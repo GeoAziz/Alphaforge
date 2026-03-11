@@ -94,6 +94,28 @@ export interface MarketSentiment {
   id: string;
   score: number;
   label: string;
+  factors?: {
+    social: number;
+    volatility: number;
+    orderBook: number;
+  };
+}
+
+export interface OnChainActivity {
+  id: string;
+  type: 'whale_move' | 'exchange_flow' | 'contract_deploy';
+  asset: string;
+  amount: number;
+  valueUsd: number;
+  from: string;
+  to: string;
+  timestamp: string;
+}
+
+export interface LiquidationCluster {
+  asset: string;
+  value: number;
+  type: 'long' | 'short';
 }
 
 export interface Strategy {
@@ -179,12 +201,6 @@ export interface MarketplaceStrategy {
   riskLevel: RiskLevel;
   monthlyPrice: number;
   isVerified: boolean;
-}
-
-export interface SignalDriver {
-  label: string;
-  weight: number;
-  active: boolean;
 }
 
 export interface Signal {

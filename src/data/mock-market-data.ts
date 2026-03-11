@@ -1,4 +1,4 @@
-import { MarketTicker, MarketSentiment, FundingRate, OpenInterest } from '@/lib/types';
+import { MarketTicker, MarketSentiment, FundingRate, OpenInterest, OnChainActivity, LiquidationCluster } from '@/lib/types';
 
 export const mockTickers: MarketTicker[] = [
   { id: 'btc-usdt', asset: 'BTCUSDT', price: 68420.50, change24h: 2.45, change24hAbs: 1640.20, volume24h: 1240000000, high24h: 69200, low24h: 66800 },
@@ -12,7 +12,12 @@ export const mockTickers: MarketTicker[] = [
 export const mockSentiment: MarketSentiment = {
   id: 'latest',
   score: 72,
-  label: 'Greed'
+  label: 'Greed',
+  factors: {
+    social: 84,
+    volatility: 42,
+    orderBook: 68
+  }
 };
 
 export const mockFundingRates: FundingRate[] = [
@@ -24,4 +29,18 @@ export const mockFundingRates: FundingRate[] = [
 export const mockOpenInterest: OpenInterest[] = [
   { id: 'oi-1', asset: 'BTCUSDT', value: 12400000000, change24h: 4.2 },
   { id: 'oi-2', asset: 'ETHUSDT', value: 8500000000, change24h: -1.5 }
+];
+
+export const mockOnChainActivity: OnChainActivity[] = [
+  { id: 'oa-1', type: 'whale_move', asset: 'BTC', amount: 450, valueUsd: 30789000, from: 'Unknown Wallet', to: 'Coinbase Institutional', timestamp: new Date().toISOString() },
+  { id: 'oa-2', type: 'exchange_flow', asset: 'ETH', amount: 12000, valueUsd: 41400000, from: 'Binance', to: 'Private Storage', timestamp: new Date().toISOString() },
+  { id: 'oa-3', type: 'contract_deploy', asset: 'SOL', amount: 0, valueUsd: 0, from: 'Developer Engine', to: 'Mainnet-Beta', timestamp: new Date().toISOString() }
+];
+
+export const mockLiquidationClusters: LiquidationCluster[] = [
+  { asset: 'BTC', value: 45, type: 'long' },
+  { asset: 'ETH', value: 25, type: 'short' },
+  { asset: 'SOL', value: 15, type: 'long' },
+  { asset: 'LINK', value: 10, type: 'short' },
+  { asset: 'ARB', value: 5, type: 'long' }
 ];

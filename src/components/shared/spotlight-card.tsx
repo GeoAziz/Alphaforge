@@ -42,7 +42,7 @@ export function SpotlightCard({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       className={cn(
-        "relative overflow-hidden rounded-2xl border border-border-subtle bg-surface transition-all duration-300 hover:border-border-subtle group/card",
+        "relative overflow-hidden rounded-2xl border border-border-subtle bg-surface transition-all duration-300 hover:border-border-subtle group/card noise-surface",
         className
       )}
       {...props}
@@ -51,7 +51,7 @@ export function SpotlightCard({
         className="pointer-events-none absolute -inset-px transition-opacity duration-300 z-0"
         style={{
           opacity,
-          background: `radial-gradient(600px circle at ${position.x}px ${position.y}px, ${variant === 'accent' ? 'rgba(96, 165, 250, 0.12)' : 'rgba(96, 165, 250, 0.08)'}, transparent 40%)`,
+          background: `radial-gradient(400px circle at ${position.x}px ${position.y}px, ${variant === 'accent' ? 'rgba(96, 165, 250, 0.15)' : 'rgba(96, 165, 250, 0.1)'}, transparent 40%)`,
         }}
       />
       <div className="relative z-10 h-full w-full">{children}</div>

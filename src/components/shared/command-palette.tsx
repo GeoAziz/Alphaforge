@@ -13,9 +13,11 @@ import {
   Store, 
   TrendingUp, 
   Settings,
-  LayoutDashboard
+  LayoutDashboard,
+  X
 } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard, keywords: "home main overview" },
@@ -52,52 +54,65 @@ export function CommandPalette() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-2xl top-[20%] translate-y-0">
-        <Command className="glass rounded-2xl overflow-hidden border border-border-subtle shadow-[0_0_50px_rgba(0,0,0,0.5)] animate-in fade-in zoom-in-95 duration-200">
-          <div className="flex items-center border-b border-border-subtle px-4">
-            <Search className="w-5 h-5 text-text-muted" />
+      <DialogContent className={cn(
+        "p-0 border-none bg-transparent shadow-none max-w-2xl overflow-hidden z-[100]",
+        "fixed inset-0 sm:inset-auto sm:top-[20%] sm:left-[50%] sm:translate-x-[-50%] sm:translate-y-0",
+        "flex flex-col sm:block"
+      )}>
+        <Command className={cn(
+          "glass flex-1 sm:flex-none sm:rounded-2xl overflow-hidden border border-white/10 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)]",
+          "animate-in fade-in slide-in-from-bottom sm:slide-in-from-top-4 sm:zoom-in-95 duration-500 ease-out-custom"
+        )}>
+          <div className="flex items-center border-b border-border-subtle px-4 relative">
+            <Search className="w-5 h-5 text-text-muted shrink-0" />
             <Command.Input 
-              placeholder="Type a command or search nodes... (⌘K)" 
-              className="flex h-14 w-full bg-transparent px-4 text-sm outline-none placeholder:text-text-muted font-medium text-text-primary"
+              placeholder="Traverse terminal nodes... (⌘K)" 
+              className="flex h-16 w-full bg-transparent px-4 text-sm outline-none placeholder:text-text-muted font-black uppercase tracking-tighter text-text-primary"
             />
+            <button 
+              onClick={() => setOpen(false)}
+              className="sm:hidden p-2 text-text-muted hover:text-text-primary"
+            >
+              <X size={20} />
+            </button>
           </div>
-          <Command.List className="max-h-[400px] overflow-y-auto p-2 scrollbar-hide">
+          <Command.List className="flex-1 overflow-y-auto p-2 scrollbar-hide max-h-[calc(100vh-120px)] sm:max-h-[400px]">
             <Command.Empty className="py-12 text-center text-sm text-text-muted font-black uppercase tracking-widest opacity-50">
-              No matching nodes found.
+              No matching node identifiers.
             </Command.Empty>
             
-            <Command.Group heading="Navigation" className="px-2 py-3 text-[10px] font-black uppercase text-text-muted tracking-widest">
+            <Command.Group heading="Navigation Clusters" className="px-2 py-3 text-[10px] font-black uppercase text-text-muted tracking-widest">
               {NAV_ITEMS.map((item) => (
                 <Command.Item
                   key={item.href}
                   value={item.name + " " + item.keywords}
                   onSelect={() => onSelect(item.href)}
-                  className="flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors aria-selected:bg-primary/10 aria-selected:text-primary group"
+                  className="flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer hover:bg-primary/10 hover:text-primary transition-all aria-selected:bg-primary/10 aria-selected:text-primary group"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-elevated flex items-center justify-center text-text-muted group-aria-selected:text-primary transition-colors">
+                  <div className="w-8 h-8 rounded-lg bg-elevated flex items-center justify-center text-text-muted group-aria-selected:text-primary group-aria-selected:shadow-[0_0_15px_rgba(96,165,250,0.3)] transition-all">
                     <item.icon className="w-4 h-4" />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-sm font-bold tracking-tight">{item.name}</span>
-                    <span className="text-[10px] text-text-muted font-medium lowercase tracking-normal line-clamp-1">{item.keywords}</span>
+                    <span className="text-sm font-black tracking-tight uppercase">{item.name}</span>
+                    <span className="text-[10px] text-text-muted font-bold lowercase tracking-normal line-clamp-1">{item.keywords}</span>
                   </div>
                 </Command.Item>
               ))}
             </Command.Group>
           </Command.List>
           
-          <div className="flex items-center justify-between px-4 py-3 bg-elevated/20 border-t border-border-subtle">
+          <div className="hidden sm:flex items-center justify-between px-4 py-3 bg-elevated/20 border-t border-border-subtle">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1.5">
                 <kbd className="px-1.5 py-0.5 rounded bg-elevated text-[10px] font-black text-text-muted border border-border-subtle">ESC</kbd>
-                <span className="text-[10px] font-bold text-text-muted uppercase">Close</span>
+                <span className="text-[10px] font-black text-text-muted uppercase">Dismiss</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <kbd className="px-1.5 py-0.5 rounded bg-elevated text-[10px] font-black text-text-muted border border-border-subtle">↵</kbd>
-                <span className="text-[10px] font-bold text-text-muted uppercase">Select</span>
+                <span className="text-[10px] font-black text-text-muted uppercase">Execute</span>
               </div>
             </div>
-            <div className="text-[9px] font-black text-primary uppercase tracking-widest">AlphaForge v1.0.4</div>
+            <div className="text-[9px] font-black text-primary uppercase tracking-widest">AlphaForge Terminal v1.0.8</div>
           </div>
         </Command>
       </DialogContent>

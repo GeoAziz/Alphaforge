@@ -5,11 +5,14 @@ import { useFirestore, useCollection, useDoc, useMemoFirebase, useUser } from '@
 import { collection, doc, query, limit } from 'firebase/firestore';
 import { SpotlightCard } from '@/components/shared/spotlight-card';
 import { generateMarketInsights, MarketInsightsOutput } from '@/ai/flows/market-insights-flow';
-import { MarketTicker, MarketSentiment, FundingRate, OpenInterest } from '@/lib/types';
-import { TrendingUp, Brain, ArrowUpRight, ArrowDownRight, Loader2, Zap, BarChart3, ShieldAlert, Activity, DollarSign, Waves } from 'lucide-react';
+import { MarketTicker, MarketSentiment, FundingRate, OpenInterest, OnChainActivity, LiquidationCluster } from '@/lib/types';
+import { TrendingUp, Brain, ArrowUpRight, ArrowDownRight, Loader2, Zap, BarChart3, ShieldAlert, Activity, DollarSign, Waves, Network, Database, Fish } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { AnimatedCounter } from '@/components/shared/animated-counter';
+import { Progress } from '@/components/ui/progress';
+import { Treemap, ResponsiveContainer, Tooltip } from 'recharts';
 
 export default function MarketIntelligencePage() {
   const { user } = useUser();
@@ -29,7 +32,6 @@ export default function MarketIntelligencePage() {
     return doc(db, 'marketSentiment', 'latest');
   }, [db, user]);
 
-  // Advanced Market Metrics
   const fundingQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
     return query(collection(db, 'fundingRates'), limit(5));
@@ -40,10 +42,25 @@ export default function MarketIntelligencePage() {
     return query(collection(db, 'openInterests'), limit(5));
   }, [db, user]);
 
+  // New simulated data streams for intelligence
+  const onChainQuery = useMemoFirebase(() => {
+    if (!db || !user) return null;
+    return query(collection(db, 'onChainActivity'), limit(5));
+  }, [db, user]);
+
   const { data: tickers, isLoading: isTickersLoading } = useCollection<MarketTicker>(tickersQuery);
   const { data: sentiment } = useDoc<MarketSentiment>(sentimentRef);
   const { data: fundingRates } = useCollection<FundingRate>(fundingQuery);
   const { data: openInterest } = useCollection<OpenInterest>(openInterestQuery);
+  const { data: onChain } = useCollection<OnChainActivity>(onChainQuery);
+
+  const liquidationData = [
+    { name: 'BTC Longs', size: 45, type: 'long' },
+    { name: 'ETH Shorts', size: 25, type: 'short' },
+    { name: 'SOL Longs', size: 15, type: 'long' },
+    { name: 'PEPE Longs', size: 10, type: 'long' },
+    { name: 'ARB Shorts', size: 5, type: 'short' },
+  ];
 
   async function handleGenerateInsights() {
     if (!tickers || !sentiment) return;
@@ -76,22 +93,23 @@ export default function MarketIntelligencePage() {
   }
 
   return (
-    <div className="p-8 space-y-8 pb-20">
+    <div className="p-8 space-y-8 pb-24">
       <header className="space-y-1">
         <h1 className="text-3xl font-black tracking-tight uppercase">Market Intelligence</h1>
         <p className="text-muted-foreground text-sm">Real-time institutional data streams and AI-augmented trend synthesis.</p>
       </header>
 
       <div className="grid grid-cols-12 gap-6">
+        {/* Core Asset Monitoring */}
         <SpotlightCard className="col-span-12 lg:col-span-8 p-6">
           <div className="flex items-center justify-between mb-8">
             <h3 className="text-sm font-bold uppercase text-text-muted flex items-center gap-2">
               <TrendingUp size={16} />
-              Asset Monitoring Core
+              Trend Dashboard
             </h3>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 text-[9px] font-black uppercase text-green">
               <div className="w-1.5 h-1.5 rounded-full bg-green animate-pulse" />
-              <span className="text-[9px] font-black uppercase text-green">Synced With Exchange Engine</span>
+              Engine Synced
             </div>
           </div>
           
@@ -100,13 +118,14 @@ export default function MarketIntelligencePage() {
               Array(6).fill(0).map((_, i) => (
                 <div key={i} className="h-24 rounded-2xl bg-elevated/20 animate-pulse border border-border-subtle" />
               ))
-            ) : (tickers?.length === 0 ? (
-              <div className="col-span-2 py-12 text-center text-[10px] font-black uppercase text-text-muted opacity-50">Synchronizing market depth clusters...</div>
             ) : tickers?.map((ticker) => (
               <div key={ticker.asset} className="flex items-center justify-between p-4 rounded-2xl bg-elevated/30 border border-border-subtle hover:border-primary/50 transition-all group">
-                <div>
+                <div className="space-y-1">
                   <div className="font-black text-xl tracking-tighter">{ticker.asset}</div>
-                  <div className="text-[9px] text-text-muted font-bold uppercase tracking-widest mt-0.5">Vol: ${ticker.volume24h.toLocaleString()}</div>
+                  <div className="flex gap-2">
+                    <Badge variant="outline" className="text-[8px] h-4 uppercase font-black border-border-subtle text-text-muted">Vol High</Badge>
+                    <Badge variant="outline" className="text-[8px] h-4 uppercase font-black border-primary/20 text-primary">Bullish Bias</Badge>
+                  </div>
                 </div>
                 <div className="text-right">
                   <div className="text-lg font-mono font-bold tracking-tight">${ticker.price.toLocaleString()}</div>
@@ -119,71 +138,184 @@ export default function MarketIntelligencePage() {
                   </div>
                 </div>
               </div>
-            )))}
+            ))}
           </div>
         </SpotlightCard>
 
-        <SpotlightCard className="col-span-12 lg:col-span-4 p-6 flex flex-col justify-between">
+        {/* Sentiment Analysis Gauge & Breakdown */}
+        <SpotlightCard className="col-span-12 lg:col-span-4 p-6 space-y-8 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-8">
-              <h3 className="text-sm font-bold uppercase text-text-muted flex items-center gap-2">
-                <BarChart3 size={16} />
-                Network Sentiment
-              </h3>
-            </div>
+            <h3 className="text-sm font-bold uppercase text-text-muted mb-8 flex items-center gap-2">
+              <BarChart3 size={16} />
+              Sentiment Engine
+            </h3>
             <div className="flex flex-col items-center justify-center text-center">
-              <div className="relative w-48 h-48 flex items-center justify-center">
+              <div className="relative w-40 h-40 flex items-center justify-center">
                 <svg className="w-full h-full rotate-[-90deg]">
-                  <circle cx="96" cy="96" r="80" stroke="currentColor" strokeWidth="12" fill="transparent" className="text-border-subtle" />
+                  <circle cx="80" cy="80" r="70" stroke="currentColor" strokeWidth="10" fill="transparent" className="text-border-subtle" />
                   <circle 
-                    cx="96" 
-                    cy="96" 
-                    r="80" 
+                    cx="80" 
+                    cy="80" 
+                    r="70" 
                     stroke="currentColor" 
-                    strokeWidth="12" 
+                    strokeWidth="10" 
                     fill="transparent" 
                     className="text-primary transition-all duration-1000 ease-out" 
-                    strokeDasharray="502.6" 
-                    strokeDashoffset={502.6 - (502.6 * (sentiment?.score || 50) / 100)} 
+                    strokeDasharray="439.8" 
+                    strokeDashoffset={439.8 - (439.8 * (sentiment?.score || 50) / 100)} 
                     strokeLinecap="round" 
                   />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-5xl font-black tracking-tighter">{sentiment?.score || '--'}</span>
-                  <span className="text-[10px] font-black uppercase text-primary tracking-widest mt-1">{sentiment?.label || 'Calculating'}</span>
+                  <span className="text-4xl font-black tracking-tighter">{sentiment?.score || '--'}</span>
+                  <span className="text-[9px] font-black uppercase text-primary tracking-widest">{sentiment?.label || 'Calibrating'}</span>
                 </div>
               </div>
-              <p className="mt-8 text-[11px] text-text-muted leading-relaxed max-w-[260px] font-medium uppercase italic">
-                Cross-exchange sentiment aggregation weighting social momentum and volatility regimes.
-              </p>
+              
+              <div className="w-full space-y-4 mt-8">
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-[9px] font-black uppercase text-text-muted">
+                    <span>Social Momentum</span>
+                    <span>{sentiment?.factors?.social || 0}%</span>
+                  </div>
+                  <Progress value={sentiment?.factors?.social || 0} className="h-1 bg-border-subtle" />
+                </div>
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-[9px] font-black uppercase text-text-muted">
+                    <span>Order Book Bias</span>
+                    <span>{sentiment?.factors?.orderBook || 0}%</span>
+                  </div>
+                  <Progress value={sentiment?.factors?.orderBook || 0} className="h-1 bg-border-subtle" />
+                </div>
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-[9px] font-black uppercase text-text-muted">
+                    <span>Vol Regime Status</span>
+                    <span className="text-amber">Stable</span>
+                  </div>
+                  <Progress value={42} className="h-1 bg-border-subtle" />
+                </div>
+              </div>
             </div>
           </div>
           
           <Button 
             onClick={handleGenerateInsights} 
-            disabled={isAiLoading || !tickers || tickers.length === 0}
-            className="w-full mt-10 bg-primary hover:bg-primary/95 text-primary-foreground font-black uppercase text-xs h-14 gap-3 rounded-2xl shadow-[0_0_25px_rgba(96,165,250,0.3)]"
+            disabled={isAiLoading || !tickers}
+            className="w-full bg-primary hover:bg-primary/95 text-primary-foreground font-black uppercase text-xs h-14 gap-3 rounded-2xl shadow-[0_0_25px_rgba(96,165,250,0.3)] mt-6"
           >
             {isAiLoading ? <Loader2 className="animate-spin" size={18} /> : <Brain size={18} />}
-            Generate AI Synthesis Report
+            AI Market Synthesis
           </Button>
         </SpotlightCard>
 
+        {/* Liquidation Heatmap */}
+        <SpotlightCard className="col-span-12 lg:col-span-6 p-6">
+          <div className="flex items-center justify-between mb-8">
+            <h3 className="text-sm font-bold uppercase text-text-muted flex items-center gap-2">
+              <Zap size={16} />
+              Liquidation Heatmap
+            </h3>
+            <span className="text-[9px] font-black uppercase text-text-muted">Risk Clusters (24H)</span>
+          </div>
+          <div className="h-[250px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <Treemap
+                data={liquidationData}
+                dataKey="size"
+                aspectRatio={4 / 3}
+                stroke="#fff"
+                fill="#8884d8"
+                content={(props: any) => {
+                  const { x, y, width, height, name, type } = props;
+                  return (
+                    <g>
+                      <rect
+                        x={x}
+                        y={y}
+                        width={width}
+                        height={height}
+                        style={{
+                          fill: type === 'long' ? 'rgba(52, 211, 153, 0.15)' : 'rgba(248, 113, 113, 0.15)',
+                          stroke: type === 'long' ? 'var(--green)' : 'var(--red)',
+                          strokeWidth: 1,
+                        }}
+                      />
+                      {width > 40 && height > 20 && (
+                        <text
+                          x={x + width / 2}
+                          y={y + height / 2 + 4}
+                          textAnchor="middle"
+                          fill="currentColor"
+                          className="text-[10px] font-black uppercase tracking-tighter"
+                        >
+                          {name}
+                        </text>
+                      )}
+                    </g>
+                  );
+                }}
+              />
+            </ResponsiveContainer>
+          </div>
+        </SpotlightCard>
+
+        {/* On-Chain Activity Monitor */}
+        <SpotlightCard className="col-span-12 lg:col-span-6 p-6">
+          <div className="flex items-center justify-between mb-8">
+            <h3 className="text-sm font-bold uppercase text-text-muted flex items-center gap-2">
+              <Database size={16} />
+              On-Chain Activity Dashboard
+            </h3>
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-amber animate-pulse" />
+              <span className="text-[9px] font-black uppercase text-amber">Whale Tracking Active</span>
+            </div>
+          </div>
+          <div className="space-y-4">
+            {onChain?.length === 0 ? (
+              <div className="py-12 text-center text-[10px] font-black uppercase text-text-muted opacity-50">Synchronizing node telemetry...</div>
+            ) : onChain?.map((activity) => (
+              <div key={activity.id} className="p-3 rounded-xl bg-elevated/20 border border-border-subtle flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "w-8 h-8 rounded-lg flex items-center justify-center",
+                    activity.type === 'whale_move' ? "bg-amber/10 text-amber" : 
+                    activity.type === 'exchange_flow' ? "bg-primary/10 text-primary" : "bg-green/10 text-green"
+                  )}>
+                    {activity.type === 'whale_move' ? <Fish size={16} /> : 
+                     activity.type === 'exchange_flow' ? <Activity size={16} /> : <Zap size={16} />}
+                  </div>
+                  <div>
+                    <div className="text-xs font-black uppercase tracking-tight">{activity.asset} {activity.type.replace('_', ' ')}</div>
+                    <div className="text-[10px] text-text-muted font-bold uppercase">{activity.from} → {activity.to}</div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-black text-text-primary">${(activity.valueUsd / 1000000).toFixed(1)}M</div>
+                  <div className="text-[9px] text-text-muted font-bold uppercase">{activity.amount.toLocaleString()} {activity.asset}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </SpotlightCard>
+
+        {/* Global Market Monitors */}
         <div className="col-span-12 grid grid-cols-1 md:grid-cols-2 gap-6">
           <SpotlightCard className="p-6">
             <h3 className="text-sm font-bold uppercase text-text-muted mb-6 flex items-center gap-2">
               <DollarSign size={16} />
-              Funding Rates
+              Funding Rate Monitor
             </h3>
             <div className="space-y-4">
-              {fundingRates?.length === 0 ? (
-                <div className="py-4 text-center text-[10px] font-black uppercase text-text-muted opacity-50">Awaiting stream...</div>
-              ) : fundingRates?.map((f) => (
-                <div key={f.id} className="flex justify-between items-center text-sm">
+              {fundingRates?.map((f) => (
+                <div key={f.id} className="flex justify-between items-center text-sm p-2 rounded-lg bg-elevated/10">
                   <span className="font-bold">{f.asset}</span>
-                  <span className={cn("font-mono font-bold", f.rate >= 0 ? "text-green" : "text-red")}>
-                    {(f.rate * 100).toFixed(4)}%
-                  </span>
+                  <div className="flex items-center gap-4">
+                    <span className="text-[10px] font-black uppercase text-text-muted">{f.exchange}</span>
+                    <span className={cn("font-mono font-bold", f.rate >= 0 ? "text-green" : "text-red")}>
+                      {(f.rate * 100).toFixed(4)}%
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -192,18 +324,16 @@ export default function MarketIntelligencePage() {
           <SpotlightCard className="p-6">
             <h3 className="text-sm font-bold uppercase text-text-muted mb-6 flex items-center gap-2">
               <Waves size={16} />
-              Open Interest
+              Open Interest Tracker
             </h3>
             <div className="space-y-4">
-              {openInterest?.length === 0 ? (
-                <div className="py-4 text-center text-[10px] font-black uppercase text-text-muted opacity-50">Awaiting stream...</div>
-              ) : openInterest?.map((oi) => (
-                <div key={oi.id} className="flex justify-between items-center text-sm">
+              {openInterest?.map((oi) => (
+                <div key={oi.id} className="flex justify-between items-center text-sm p-2 rounded-lg bg-elevated/10">
                   <span className="font-bold">{oi.asset}</span>
                   <div className="text-right">
-                    <div className="font-mono font-bold">${(oi.value / 1000000).toFixed(1)}M</div>
+                    <div className="font-mono font-bold">${(oi.value / 1000000000).toFixed(2)}B</div>
                     <div className={cn("text-[10px] font-black", oi.change24h >= 0 ? "text-green" : "text-red")}>
-                      {oi.change24h >= 0 ? '+' : ''}{oi.change24h}%
+                      {oi.change24h >= 0 ? '+' : ''}{oi.change24h}% (24H)
                     </div>
                   </div>
                 </div>
@@ -212,6 +342,7 @@ export default function MarketIntelligencePage() {
           </SpotlightCard>
         </div>
 
+        {/* AI Synthesis Report Integration */}
         {aiInsights && (
           <SpotlightCard variant="accent" className="col-span-12 p-8 animate-in fade-in slide-in-from-bottom-6 duration-700 shadow-2xl border-primary/20 bg-primary/5">
             <div className="flex flex-col md:flex-row gap-10">
@@ -245,7 +376,7 @@ export default function MarketIntelligencePage() {
                   </div>
                 </div>
                 <div className="p-6 rounded-2xl bg-surface/80 border border-border-subtle backdrop-blur-md">
-                  <div className="text-[9px] font-black uppercase tracking-widest text-text-muted mb-2">Report Timestamp</div>
+                  <div className="text-[9px] font-black uppercase tracking-widest text-text-muted mb-2">Synthesis Timestamp</div>
                   <div className="text-sm font-mono font-bold uppercase">{new Date().toLocaleTimeString()} (UTC)</div>
                 </div>
               </div>

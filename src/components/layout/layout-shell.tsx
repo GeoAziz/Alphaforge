@@ -34,7 +34,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
           <ScrollProgress />
           <Topbar />
-          <main className="flex-1 overflow-y-auto relative pb-16 md:pb-0">
+          <main className="flex-1 overflow-y-auto relative pb-16 md:pb-0 noise-surface">
             {children}
           </main>
           <MobileNav />
