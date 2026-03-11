@@ -112,65 +112,26 @@ export default function SignalsPage() {
   }
 
   return (
-    <div className="flex h-full relative overflow-hidden animate-page">
-      {/* Center Panel: Intelligence Stream */}
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="p-8 pb-4 space-y-6 border-b border-border-subtle bg-surface/50 backdrop-blur-md sticky top-0 z-20">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div className="space-y-1">
-              <h1 className="text-3xl font-black tracking-tighter uppercase leading-none">Intelligence Stream</h1>
-              <p className="text-muted-foreground text-sm font-medium">Real-time algorithmic consensus and institutional signal rationale.</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="h-9 px-4 rounded-md border border-border-subtle bg-elevated/20 flex items-center gap-2 text-[10px] font-black uppercase text-green">
-                <div className="w-1.5 h-1.5 rounded-full bg-green animate-pulse" />
-                Live Stream Active
-              </div>
-            </div>
+    <div className={cn(
+      "flex h-full relative overflow-hidden animate-page",
+      !mounted && "opacity-0"
+    )}>
+      {/* Left Panel: Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Main Content */}
+        <div className="flex-1 overflow-y-auto p-8 space-y-8 pb-24 md:pb-8">
+        <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-black tracking-tighter uppercase leading-none">Intelligence Stream</h1>
+            <p className="text-muted-foreground text-sm font-medium">Real-time algorithmic consensus and institutional signal rationale.</p>
           </div>
-
-          {/* Filter Toolbar */}
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
-              <Input 
-                placeholder="Search assets..." 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 h-10 bg-elevated/30 border-border-subtle text-xs font-bold uppercase"
-              />
-            </div>
-            <Select value={strategyFilter} onValueChange={setStrategyFilter}>
-              <SelectTrigger className="w-[180px] h-10 bg-elevated/30 border-border-subtle text-xs font-black uppercase">
-                <SelectValue placeholder="Strategy" />
-              </SelectTrigger>
-              <SelectContent className="glass">
-                <SelectItem value="all">All Strategies</SelectItem>
-                <SelectItem value="Momentum Breakout">Momentum Breakout</SelectItem>
-                <SelectItem value="Mean Reversion">Mean Reversion</SelectItem>
-                <SelectItem value="Volatility Expansion">Volatility Expansion</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[140px] h-10 bg-elevated/30 border-border-subtle text-xs font-black uppercase">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent className="glass">
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="closed">Closed</SelectItem>
-              </SelectContent>
-            </Select>
-            
-            <div className="flex items-center gap-4 px-4 h-10 rounded-lg bg-elevated/30 border border-border-subtle min-w-[200px]">
-              <span className="text-[9px] font-black uppercase text-text-muted whitespace-nowrap">Min Confidence: {confidenceRange[0]}%</span>
-              <Slider 
-                value={confidenceRange} 
-                onValueChange={setConfidenceRange} 
-                max={100} 
-                step={5} 
-                className="flex-1"
-              />
+          <div className="flex items-center gap-3">
+            <Button variant="outline" size="sm" className="h-9 px-4 border-border-subtle bg-elevated/20 text-[10px] font-black uppercase gap-2">
+              <Filter size={14} /> Filter Clusters
+            </Button>
+            <div className="h-9 px-4 rounded-md border border-border-subtle bg-elevated/20 flex items-center gap-2 text-[10px] font-black uppercase text-green">
+              <div className="w-1.5 h-1.5 rounded-full bg-green animate-pulse" />
+              Live Stream Active
             </div>
           </div>
         </header>
@@ -241,16 +202,19 @@ export default function SignalsPage() {
               </GradientBorder>
             </div>
           ))}
+            </div>
         </div>
       </div>
 
-      {/* Right Panel: Terminal Detail */}
-      <SignalDetailPanel 
-        signal={selectedSignal}
-        onDismiss={() => setSelectedSignal(null)}
-        onExecute={handleExecuteSignal}
-        isExecuting={isExecuting}
-      />
+      {/* Right Info Panel: Terminal Detail (Contextual) */}
+      {selectedSignal && (
+        <SignalDetailPanel 
+          signal={selectedSignal}
+          onDismiss={() => setSelectedSignal(null)}
+          onExecute={handleExecuteSignal}
+          isExecuting={isExecuting}
+        />
+      )}
     </div>
   );
 }

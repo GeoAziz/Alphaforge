@@ -206,7 +206,7 @@ export default function MarketplacePage() {
   }
 
   return (
-    <div className="p-4 lg:p-8 space-y-8 pb-32 max-w-screen-2xl mx-auto animate-page pl-safe pr-safe">
+    <div className="p-8 space-y-8 pb-20 animate-page">
       <header className="space-y-1">
         <h1 className="text-3xl font-black tracking-tight uppercase leading-none">Strategy Marketplace</h1>
         <p className="text-muted-foreground text-sm font-medium">Subscribe to verified institutional-grade algorithmic engines.</p>

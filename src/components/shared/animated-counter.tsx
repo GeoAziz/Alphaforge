@@ -12,12 +12,12 @@ interface AnimatedCounterProps {
 
 /**
  * AnimatedCounter provides a smooth transition between numerical values.
- * Respects 'prefers-reduced-motion' by resolving immediately.
+ * Animates over 600ms using easeOutQuart for smooth deceleration.
  */
 export function AnimatedCounter({ 
   value, 
   decimals = 0, 
-  duration = 800,
+  duration = 600,
   prefix = '',
   suffix = ''
 }: AnimatedCounterProps) {

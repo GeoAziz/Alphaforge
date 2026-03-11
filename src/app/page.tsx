@@ -55,8 +55,8 @@ export default function DashboardPage() {
 
   return (
     <div className={cn(
-      "p-6 lg:p-8 space-y-8 pb-24 md:pb-10 transition-all duration-1000 ease-out-custom",
-      mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+      "p-6 lg:p-8 space-y-8 pb-24 md:pb-10 animate-page",
+      mounted && "opacity-100"
     )}>
       <header className="flex flex-col gap-1">
         <h1 className="text-3xl font-black uppercase tracking-tighter gradient-text leading-none">Intelligence Terminal</h1>

@@ -128,36 +128,19 @@ export default function MarketIntelligencePage() {
   }
 
   return (
-    <div className="p-4 lg:p-8 space-y-8 pb-32 max-w-screen-2xl mx-auto pl-safe pr-safe">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <header className="space-y-1">
-          <h1 className="text-3xl font-black tracking-tight uppercase leading-none">Market Intelligence</h1>
-          <p className="text-muted-foreground text-sm font-medium">Real-time institutional data streams and AI-augmented trend synthesis.</p>
-        </header>
-        <div className="flex items-center gap-3">
-          <div className="hidden sm:flex h-9 px-4 rounded-md border border-border-subtle bg-elevated/20 items-center gap-2 text-[10px] font-black uppercase text-green">
-            <div className="w-1.5 h-1.5 rounded-full bg-green animate-pulse" />
-            Stream Synchronized
-          </div>
-          <Button 
-            onClick={handleGenerateInsights} 
-            disabled={isAiLoading || !tickers}
-            className="flex-1 sm:flex-none bg-primary hover:bg-primary/90 text-primary-foreground font-black uppercase text-[10px] h-12 lg:h-9 gap-2 rounded-lg touch-target"
-          >
-            {isAiLoading ? <Loader2 className="animate-spin" size={14} /> : <Brain size={14} />}
-            AI Synthesis
-          </Button>
-        </div>
-      </div>
+    <div className="p-8 space-y-8 pb-24 animate-page">
+      <header className="space-y-1">
+        <h1 className="text-3xl font-black tracking-tight uppercase">Market Intelligence</h1>
+        <p className="text-muted-foreground text-sm">Real-time institutional data streams and AI-augmented trend synthesis.</p>
+      </header>
 
-      <div className="grid grid-cols-12 gap-4 lg:gap-6">
-        
-        {/* Trend Strength Dashboard */}
-        <SpotlightCard className="col-span-12 lg:col-span-8 p-4 lg:p-6">
-          <div className="flex items-center justify-between mb-6 lg:mb-8">
-            <h3 className="text-sm font-black uppercase text-text-muted flex items-center gap-2 tracking-widest">
-              <TrendingUp size={16} className="text-primary" />
-              Trend Strength Core
+      <div className="grid grid-cols-12 gap-6">
+        {/* Core Asset Monitoring */}
+        <SpotlightCard className="col-span-12 lg:col-span-8 p-6">
+          <div className="flex items-center justify-between mb-8">
+            <h3 className="text-sm font-bold uppercase text-text-muted flex items-center gap-2">
+              <TrendingUp size={16} />
+              Trend Dashboard
             </h3>
             <span className="text-[9px] font-bold text-text-muted uppercase">Live Refresh</span>
           </div>

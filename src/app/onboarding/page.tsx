@@ -28,6 +28,9 @@ import {
   Info
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { StepNotifications } from '@/components/onboarding/step-notifications';
+import { StepWalkthrough } from '@/components/onboarding/step-walkthrough';
+import { StepRegulatoryConsent } from '@/components/onboarding/step-regulatory-consent';
 
 const RISK_LEVELS = [
   { id: 'conservative', label: 'Conservative', description: 'Priority on capital preservation and low volatility.', icon: ShieldCheck },
@@ -53,6 +56,14 @@ export default function OnboardingPage() {
   const [name, setName] = useState('');
   const [risk, setRisk] = useState('balanced');
   const [gdpr, setGdpr] = useState(false);
+  const [ccpa, setCcpa] = useState(false);
+  const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
+  const [notificationPrefs, setNotificationPrefs] = useState<Record<string, boolean>>({
+    signals: true,
+    trades: true,
+    risk: true,
+    system: false,
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const profileRef = useMemoFirebase(() => {
@@ -106,7 +117,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="h-screen w-full flex items-center justify-center bg-background p-6 overflow-hidden">
+    <div className="h-screen w-full flex items-center justify-center bg-background p-6 overflow-hidden animate-page">
       <div className="max-w-2xl w-full space-y-8">
         <div className="text-center space-y-2">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary mb-4 font-black text-primary-foreground shadow-[0_0_20px_rgba(96,165,250,0.4)]" aria-hidden="true">
@@ -239,87 +250,42 @@ export default function OnboardingPage() {
 
             {step === 4 && (
               <div className="space-y-8">
-                <div className="space-y-4">
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-4" aria-hidden="true">
-                    <Bell size={24} />
-                  </div>
-                  <h2 id="step-title" className="text-xl font-black uppercase tracking-tight">Notification Nodes</h2>
-                  <p className="text-sm text-text-muted leading-relaxed">
-                    Enable real-time telemetry for signal execution and risk alerts. AlphaForge nodes synchronize globally for <span className="text-primary font-bold">sub-10ms delivery</span>.
-                  </p>
-                  <div className="space-y-4 pt-4">
-                    <div className="flex items-center justify-between p-4 rounded-xl bg-elevated/20 border border-border-subtle">
-                      <div className="space-y-0.5">
-                        <Label htmlFor="notify-alpha" className="text-[10px] font-black uppercase">Alpha Signals</Label>
-                        <p id="notify-alpha-desc" className="text-[9px] text-text-muted font-bold uppercase">Real-time trading opportunities</p>
-                      </div>
-                      <Switch id="notify-alpha" defaultChecked aria-describedby="notify-alpha-desc" />
-                    </div>
-                    <div className="flex items-center justify-between p-4 rounded-xl bg-elevated/20 border border-border-subtle">
-                      <div className="space-y-0.5">
-                        <Label htmlFor="notify-risk" className="text-[10px] font-black uppercase">Risk Alerts</Label>
-                        <p id="notify-risk-desc" className="text-[9px] text-text-muted font-bold uppercase">Margin and drawdown triggers</p>
-                      </div>
-                      <Switch id="notify-risk" defaultChecked aria-describedby="notify-risk-desc" />
-                    </div>
-                  </div>
-                </div>
+                <StepNotifications 
+                  prefs={notificationPrefs}
+                  onChange={(key, value) => setNotificationPrefs(prev => ({ ...prev, [key]: value }))}
+                />
                 <div className="flex gap-4">
                   <Button variant="ghost" onClick={handleBack} className="flex-1 h-14 font-black uppercase text-xs">Back</Button>
-                  <Button onClick={handleNext} className="flex-[2] h-14 bg-primary text-primary-foreground font-black uppercase text-xs">Sync Nodes</Button>
+                  <Button onClick={handleNext} className="flex-[2] h-14 bg-primary text-primary-foreground font-black uppercase text-xs">Continue</Button>
                 </div>
               </div>
             )}
 
             {step === 5 && (
               <div className="space-y-8">
-                <div className="space-y-4">
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-4" aria-hidden="true">
-                    <Eye size={24} />
-                  </div>
-                  <h2 id="step-title" className="text-xl font-black uppercase tracking-tight">Terminal Walkthrough</h2>
-                  <p className="text-sm text-text-muted leading-relaxed">
-                    Your institutional workspace is divided into <span className="text-primary font-bold">Intelligence</span>, <span className="text-primary font-bold">Execution</span>, and <span className="text-primary font-bold">Analytics</span> clusters.
-                  </p>
-                  <div className="p-6 rounded-2xl bg-primary/5 border border-primary/10 space-y-4">
-                    <div className="flex items-center gap-3">
-                      <Database size={18} className="text-primary" aria-hidden="true" />
-                      <span className="text-xs font-black uppercase tracking-tight">Immutable Audit Trail</span>
-                    </div>
-                    <p className="text-[10px] text-text-secondary leading-relaxed font-medium uppercase">Every action in this terminal is logged to an ISO-27001 compliant audit trail for institutional transparency.</p>
-                  </div>
-                </div>
+                <StepWalkthrough />
                 <div className="flex gap-4">
                   <Button variant="ghost" onClick={handleBack} className="flex-1 h-14 font-black uppercase text-xs">Back</Button>
-                  <Button onClick={handleNext} className="flex-[2] h-14 bg-primary text-primary-foreground font-black uppercase text-xs">Final Compliance</Button>
+                  <Button onClick={handleNext} className="flex-[2] h-14 bg-primary text-primary-foreground font-black uppercase text-xs">Continue</Button>
                 </div>
               </div>
             )}
 
             {step === 6 && (
               <div className="space-y-8">
-                <div className="space-y-4">
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-4" aria-hidden="true">
-                    <Scale size={24} />
-                  </div>
-                  <h2 id="step-title" className="text-xl font-black uppercase tracking-tight">Compliance & Data Privacy</h2>
-                  <p className="text-sm text-text-muted leading-relaxed">
-                    AlphaForge requires mandatory consent for GDPR/CCPA data handling. We encrypt all institutional PII at rest.
-                  </p>
-                  <div className="space-y-4 pt-4">
-                    <div className="flex items-start gap-3 p-4 rounded-xl bg-elevated/20 border border-border-subtle">
-                      <Checkbox id="gdpr" checked={gdpr} onCheckedChange={(v) => setGdpr(v as boolean)} className="mt-1" aria-required="true" />
-                      <Label htmlFor="gdpr" className="text-[10px] font-bold text-text-muted uppercase leading-snug cursor-pointer">
-                        I acknowledge the data retention policies and consent to high-frequency telemetry processing for institutional reporting.
-                      </Label>
-                    </div>
-                  </div>
-                </div>
+                <StepRegulatoryConsent 
+                  gdprAccepted={gdpr}
+                  ccpaAccepted={ccpa}
+                  disclaimerAccepted={disclaimerAccepted}
+                  onGdprChange={setGdpr}
+                  onCcpaChange={setCcpa}
+                  onDisclaimerChange={setDisclaimerAccepted}
+                />
                 <div className="flex gap-4">
                   <Button variant="ghost" onClick={handleBack} className="flex-1 h-14 font-black uppercase text-xs">Back</Button>
                   <Button 
                     onClick={handleCompleteOnboarding}
-                    disabled={!gdpr || isSubmitting}
+                    disabled={!gdpr || !ccpa || !disclaimerAccepted || isSubmitting}
                     className="flex-[2] h-14 bg-primary text-primary-foreground font-black uppercase text-xs gap-2"
                   >
                     {isSubmitting ? <Loader2 className="animate-spin" size={16} /> : "Initialize Terminal"}

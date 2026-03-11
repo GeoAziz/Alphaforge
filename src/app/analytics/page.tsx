@@ -22,41 +22,40 @@ import {
   Tooltip
 } from 'recharts';
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { Activity, PieChart as PieIcon, BarChart3, ShieldAlert, Cpu, Network, Zap, ShieldCheck, Timer, TrendingUp } from 'lucide-react';
+import { ShieldAlert, TrendingUp, BarChart3, LineChart as LineChartIcon, Target, AlertCircle, Cpu, ShieldCheck, Network, Timer, Zap, PiIcon, Activity } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-
-const assetDistribution = [
-  { name: 'BTC', value: 45, color: 'hsl(var(--primary))' },
-  { name: 'ETH', value: 25, color: '#6366f1' },
-  { name: 'SOL', value: 15, color: '#8b5cf6' },
-  { name: 'Other', value: 15, color: '#ec4899' },
-];
-
-const accuracyHistory = [
-  { time: '00:00', accuracy: 82 },
-  { time: '04:00', accuracy: 84 },
-  { time: '08:00', accuracy: 81 },
-  { time: '12:00', accuracy: 88 },
-  { time: '16:00', accuracy: 86 },
-  { time: '20:00', accuracy: 84 },
-  { time: '23:59', accuracy: 85 },
-];
-
-const winRateData = [
-  { day: 'Mon', rate: 65 },
-  { day: 'Tue', rate: 72 },
-  { day: 'Wed', rate: 68 },
-  { day: 'Thu', rate: 75 },
-  { day: 'Fri', rate: 82 },
-  { day: 'Sat', rate: 78 },
-  { day: 'Sun', rate: 70 },
-];
 
 export default function AnalyticsPage() {
   const { user } = useUser();
   const db = useFirestore();
   const [timeframe, setTimeframe] = useState('30d');
+
+  // Mock data for charts
+  const profitFactorTrend = [
+    { week: 'W1', profitFactor: 1.8 },
+    { week: 'W2', profitFactor: 2.1 },
+    { week: 'W3', profitFactor: 1.9 },
+    { week: 'W4', profitFactor: 2.4 },
+    { week: 'W5', profitFactor: 2.2 },
+  ];
+
+  const winRateTrend = [
+    { week: 'W1', Momentum: 65, Reversion: 58, Volatility: 72 },
+    { week: 'W2', Momentum: 68, Reversion: 61, Volatility: 75 },
+    { week: 'W3', Momentum: 66, Reversion: 59, Volatility: 73 },
+    { week: 'W4', Momentum: 71, Reversion: 64, Volatility: 78 },
+    { week: 'W5', Momentum: 69, Reversion: 62, Volatility: 76 },
+  ];
+
+  const signalAccuracy = [
+    { hour: '00:00', accuracy: 82 },
+    { hour: '04:00', accuracy: 85 },
+    { hour: '08:00', accuracy: 88 },
+    { hour: '12:00', accuracy: 84 },
+    { hour: '16:00', accuracy: 87 },
+    { hour: '20:00', accuracy: 86 },
+  ];
 
   const strategiesQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
@@ -86,7 +85,7 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="p-8 space-y-8 pb-32">
+    <div className="p-8 space-y-8 pb-20 animate-page">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <header className="space-y-1">
           <h1 className="text-3xl font-black tracking-tight uppercase">System Analytics</h1>
@@ -187,7 +186,7 @@ export default function AnalyticsPage() {
           </div>
           <div className="h-[400px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={accuracyHistory}>
+              <AreaChart data={signalAccuracy}>
                 <defs>
                   <linearGradient id="colorEquity" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
@@ -195,7 +194,7 @@ export default function AnalyticsPage() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 10, fontWeight: 900 }} />
+                <XAxis dataKey="hour" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 10, fontWeight: 900 }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 10, fontWeight: 900 }} />
                 <Tooltip 
                   contentStyle={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px' }}
@@ -214,26 +213,24 @@ export default function AnalyticsPage() {
           <h3 className="text-xs font-black uppercase tracking-widest text-text-muted mb-6">Win Rate Distribution</h3>
           <div className="h-[250px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={winRateData}>
+              <BarChart data={winRateTrend}>
                 <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 9 }} />
+                <XAxis dataKey="week" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 9 }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 9 }} />
-                <Bar dataKey="rate" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Momentum" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </SpotlightCard>
 
-        <SpotlightCard className="col-span-12 lg:col-span-6 p-6">
-          <h3 className="text-xs font-black uppercase tracking-widest text-text-muted mb-6">Consensus Accuracy</h3>
-          <div className="h-[250px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={accuracyHistory}>
-                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 9 }} />
-                <Area type="monotone" dataKey="accuracy" stroke="var(--green)" fill="var(--green)" fillOpacity={0.1} />
-              </AreaChart>
-            </ResponsiveContainer>
+        {/* Asset Concentration Pie */}
+        <SpotlightCard className="col-span-12 lg:col-span-4 p-8">
+          <div className="space-y-1 mb-8">
+            <h3 className="text-sm font-bold uppercase text-text-muted flex items-center gap-2">
+              <PiIcon size={16} className="text-accent" />
+              Asset Concentration
+            </h3>
+            <p className="text-[10px] text-text-muted font-bold uppercase">Exposure by network asset</p>
           </div>
         </SpotlightCard>
 
@@ -241,11 +238,20 @@ export default function AnalyticsPage() {
           <h3 className="text-xs font-black uppercase tracking-widest text-text-muted mb-6">Asset Concentration</h3>
           <div className="h-[250px] relative">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={assetDistribution} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
-                  {assetDistribution.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
-                </Pie>
-              </PieChart>
+              <LineChart data={profitFactorTrend}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                <XAxis dataKey="week" tick={{ fontSize: 12, fill: 'var(--text-secondary)' }} />
+                <YAxis tick={{ fontSize: 12, fill: 'var(--text-secondary)' }} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Line
+                  type="monotone"
+                  dataKey="profitFactor"
+                  stroke="var(--green)"
+                  strokeWidth={2}
+                  dot={{ fill: 'var(--green)', r: 4 }}
+                  activeDot={{ r: 6 }}
+                />
+              </LineChart>
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
               <span className="text-xl font-black">AF</span>
@@ -254,14 +260,50 @@ export default function AnalyticsPage() {
           </div>
         </SpotlightCard>
 
-        <SpotlightCard className="col-span-12 lg:col-span-8 p-6">
-          <h3 className="text-xs font-black uppercase tracking-widest text-text-muted mb-6">Strategy Performance Map</h3>
-          <div className="h-[250px]">
+        {/* Win Rate by Strategy */}
+        <SpotlightCard className="col-span-12 lg:col-span-6 p-6">
+          <div className="flex items-center gap-2 mb-6">
+            <Target size={18} className="text-primary" />
+            <h3 className="text-sm font-bold uppercase text-text-muted">Win Rate by Strategy Trend</h3>
+          </div>
+          <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={strategyData}>
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 9 }} />
-                <Bar dataKey="winRate" fill="hsl(var(--primary))" radius={[2, 2, 0, 0]} />
-                <Bar dataKey="roi" fill="var(--green)" radius={[2, 2, 0, 0]} />
+              <LineChart data={winRateTrend}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                <XAxis dataKey="week" tick={{ fontSize: 12, fill: 'var(--text-secondary)' }} />
+                <YAxis tick={{ fontSize: 12, fill: 'var(--text-secondary)' }} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Line type="monotone" dataKey="Momentum" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="Reversion" stroke="#8b5cf6" strokeWidth={2} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="Volatility" stroke="var(--green)" strokeWidth={2} dot={{ r: 3 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </SpotlightCard>
+
+        {/* Accuracy Over Time */}
+        <SpotlightCard className="col-span-12 p-8">
+          <div className="flex items-center justify-between mb-8">
+            <div className="space-y-1">
+              <h3 className="text-sm font-bold uppercase text-text-muted flex items-center gap-2">
+                <Activity size={16} className="text-green" />
+                Network Signal Consensus Accuracy (24H)
+              </h3>
+              <p className="text-[10px] text-text-muted font-bold uppercase">Stability of algorithmic predictions against tick results</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-green animate-pulse" />
+              <span className="text-[10px] font-black text-green uppercase">Peak Accuracy: 88.2%</span>
+            </div>
+          </div>
+          <div className="h-56 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={signalAccuracy}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                <XAxis dataKey="hour" tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} />
+                <YAxis tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar dataKey="accuracy" fill="var(--accent)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

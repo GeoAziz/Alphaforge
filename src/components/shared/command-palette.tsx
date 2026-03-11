@@ -60,22 +60,25 @@ export function CommandPalette() {
         "fixed inset-x-0 bottom-0 sm:inset-auto sm:top-[20%] sm:left-[50%] sm:translate-x-[-50%] sm:translate-y-0",
         "flex flex-col sm:block h-[80vh] sm:h-auto rounded-t-3xl sm:rounded-none"
       )}>
-        <DialogTitle className="sr-only">Traverse Terminal Nodes</DialogTitle>
+        {/* Mobile Bottom Sheet Drag Handle */}
+        <div className="sm:hidden h-1 bg-gradient-to-r from-transparent via-border-subtle to-transparent rounded-full mx-auto my-2 w-10" />
+        
         <Command className={cn(
           "glass flex-1 sm:flex-none sm:rounded-2xl overflow-hidden border border-white/10 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)]",
-          "animate-in slide-in-from-bottom sm:zoom-in-95 duration-500 ease-out-custom h-full flex flex-col"
+          "rounded-t-3xl sm:rounded-2xl",
+          "animate-in fade-in slide-in-from-bottom-24 sm:slide-in-from-top-4 sm:zoom-in-95 duration-400 ease-out-custom"
         )}>
-          <div className="flex items-center border-b border-border-subtle px-6 relative shrink-0">
+          <div className="flex items-center border-b border-border-subtle px-4 relative sm:px-4 sm:py-0 py-3 gap-3 sm:gap-1">
             <Search className="w-5 h-5 text-text-muted shrink-0" />
             <Command.Input 
-              placeholder="Initialize traverse handshake... (⌘K)" 
-              className="flex h-20 w-full bg-transparent px-4 text-sm outline-none placeholder:text-text-muted font-black uppercase tracking-widest text-text-primary"
+              placeholder="Traverse terminal nodes... (⌘K)" 
+              className="flex h-16 sm:h-16 w-full bg-transparent px-4 sm:px-4 text-sm sm:text-sm outline-none placeholder:text-text-muted font-black uppercase tracking-tighter text-text-primary"
             />
             <button 
               onClick={() => setOpen(false)}
-              className="p-2 text-text-muted hover:text-text-primary transition-colors bg-elevated/50 rounded-xl"
+              className="sm:hidden p-2 text-text-muted hover:text-text-primary active:text-primary"
             >
-              <X size={20} />
+              <X size={24} />
             </button>
           </div>
           
@@ -87,31 +90,24 @@ export function CommandPalette() {
               <div className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">Node identifier not recognized.</div>
             </Command.Empty>
             
-            {["Primary", "Intelligence", "Execution", "Analytics", "System"].map(cluster => (
-              <Command.Group 
-                key={cluster} 
-                heading={cluster}
-                className="px-2 py-4 first:pt-0"
-              >
-                {NAV_ITEMS.filter(item => item.cluster === cluster).map((item) => (
-                  <Command.Item
-                    key={item.href}
-                    value={item.name + " " + item.keywords}
-                    onSelect={() => onSelect(item.href)}
-                    className="flex items-center gap-4 px-4 py-4 rounded-2xl cursor-pointer hover:bg-primary/10 transition-all aria-selected:bg-primary/10 aria-selected:text-primary group mt-1"
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-elevated/50 flex items-center justify-center text-text-muted group-aria-selected:text-primary group-aria-selected:bg-primary/20 group-aria-selected:shadow-[0_0_20px_rgba(96,165,250,0.3)] transition-all shrink-0">
-                      <item.icon className="w-5 h-5" />
-                    </div>
-                    <div className="flex flex-col flex-1 min-w-0">
-                      <span className="text-sm font-black tracking-tighter uppercase">{item.name}</span>
-                      <span className="text-[9px] text-text-muted font-bold uppercase tracking-widest truncate">{item.keywords}</span>
-                    </div>
-                    <ArrowRight size={14} className="text-primary opacity-0 group-aria-selected:opacity-100 transition-opacity -translate-x-2 group-aria-selected:translate-x-0" />
-                  </Command.Item>
-                ))}
-              </Command.Group>
-            ))}
+            <Command.Group heading="Navigation Clusters" className="px-2 py-3 text-[10px] font-black uppercase text-text-muted tracking-widest">
+              {NAV_ITEMS.map((item) => (
+                <Command.Item
+                  key={item.href}
+                  value={item.name + " " + item.keywords}
+                  onSelect={() => onSelect(item.href)}
+                  className="flex items-center gap-3 px-3 sm:px-3 py-3 sm:py-3 rounded-xl sm:rounded-xl cursor-pointer hover:bg-primary/10 hover:text-primary active:bg-primary/20 sm:active:bg-primary/10 transition-all aria-selected:bg-primary/10 aria-selected:text-primary group"
+                >
+                  <div className="w-8 h-8 sm:w-8 sm:h-8 rounded-lg bg-elevated flex items-center justify-center text-text-muted group-aria-selected:text-primary group-aria-selected:shadow-[0_0_15px_rgba(96,165,250,0.3)] transition-all">
+                    <item.icon className="w-4 h-4" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-black tracking-tight uppercase">{item.name}</span>
+                    <span className="text-[10px] text-text-muted font-bold lowercase tracking-normal line-clamp-1">{item.keywords}</span>
+                  </div>
+                </Command.Item>
+              ))}
+            </Command.Group>
           </Command.List>
           
           <div className="flex items-center justify-between px-6 py-4 bg-elevated/20 border-t border-border-subtle shrink-0">

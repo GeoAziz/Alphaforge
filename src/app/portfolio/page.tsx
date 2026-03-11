@@ -74,19 +74,11 @@ export default function PortfolioPage() {
   }
 
   return (
-    <div className="p-4 lg:p-8 space-y-8 pb-32 max-w-screen-2xl mx-auto animate-page pr-safe pl-safe">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <header className="space-y-1">
-          <h1 className="text-3xl font-black tracking-tight uppercase leading-none">Portfolio Intelligence</h1>
-          <p className="text-muted-foreground text-sm font-medium">Real-time risk exposure and historical alpha verification.</p>
-        </header>
-        <div className="flex items-center gap-3">
-          <div className="h-9 px-4 rounded-md border border-border-subtle bg-elevated/20 flex items-center gap-2 text-[10px] font-black uppercase text-green">
-            <div className="w-1.5 h-1.5 rounded-full bg-green animate-pulse" />
-            Handshake Synced
-          </div>
-        </div>
-      </div>
+    <div className="p-8 space-y-8 pb-20 animate-page">
+      <header className="space-y-1">
+        <h1 className="text-3xl font-black tracking-tight uppercase">Portfolio Intelligence</h1>
+        <p className="text-muted-foreground text-sm">Real-time performance metrics and active risk exposure.</p>
+      </header>
 
       {/* Hero Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">

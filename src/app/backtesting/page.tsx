@@ -90,7 +90,7 @@ export default function BacktestingPage() {
   }
 
   return (
-    <div className="p-8 space-y-8 pb-32">
+    <div className="p-8 space-y-8 pb-20 animate-page">
       <header className="space-y-1">
         <h1 className="text-3xl font-black tracking-tight uppercase">Backtesting Lab</h1>
         <p className="text-muted-foreground text-sm">Simulate institutional algorithmic performance against historical tick data.</p>

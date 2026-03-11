@@ -39,7 +39,7 @@ export default function StrategiesPage() {
   }
 
   return (
-    <div className="p-8 space-y-8 pb-32">
+    <div className="p-8 space-y-8 pb-20 animate-page">
       <header className="space-y-1">
         <h1 className="text-3xl font-black tracking-tight uppercase">Core Strategies</h1>
         <p className="text-muted-foreground text-sm">Proprietary algorithmic engines driving AlphaForge intelligence.</p>
