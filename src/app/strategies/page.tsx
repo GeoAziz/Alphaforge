@@ -15,7 +15,8 @@ export default function StrategiesPage() {
 
   const strategiesQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
-    return query(collection(db, 'strategies'), orderBy('winRate', 'desc'));
+    // Fix: Access user-specific strategies subcollection to comply with security rules
+    return query(collection(db, 'users', user.uid, 'strategies'), orderBy('winRate', 'desc'));
   }, [db, user]);
 
   const { data: strategies, isLoading } = useCollection<Strategy>(strategiesQuery);

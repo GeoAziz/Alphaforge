@@ -1,6 +1,8 @@
 export type SignalDirection = 'LONG' | 'SHORT';
 export type SignalStatus = 'active' | 'closed' | 'expired' | 'cancelled';
 export type RiskLevel = 'Low' | 'Medium' | 'High';
+export type NotificationType = 'signal' | 'trade' | 'risk' | 'system';
+export type TradeStatus = 'win' | 'loss';
 
 export interface UserProfile {
   id: string;
@@ -10,6 +12,15 @@ export interface UserProfile {
   riskTolerance: string;
   connectedExchanges: string[];
   onboardingComplete: boolean;
+  createdAt?: string;
+}
+
+export interface ConnectedExchange {
+  id: string;
+  exchange: string;
+  connected: boolean;
+  connectedAt: string;
+  permissions: string[];
 }
 
 export interface PortfolioSummary {
@@ -46,11 +57,134 @@ export interface Trade {
   exitPrice: number;
   pnl: number;
   pnlPercent: number;
-  status: 'win' | 'loss';
+  status: TradeStatus;
   strategy: string;
   signalId: string;
   executedAt: string;
   closedAt: string;
+}
+
+export interface MarketTicker {
+  id: string;
+  asset: string;
+  price: number;
+  change24h: number;
+  change24hAbs: number;
+  volume24h: number;
+  high24h: number;
+  low24h: number;
+}
+
+export interface FundingRate {
+  id: string;
+  asset: string;
+  exchange: string;
+  rate: number;
+  nextFundingTime: string;
+}
+
+export interface OpenInterest {
+  id: string;
+  asset: string;
+  value: number;
+  change24h: number;
+}
+
+export interface MarketSentiment {
+  id: string;
+  score: number;
+  label: string;
+}
+
+export interface Strategy {
+  id: string;
+  name: string;
+  description: string;
+  winRate: number;
+  avgRoi: number;
+  maxDrawdown: number;
+  sharpeRatio: number;
+  totalTrades: number;
+  profitFactor: number;
+  riskLevel: RiskLevel;
+  isActive: boolean;
+}
+
+export interface PerformancePoint {
+  id: string;
+  userId: string;
+  strategyId?: string;
+  backtestResultId?: string;
+  date: string;
+  equity: number;
+  drawdown: number;
+  cumulativePnl: number;
+}
+
+export interface StrategyPerformance {
+  id: string;
+  strategyName: string;
+  winRate: number;
+  roi: number;
+  trades: number;
+  profitFactor: number;
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  read: boolean;
+  critical: boolean;
+  createdAt: string;
+}
+
+export interface BacktestConfig {
+  id: string;
+  userId: string;
+  asset: string;
+  strategyId: string;
+  timeframe: string;
+  startDate: string;
+  endDate: string;
+  initialCapital: number;
+  riskPerTrade: number;
+}
+
+export interface BacktestResult {
+  id: string;
+  userId: string;
+  backtestConfigId: string;
+  winRate: number;
+  totalTrades: number;
+  roi: number;
+  maxDrawdown: number;
+  sharpeRatio: number;
+  sortinoRatio: number;
+  profitFactor: number;
+  equityCurvePointIds: string[];
+}
+
+export interface MarketplaceStrategy {
+  id: string;
+  name: string;
+  creator: string;
+  description: string;
+  winRate: number;
+  roi: number;
+  maxDrawdown: number;
+  subscribers: number;
+  riskLevel: RiskLevel;
+  monthlyPrice: number;
+  isVerified: boolean;
+}
+
+export interface SignalDriver {
+  label: string;
+  weight: number;
+  active: boolean;
 }
 
 export interface Signal {
@@ -69,73 +203,4 @@ export interface Signal {
   closedAt?: string;
   pnlPercent?: number;
   drivers: string[];
-}
-
-export interface MarketTicker {
-  id: string;
-  asset: string;
-  price: number;
-  change24h: number;
-  change24hAbs: number;
-  volume24h: number;
-  high24h: number;
-  low24h: number;
-}
-
-export interface Strategy {
-  id: string;
-  name: string;
-  description: string;
-  winRate: number;
-  avgRoi: number;
-  maxDrawdown: number;
-  sharpeRatio: number;
-  totalTrades: number;
-  profitFactor: number;
-  riskLevel: RiskLevel;
-  isActive: boolean;
-}
-
-export interface MarketplaceStrategy {
-  id: string;
-  name: string;
-  creator: string;
-  description: string;
-  winRate: number;
-  roi: number;
-  maxDrawdown: number;
-  subscribers: number;
-  riskLevel: RiskLevel;
-  monthlyPrice: number;
-  isVerified: boolean;
-}
-
-export interface MarketSentiment {
-  id: string;
-  score: number;
-  label: string;
-}
-
-export interface Notification {
-  id: string;
-  userId: string;
-  type: 'signal' | 'trade' | 'risk' | 'system';
-  title: string;
-  message: string;
-  read: boolean;
-  critical: boolean;
-  createdAt: string;
-}
-
-export interface BacktestResult {
-  id: string;
-  userId: string;
-  winRate: number;
-  totalTrades: number;
-  roi: number;
-  maxDrawdown: number;
-  sharpeRatio: number;
-  sortinoRatio: number;
-  profitFactor: number;
-  equityCurvePointIds: string[];
 }

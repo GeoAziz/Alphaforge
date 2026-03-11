@@ -15,12 +15,11 @@ export function SpotlightCard({
   ...props
 }: SpotlightCardProps) {
   const divRef = useRef<HTMLDivElement>(null);
-  const [isFocused, setIsFocused] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [opacity, setOpacity] = useState(0);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!divRef.current || isFocused) return;
+    if (!divRef.current) return;
 
     const div = divRef.current;
     const rect = div.getBoundingClientRect();
@@ -43,19 +42,19 @@ export function SpotlightCard({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       className={cn(
-        "relative overflow-hidden rounded-2xl border border-border-subtle bg-surface transition-colors duration-300 hover:border-border",
+        "relative overflow-hidden rounded-2xl border border-border-subtle bg-surface transition-all duration-300 hover:border-border-subtle group/card",
         className
       )}
       {...props}
     >
       <div
-        className="pointer-events-none absolute -inset-px transition duration-300"
+        className="pointer-events-none absolute -inset-px transition-opacity duration-300 z-0"
         style={{
           opacity,
-          background: `radial-gradient(600px circle at ${position.x}px ${position.y}px, ${variant === 'accent' ? 'rgba(192, 132, 252, 0.08)' : 'rgba(96, 165, 250, 0.08)'}, transparent 40%)`,
+          background: `radial-gradient(600px circle at ${position.x}px ${position.y}px, ${variant === 'accent' ? 'rgba(96, 165, 250, 0.12)' : 'rgba(96, 165, 250, 0.08)'}, transparent 40%)`,
         }}
       />
-      <div className="relative z-10">{children}</div>
+      <div className="relative z-10 h-full w-full">{children}</div>
     </div>
   );
 }

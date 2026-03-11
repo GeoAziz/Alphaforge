@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useFirestore, useUser, useCollection, useDoc, useMemoFirebase } from '@/firebase';
@@ -6,7 +5,7 @@ import { collection, doc, query, orderBy } from 'firebase/firestore';
 import { SpotlightCard } from '@/components/shared/spotlight-card';
 import { AnimatedCounter } from '@/components/shared/animated-counter';
 import { Position, Trade, PortfolioSummary } from '@/lib/types';
-import { Wallet, ArrowUpRight, ArrowDownRight, Briefcase, History, TrendingUp, AlertCircle } from 'lucide-react';
+import { Wallet, ArrowUpRight, ArrowDownRight, Briefcase, History } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { 
   Table, 
@@ -24,7 +23,7 @@ export default function PortfolioPage() {
 
   const summaryRef = useMemoFirebase(() => {
     if (!user || !db) return null;
-    return doc(db, 'users', user.uid, 'portfolio_summary', 'current');
+    return doc(db, 'users', user.uid, 'portfolioSummary', user.uid);
   }, [user, db]);
 
   const positionsQuery = useMemoFirebase(() => {

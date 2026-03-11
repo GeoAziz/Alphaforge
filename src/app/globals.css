@@ -25,14 +25,41 @@
     --ring: 213 94% 68%;
     --radius: 0.75rem;
 
-    /* AlphaForge Custom Tokens */
+    /* AlphaForge Institutional Design Tokens */
     --bg: #030712;
     --surface: #0a0f1e;
-    --elevated: #111827;
-    --border-subtle: #1f2937;
+    --elevated: #1a2342;
+    --border-subtle: #132035;
+    --overlay: rgba(3, 7, 18, 0.6);
+    --inset: rgba(3, 7, 18, 0.4);
+    
+    --primary-rgb: 96, 165, 250;
+    --accent-rgb: 192, 132, 252;
+    
+    /* 3-Tier Text System */
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-muted: #64748b;
+
+    /* Semantic Status Colors */
     --green: #34d399;
     --red: #f87171;
     --amber: #fbbf24;
+
+    /* Easing Variables */
+    --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+    --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Fluid Typography Scale */
+    --text-xs: clamp(0.7rem, 0.66rem + 0.2vw, 0.8rem);
+    --text-sm: clamp(0.8rem, 0.75rem + 0.25vw, 0.95rem);
+    --text-base: clamp(0.9rem, 0.85rem + 0.3vw, 1.1rem);
+    --text-lg: clamp(1.1rem, 1.05rem + 0.4vw, 1.3rem);
+    --text-xl: clamp(1.3rem, 1.2rem + 0.5vw, 1.6rem);
+    --text-2xl: clamp(1.6rem, 1.45rem + 0.8vw, 2.1rem);
+    --text-3xl: clamp(2.1rem, 1.9rem + 1.2vw, 3rem);
+    --text-hero: clamp(3rem, 2.4rem + 3vw, 6rem);
   }
 }
 
@@ -43,12 +70,18 @@
   body {
     background-color: var(--bg);
     background-image: 
-      radial-gradient(circle at 0% 0%, rgba(96, 165, 250, 0.03) 0%, transparent 50%),
-      radial-gradient(circle at 100% 100%, rgba(192, 132, 252, 0.03) 0%, transparent 50%);
-    color: var(--foreground);
+      radial-gradient(circle at 0% 0%, rgba(var(--primary-rgb), 0.05) 0%, transparent 50%),
+      radial-gradient(circle at 100% 100%, rgba(var(--accent-rgb), 0.05) 0%, transparent 50%),
+      radial-gradient(circle at 50% 50%, rgba(var(--primary-rgb), 0.02) 0%, transparent 70%);
+    color: var(--text-primary);
     @apply font-body antialiased;
   }
 }
+
+/* Utilities */
+.text-text-primary { color: var(--text-primary); }
+.text-text-secondary { color: var(--text-secondary); }
+.text-text-muted { color: var(--text-muted); }
 
 .font-mono {
   font-variant-numeric: tabular-nums;
@@ -78,4 +111,25 @@
   opacity: 0.03;
   pointer-events: none;
   z-index: 1;
+}
+
+@keyframes gradient-xy {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.animate-gradient-xy {
+  animation: gradient-xy 3s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-delay: -1ms !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    background-attachment: initial !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+  }
 }

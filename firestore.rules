@@ -12,21 +12,6 @@
  *   portfolios, active positions, trade history, personalized strategies, and notifications.
  * - Global Market Data: Top-level collections like /marketTickers, /fundingRates, and 
  *   /marketplaceStrategies provide read-only access to all authenticated users.
- *
- * Key Security Decisions:
- * - Authorization Independence: User access is determined by the path, eliminating the need 
- *   for cross-document lookups (get() calls) for most operations.
- * - Ownership Consistency: During document creation, the rules verify that internal 
- *   relational fields (e.g., userId, creatorId) match the authenticated user's UID.
- * - Write Protection: Only the resource owner can modify or delete their data. All 
- *   global/market collections are read-only for clients, intended to be managed by the backend.
- * - Prototyping Flexibility: While authorization is strictly enforced, the rules do not 
- *   restrict the specific shape or data types of content fields to allow for rapid development.
- *
- * Denormalization for Authorization:
- * Signals are denormalized into the user's private collection (/users/{userId}/signals). 
- * This ensures that a user can list and read their signals without the rules needing to 
- * verify strategy subscriptions or marketplace permissions in real-time.
  */
 
 rules_version = '2';
@@ -35,58 +20,30 @@ service cloud.firestore {
 
     // --- GLOBAL HELPER FUNCTIONS ---
 
-    /**
-     * @description Checks if the request is from a signed-in user.
-     */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /**
-     * @description Checks if the current user is the owner of the resource based on the path UID.
-     */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    /**
-     * @description Checks if the current user owns an existing document. 
-     * Used for update and delete operations.
-     */
     function isExistingOwner(userId) {
       return isOwner(userId) && resource != null;
     }
 
-    /**
-     * @description Enforces that a specific field in the data matches the provided ID.
-     * Used for relational integrity on create and immutability on update.
-     */
     function fieldMatches(data, fieldName, id) {
       return data[fieldName] == id;
     }
 
     // --- COLLECTION RULES ---
 
-    /**
-     * @description Rules for the UserProfile entity.
-     * @path /users/{userId}
-     * @allow (create) if the user is authenticated and matches the document ID.
-     * @deny (read) if the user is not the owner of the profile.
-     * @principle Restricts access to a user's own profile and ensures path-data consistency.
-     */
     match /users/{userId} {
       allow get, list: if isOwner(userId);
       allow create: if isOwner(userId) && fieldMatches(request.resource.data, 'id', userId);
       allow update: if isExistingOwner(userId) && fieldMatches(request.resource.data, 'id', resource.data.id);
       allow delete: if isExistingOwner(userId);
 
-      /**
-       * @description Rules for the PortfolioSummary entity (1:1 with User).
-       * @path /users/{userId}/portfolioSummary/{summaryId}
-       * @allow (get) if the requester is the owner defined in the parent path.
-       * @deny (create) if the internal 'id' does not match the user's UID.
-       * @principle Ownership-based access for private financial summaries.
-       */
       match /portfolioSummary/{summaryId} {
         allow get, list: if isOwner(userId);
         allow create: if isOwner(userId) && fieldMatches(request.resource.data, 'id', userId);
@@ -94,13 +51,6 @@ service cloud.firestore {
         allow delete: if isExistingOwner(userId);
       }
 
-      /**
-       * @description Rules for Position, Trade, Notification, and Signal entities.
-       * @path /users/{userId}/[collection]/{id}
-       * @allow (list) if the user is listing their own subcollection items.
-       * @deny (update) if the user attempts to change the 'userId' ownership field.
-       * @principle Path-based authorization for high-volume user activity data.
-       */
       match /positions/{id} {
         allow get, list: if isOwner(userId);
         allow create: if isOwner(userId) && fieldMatches(request.resource.data, 'userId', userId);
@@ -124,23 +74,15 @@ service cloud.firestore {
 
       match /signals/{id} {
         allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId); // Signals are typically backend-created; allowing owner create for proto
+        allow create: if isOwner(userId);
         allow update, delete: if isExistingOwner(userId);
       }
 
-      /**
-       * @description Rules for user-defined Strategies.
-       * @path /users/{userId}/strategies/{strategyId}
-       */
       match /strategies/{strategyId} {
         allow get, list: if isOwner(userId);
         allow create: if isOwner(userId);
         allow update, delete: if isExistingOwner(userId);
 
-        /**
-         * @description Rules for StrategyPerformance documents.
-         * @path /users/{userId}/strategies/{strategyId}/performance
-         */
         match /performance {
           allow get, list: if isOwner(userId);
           allow create: if isOwner(userId);
@@ -148,10 +90,6 @@ service cloud.firestore {
         }
       }
 
-      /**
-       * @description Rules for Backtesting configurations and results.
-       * @path /users/{userId}/[backtestPath]/{id}
-       */
       match /backtestConfigs/{id} {
         allow get, list: if isOwner(userId);
         allow create: if isOwner(userId) && fieldMatches(request.resource.data, 'userId', userId);
@@ -166,25 +104,26 @@ service cloud.firestore {
         allow delete: if isExistingOwner(userId);
       }
 
-      /**
-       * @description Rules for PerformancePoint time-series data.
-       * @path /users/{userId}/performancePoints/{id}
-       */
       match /performancePoints/{id} {
         allow get, list: if isOwner(userId);
         allow create: if isOwner(userId) && fieldMatches(request.resource.data, 'userId', userId);
         allow update: if isExistingOwner(userId) && fieldMatches(request.resource.data, 'userId', resource.data.userId);
         allow delete: if isExistingOwner(userId);
       }
+
+      match /connectedExchanges/{id} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update, delete: if isExistingOwner(userId);
+      }
+
+      match /subscriptions/{id} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update, delete: if isExistingOwner(userId);
+      }
     }
 
-    /**
-     * @description Rules for Global Market Data and Marketplace Strategies.
-     * @path /marketplaceStrategies/{id}, /marketTickers/{id}, etc.
-     * @allow (read) if the user is authenticated.
-     * @deny (write) for all client-side requests.
-     * @principle Provides shared, read-only market data to the app while preventing unauthorized manipulation.
-     */
     match /marketplaceStrategies/{id} {
       allow get, list: if isSignedIn();
       allow create, update, delete: if false; 
@@ -209,6 +148,5 @@ service cloud.firestore {
       allow get, list: if isSignedIn();
       allow create, update, delete: if false;
     }
-
   }
 }

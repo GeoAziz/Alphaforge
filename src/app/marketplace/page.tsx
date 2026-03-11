@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
@@ -6,8 +5,7 @@ import { collection, query, orderBy, doc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { SpotlightCard } from '@/components/shared/spotlight-card';
 import { MarketplaceStrategy, Notification } from '@/lib/types';
-import { Store, Users, CheckCircle2, Star, TrendingUp, ShieldAlert, ShoppingBag, Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Users, CheckCircle2, TrendingUp, ShieldAlert, ShoppingBag, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
@@ -19,7 +17,7 @@ export default function MarketplacePage() {
 
   const marketplaceQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
-    return query(collection(db, 'marketplace_strategies'), orderBy('subscribers', 'desc'));
+    return query(collection(db, 'marketplaceStrategies'), orderBy('subscribers', 'desc'));
   }, [db, user]);
 
   const { data: strategies, isLoading } = useCollection<MarketplaceStrategy>(marketplaceQuery);
@@ -31,13 +29,11 @@ export default function MarketplacePage() {
     const subscriptionRef = doc(db, 'users', user.uid, 'subscriptions', strategy.id);
     const notificationRef = doc(collection(db, 'users', user.uid, 'notifications'));
 
-    // Pattern 1: Non-blocking write for subscription placeholder
     setDocumentNonBlocking(subscriptionRef, { 
       strategyId: strategy.id,
       subscribedAt: new Date().toISOString()
     }, { merge: true });
 
-    // Add success notification via system feed
     const notification: Partial<Notification> = {
       type: 'system',
       title: 'Subscription Established',

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -11,27 +10,20 @@ import {
   User, 
   Shield, 
   Key, 
-  Bell, 
   Globe, 
   CreditCard, 
   Plus, 
   Trash2, 
-  CheckCircle2, 
-  Loader2,
-  AlertTriangle
+  Loader2
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/hooks/use-toast';
 
 export default function SettingsPage() {
   const { user } = useUser();
   const db = useFirestore();
-  const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
 
   const profileRef = useMemoFirebase(() => {
@@ -41,7 +33,7 @@ export default function SettingsPage() {
 
   const exchangesQuery = useMemoFirebase(() => {
     if (!user || !db) return null;
-    return collection(db, 'users', user.uid, 'connected_exchanges');
+    return collection(db, 'users', user.uid, 'connectedExchanges');
   }, [user, db]);
 
   const { data: profile } = useDoc<UserProfile>(profileRef);
@@ -59,10 +51,8 @@ export default function SettingsPage() {
       onboardingComplete: true
     };
 
-    // Pattern 1: Non-blocking mutation with merge
     setDocumentNonBlocking(profileRef, updates, { merge: true });
     
-    // Optimistically update state
     setTimeout(() => setIsSaving(false), 500);
   }
 

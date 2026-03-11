@@ -6,10 +6,21 @@ interface AnimatedCounterProps {
   value: number;
   decimals?: number;
   duration?: number;
+  prefix?: string;
+  suffix?: string;
 }
 
-export function AnimatedCounter({ value, decimals = 0, duration = 1000 }: AnimatedCounterProps) {
-  const [displayValue, setDisplayValue] = useState(0);
+/**
+ * AnimatedCounter provides a smooth transition between numerical values.
+ */
+export function AnimatedCounter({ 
+  value, 
+  decimals = 0, 
+  duration = 800,
+  prefix = '',
+  suffix = ''
+}: AnimatedCounterProps) {
+  const [displayValue, setDisplayValue] = useState(value);
 
   useEffect(() => {
     let startTimestamp: number | null = null;
@@ -19,8 +30,8 @@ export function AnimatedCounter({ value, decimals = 0, duration = 1000 }: Animat
       if (!startTimestamp) startTimestamp = timestamp;
       const progress = Math.min((timestamp - startTimestamp) / duration, 1);
       
-      // Easing function: easeOutExpo
-      const easedProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+      // Easing function: easeOutQuart
+      const easedProgress = 1 - Math.pow(1 - progress, 4);
       
       const current = startValue + easedProgress * (value - startValue);
       setDisplayValue(current);
@@ -35,10 +46,10 @@ export function AnimatedCounter({ value, decimals = 0, duration = 1000 }: Animat
 
   return (
     <span className="tabular-nums">
-      {displayValue.toLocaleString(undefined, {
+      {prefix}{displayValue.toLocaleString(undefined, {
         minimumFractionDigits: decimals,
         maximumFractionDigits: decimals,
-      })}
+      })}{suffix}
     </span>
   );
 }

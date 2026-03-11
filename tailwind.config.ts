@@ -54,19 +54,22 @@ export default {
         overlay: 'var(--overlay)',
         inset: 'var(--inset)',
         'border-subtle': 'var(--border-subtle)',
+        'text-primary': 'var(--text-primary)',
+        'text-secondary': 'var(--text-secondary)',
+        'text-muted': 'var(--text-muted)',
         green: 'var(--green)',
         red: 'var(--red)',
         amber: 'var(--amber)',
       },
       fontSize: {
-        xs: '0.75rem',
-        sm: '0.875rem',
-        base: '1rem',
-        lg: '1.125rem',
-        xl: '1.25rem',
-        '2xl': '1.5rem',
-        '3xl': '1.875rem',
-        hero: ['clamp(3rem, 2.4rem + 3vw, 6rem)', { lineHeight: '1', fontWeight: '900', letterSpacing: '-0.05em' }],
+        xs: 'var(--text-xs)',
+        sm: 'var(--text-sm)',
+        base: 'var(--text-base)',
+        lg: 'var(--text-lg)',
+        xl: 'var(--text-xl)',
+        '2xl': 'var(--text-2xl)',
+        '3xl': 'var(--text-3xl)',
+        hero: 'var(--text-hero)',
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -76,6 +79,7 @@ export default {
       transitionTimingFunction: {
         'ease-out-custom': 'var(--ease-out)',
         spring: 'var(--ease-spring)',
+        'in-out': 'var(--ease-in-out)',
       },
       keyframes: {
         'accordion-down': {

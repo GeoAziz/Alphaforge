@@ -2,20 +2,16 @@
 
 import { useState } from 'react';
 import { useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, limit } from 'firebase/firestore';
+import { collection, query } from 'firebase/firestore';
 import { SpotlightCard } from '@/components/shared/spotlight-card';
-import { PerformancePoint, BacktestResult, Strategy } from '@/lib/types';
-import { Play, FlaskConical, BarChart3, TrendingUp, ShieldAlert, History, Settings2, Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { BacktestResult, Strategy } from '@/lib/types';
+import { Play, FlaskConical, Settings2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { 
   Area, 
   AreaChart, 
-  ResponsiveContainer, 
-  Tooltip, 
   XAxis, 
   YAxis,
   CartesianGrid
@@ -30,13 +26,12 @@ export default function BacktestingPage() {
   const [results, setResults] = useState<BacktestResult | null>(null);
 
   const strategiesQuery = useMemoFirebase(() => {
-    if (!db) return null;
-    return query(collection(db, 'strategies'));
-  }, [db]);
+    if (!db || !user) return null;
+    return query(collection(db, 'users', user.uid, 'strategies'));
+  }, [db, user]);
 
   const { data: strategies } = useCollection<Strategy>(strategiesQuery);
 
-  // Mock backtest points for the chart
   const performanceData = [
     { date: '2024-01-01', equity: 10000 },
     { date: '2024-01-05', equity: 10250 },
@@ -55,7 +50,6 @@ export default function BacktestingPage() {
   function handleRunBacktest() {
     if (!selectedStrategy) return;
     setIsRunning(true);
-    // Simulate backtest processing
     setTimeout(() => {
       setResults({
         id: 'res-' + Math.random().toString(36).substr(2, 9),

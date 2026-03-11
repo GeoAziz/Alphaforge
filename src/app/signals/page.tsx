@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -6,6 +7,8 @@ import { collection, query, orderBy } from "firebase/firestore";
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { SpotlightCard } from "@/components/shared/spotlight-card";
 import { ConfidencePill } from "@/components/shared/confidence-pill";
+import { ScrollProgress } from "@/components/shared/scroll-progress";
+import { GradientBorder } from "@/components/shared/gradient-border";
 import { Signal, Position, Notification } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { ChevronRight, Target, Loader2, Play, Activity, ShieldAlert } from "lucide-react";
@@ -18,7 +21,7 @@ export default function SignalsPage() {
   const [selectedSignal, setSelectedSignal] = useState<Signal | null>(null);
   const [isExecuting, setIsExecuting] = useState(false);
 
-  // Live Signals Stream from user's denormalized collection
+  // Live Signals Stream
   const signalsQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
     return query(collection(db, "users", user.uid, "signals"), orderBy("createdAt", "desc"));
@@ -28,7 +31,6 @@ export default function SignalsPage() {
 
   function handleExecuteSignal() {
     if (!user || !db || !selectedSignal) return;
-
     setIsExecuting(true);
 
     const positionsRef = collection(db, "users", user.uid, "positions");
@@ -56,11 +58,9 @@ export default function SignalsPage() {
       createdAt: new Date().toISOString(),
     };
 
-    // Parallel optimistic updates
     addDocumentNonBlocking(positionsRef, newPosition);
     addDocumentNonBlocking(notificationsRef, newNotification);
 
-    // Simulate execution delay for UX weight
     setTimeout(() => {
       setIsExecuting(false);
       setSelectedSignal(null);
@@ -75,7 +75,7 @@ export default function SignalsPage() {
             <ShieldAlert size={32} />
           </div>
           <h2 className="text-2xl font-black uppercase">Signal Access Restricted</h2>
-          <p className="text-sm text-text-muted">Please connect your session to view real-time institutional-grade algorithmic signals and technical rationale.</p>
+          <p className="text-sm text-text-muted">Please connect your session to view real-time institutional-grade algorithmic signals.</p>
         </SpotlightCard>
       </div>
     );
@@ -83,15 +83,12 @@ export default function SignalsPage() {
 
   return (
     <div className="flex h-full">
+      <ScrollProgress />
       <div className="flex-1 p-8 space-y-8 overflow-y-auto">
         <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div className="space-y-1">
             <h1 className="text-3xl font-black tracking-tight uppercase">Intelligence Stream</h1>
             <p className="text-muted-foreground text-sm">Real-time institutional-grade algorithmic signals and technical rationale.</p>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-[10px] font-black uppercase border-primary/30 text-primary">Live Monitoring</Badge>
           </div>
         </header>
 
@@ -101,58 +98,48 @@ export default function SignalsPage() {
               <div key={i} className="h-24 rounded-2xl bg-elevated/20 animate-pulse border border-border-subtle" />
             ))
           ) : signals?.map((signal) => (
-            <SpotlightCard 
-              key={signal.id} 
-              className={cn(
-                "p-6 cursor-pointer group transition-all",
-                selectedSignal?.id === signal.id ? "border-primary/50 bg-primary/5" : "hover:border-primary/20"
-              )}
-              onClick={() => setSelectedSignal(signal)}
-            >
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className={cn(
-                    "px-3 py-1 rounded text-[10px] font-black uppercase tracking-widest",
-                    signal.direction === 'LONG' ? "bg-green/10 text-green" : "bg-red/10 text-red"
-                  )}>
-                    {signal.direction}
+            <GradientBorder key={signal.id} active={signal.confidence >= 90}>
+              <SpotlightCard 
+                className={cn(
+                  "p-6 cursor-pointer group transition-all h-full bg-transparent border-none",
+                  selectedSignal?.id === signal.id && "bg-primary/5"
+                )}
+                onClick={() => setSelectedSignal(signal)}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className={cn(
+                      "px-3 py-1 rounded text-[10px] font-black uppercase tracking-widest",
+                      signal.direction === 'LONG' ? "bg-green/10 text-green" : "bg-red/10 text-red"
+                    )}>
+                      {signal.direction}
+                    </div>
+                    <div>
+                      <div className="text-lg font-black tracking-tight">{signal.asset}</div>
+                      <div className="text-[9px] text-text-muted font-bold uppercase tracking-widest">{signal.strategy}</div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-lg font-black tracking-tight">{signal.asset}</div>
-                    <div className="text-[9px] text-text-muted font-bold uppercase tracking-widest">{signal.strategy}</div>
-                  </div>
-                </div>
 
-                <div className="flex items-center gap-12">
-                  <div className="hidden md:block">
-                    <div className="text-[9px] text-text-muted uppercase font-black tracking-widest mb-1">Execution Entry</div>
-                    <div className="text-sm font-mono font-bold">${signal.entryPrice.toLocaleString()}</div>
-                  </div>
-                  <div className="hidden md:block">
-                    <div className="text-[9px] text-text-muted uppercase font-black tracking-widest mb-1">Risk Profile</div>
-                    <div className="text-sm font-mono font-bold text-primary">{signal.riskRewardRatio} R/R</div>
-                  </div>
-                  <div className="flex items-center gap-6">
-                    <ConfidencePill score={signal.confidence} />
-                    <ChevronRight className={cn(
-                      "text-text-muted transition-transform group-hover:translate-x-1",
-                      selectedSignal?.id === signal.id && "rotate-90 md:rotate-0"
-                    )} />
+                  <div className="flex items-center gap-12">
+                    <div className="hidden md:block">
+                      <div className="text-[9px] text-text-muted uppercase font-black tracking-widest mb-1">Execution Entry</div>
+                      <div className="text-sm font-mono font-bold">${signal.entryPrice.toLocaleString()}</div>
+                    </div>
+                    <div className="flex items-center gap-6">
+                      <ConfidencePill score={signal.confidence} />
+                      <ChevronRight className={cn(
+                        "text-text-muted transition-transform group-hover:translate-x-1",
+                        selectedSignal?.id === signal.id && "rotate-90 md:rotate-0"
+                      )} />
+                    </div>
                   </div>
                 </div>
-              </div>
-            </SpotlightCard>
+              </SpotlightCard>
+            </GradientBorder>
           ))}
-          {signals?.length === 0 && (
-            <div className="h-64 flex flex-col items-center justify-center text-center space-y-4 rounded-2xl border border-dashed border-border-subtle bg-surface/30">
-               <Loader2 className="animate-spin text-primary" size={24} />
-               <p className="text-xs font-black uppercase text-text-muted">Scanning high-latency clusters...</p>
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Signal Detail Modal Sidebar */}
       {selectedSignal && (
         <aside className="hidden lg:block w-[450px] border-l border-border-subtle bg-surface/80 backdrop-blur-xl p-8 overflow-y-auto space-y-8 animate-in slide-in-from-right duration-300">
           <div className="flex items-center justify-between">
@@ -192,27 +179,16 @@ export default function SignalsPage() {
             <div className="space-y-4">
               <h3 className="text-[10px] font-black uppercase text-text-muted tracking-widest flex items-center gap-2">
                 <Activity size={14} className="text-primary" />
-                Alpha Drivers (Technical Rationale)
+                Alpha Drivers
               </h3>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {selectedSignal.drivers.map((driver, index) => (
-                  <div key={index} className="space-y-2">
-                    <div className="flex justify-between text-[10px] font-bold uppercase">
-                      <span className="text-text-secondary">{driver}</span>
-                    </div>
+                  <div key={index} className="flex items-center gap-3 p-3 rounded-xl bg-elevated/20 border border-border-subtle">
+                    <div className="w-1 h-1 rounded-full bg-primary" />
+                    <span className="text-[11px] font-bold text-text-secondary uppercase">{driver}</span>
                   </div>
                 ))}
               </div>
-            </div>
-
-            <div className="p-5 rounded-2xl border border-primary/20 bg-primary/5 space-y-3 shadow-2xl">
-              <div className="flex items-center gap-2 text-primary">
-                <Target size={14} />
-                <span className="text-[10px] font-black uppercase tracking-widest">Model Consensus</span>
-              </div>
-              <p className="text-[11px] text-text-secondary leading-relaxed font-medium">
-                Our <span className="text-primary font-bold">{selectedSignal.strategy}</span> engine identifies significant liquidity absorption at ${selectedSignal.entryPrice.toLocaleString()}. Market structure suggests dynamic expansion toward projected targets based on volatility clusters.
-              </p>
             </div>
           </div>
 
