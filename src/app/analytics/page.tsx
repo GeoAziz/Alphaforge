@@ -1,10 +1,9 @@
-
 'use client';
 
 import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, limit, orderBy } from 'firebase/firestore';
 import { SpotlightCard } from '@/components/shared/spotlight-card';
-import { Strategy } from '@/lib/types';
+import { MarketplaceStrategy } from '@/lib/types';
 import { 
   BarChart, 
   Bar, 
@@ -50,15 +49,15 @@ export default function AnalyticsPage() {
 
   const strategiesQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
-    return query(collection(db, 'strategies'), orderBy('winRate', 'desc'), limit(5));
+    return query(collection(db, 'marketplaceStrategies'), orderBy('winRate', 'desc'), limit(5));
   }, [db, user]);
 
-  const { data: strategies, isLoading } = useCollection<Strategy>(strategiesQuery);
+  const { data: strategies, isLoading } = useCollection<MarketplaceStrategy>(strategiesQuery);
 
   const strategyData = strategies?.map(s => ({
     name: s.name,
     winRate: s.winRate,
-    roi: s.avgRoi
+    roi: s.roi
   })) || [];
 
   if (!user) {

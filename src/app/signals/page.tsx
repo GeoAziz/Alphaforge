@@ -6,7 +6,7 @@ import { collection, query, orderBy } from "firebase/firestore";
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { SpotlightCard } from "@/components/shared/spotlight-card";
 import { ConfidencePill } from "@/components/shared/confidence-pill";
-import { Signal, Position, SignalDriver, Notification } from "@/lib/types";
+import { Signal, Position, Notification } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { ChevronRight, Target, Loader2, Play, Activity, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,21 +18,13 @@ export default function SignalsPage() {
   const [selectedSignal, setSelectedSignal] = useState<Signal | null>(null);
   const [isExecuting, setIsExecuting] = useState(false);
 
-  // Live Signals Stream from public collection
+  // Live Signals Stream from user's denormalized collection
   const signalsQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
-    return query(collection(db, "signals_public"), orderBy("createdAt", "desc"));
+    return query(collection(db, "users", user.uid, "signals"), orderBy("createdAt", "desc"));
   }, [db, user]);
 
   const { data: signals, isLoading } = useCollection<Signal>(signalsQuery);
-
-  // Dynamic Confidence Drivers for the selected signal
-  const driversQuery = useMemoFirebase(() => {
-    if (!db || !user || !selectedSignal) return null;
-    return collection(db, "signals_public", selectedSignal.id, "drivers");
-  }, [db, user, selectedSignal]);
-
-  const { data: drivers } = useCollection<SignalDriver>(driversQuery);
 
   function handleExecuteSignal() {
     if (!user || !db || !selectedSignal) return;
@@ -203,22 +195,10 @@ export default function SignalsPage() {
                 Alpha Drivers (Technical Rationale)
               </h3>
               <div className="space-y-4">
-                {drivers?.length === 0 ? (
-                  <div className="space-y-4">
-                    <div className="h-4 bg-elevated/20 animate-pulse rounded" />
-                    <div className="h-4 bg-elevated/20 animate-pulse rounded w-3/4" />
-                  </div>
-                ) : drivers?.map((driver) => (
-                  <div key={driver.id} className="space-y-2">
+                {selectedSignal.drivers.map((driver, index) => (
+                  <div key={index} className="space-y-2">
                     <div className="flex justify-between text-[10px] font-bold uppercase">
-                      <span className="text-text-secondary">{driver.label}</span>
-                      <span className="text-primary">{(driver.weight * 100).toFixed(0)}% Weight</span>
-                    </div>
-                    <div className="h-1.5 w-full bg-border-subtle rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-primary transition-all duration-1000 ease-out" 
-                        style={{ width: `${driver.weight * 100}%` }} 
-                      />
+                      <span className="text-text-secondary">{driver}</span>
                     </div>
                   </div>
                 ))}

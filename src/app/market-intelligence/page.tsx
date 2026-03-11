@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -6,7 +5,7 @@ import { useFirestore, useCollection, useDoc, useMemoFirebase, useUser } from '@
 import { collection, doc, query, limit } from 'firebase/firestore';
 import { SpotlightCard } from '@/components/shared/spotlight-card';
 import { generateMarketInsights, MarketInsightsOutput } from '@/ai/flows/market-insights-flow';
-import { MarketTicker, MarketSentiment, FundingRate, OpenInterest, LiquidationCluster } from '@/lib/types';
+import { MarketTicker, MarketSentiment, FundingRate, OpenInterest } from '@/lib/types';
 import { TrendingUp, Brain, ArrowUpRight, ArrowDownRight, Loader2, Zap, BarChart3, ShieldAlert, Activity, DollarSign, Waves } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -21,36 +20,30 @@ export default function MarketIntelligencePage() {
   // Real-time institutional asset tickers
   const tickersQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
-    return query(collection(db, 'market_tickers'), limit(12));
+    return query(collection(db, 'marketTickers'), limit(12));
   }, [db, user]);
 
   // Global aggregate sentiment
   const sentimentRef = useMemoFirebase(() => {
     if (!db || !user) return null;
-    return doc(db, 'market_sentiment', 'current');
+    return doc(db, 'marketSentiment', 'latest');
   }, [db, user]);
 
   // Advanced Market Metrics
   const fundingQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
-    return query(collection(db, 'market_funding_rates'), limit(5));
+    return query(collection(db, 'fundingRates'), limit(5));
   }, [db, user]);
 
   const openInterestQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
-    return query(collection(db, 'market_open_interest'), limit(5));
-  }, [db, user]);
-
-  const liquidationsQuery = useMemoFirebase(() => {
-    if (!db || !user) return null;
-    return query(collection(db, 'market_liquidation_clusters'), limit(5));
+    return query(collection(db, 'openInterests'), limit(5));
   }, [db, user]);
 
   const { data: tickers, isLoading: isTickersLoading } = useCollection<MarketTicker>(tickersQuery);
   const { data: sentiment } = useDoc<MarketSentiment>(sentimentRef);
   const { data: fundingRates } = useCollection<FundingRate>(fundingQuery);
   const { data: openInterest } = useCollection<OpenInterest>(openInterestQuery);
-  const { data: liquidations } = useCollection<LiquidationCluster>(liquidationsQuery);
 
   async function handleGenerateInsights() {
     if (!tickers || !sentiment) return;
@@ -176,7 +169,7 @@ export default function MarketIntelligencePage() {
           </Button>
         </SpotlightCard>
 
-        <div className="col-span-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="col-span-12 grid grid-cols-1 md:grid-cols-2 gap-6">
           <SpotlightCard className="p-6">
             <h3 className="text-sm font-bold uppercase text-text-muted mb-6 flex items-center gap-2">
               <DollarSign size={16} />
@@ -213,28 +206,6 @@ export default function MarketIntelligencePage() {
                       {oi.change24h >= 0 ? '+' : ''}{oi.change24h}%
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </SpotlightCard>
-
-          <SpotlightCard className="p-6">
-            <h3 className="text-sm font-bold uppercase text-text-muted mb-6 flex items-center gap-2">
-              <Activity size={16} />
-              Liquidation Heat
-            </h3>
-            <div className="space-y-4">
-              {liquidations?.length === 0 ? (
-                <div className="py-4 text-center text-[10px] font-black uppercase text-text-muted opacity-50">Awaiting stream...</div>
-              ) : liquidations?.map((l) => (
-                <div key={l.id} className="flex justify-between items-center text-sm">
-                  <div>
-                    <span className="font-mono font-bold">${l.priceLevel.toLocaleString()}</span>
-                    <Badge variant="outline" className={cn("ml-2 text-[8px] uppercase", l.side === 'long' ? "text-red border-red/20" : "text-green border-green/20")}>
-                      {l.side}
-                    </Badge>
-                  </div>
-                  <span className="text-[10px] font-black text-text-muted">${(l.volume / 1000).toFixed(1)}K</span>
                 </div>
               ))}
             </div>
