@@ -1,140 +1,192 @@
-import { HeroStats } from "@/components/dashboard/hero-stats";
-import { SpotlightCard } from "@/components/shared/spotlight-card";
-import { Zap, TrendingUp, AlertCircle, ArrowUpRight, ArrowDownRight } from "lucide-react";
-import { ConfidencePill } from "@/components/shared/confidence-pill";
-import { mockActiveSignals } from "@/data/mock-signals";
+'use client';
 
-export default function Dashboard() {
+import { useFirestore, useUser, useCollection, useDoc, useMemoFirebase } from '@/firebase';
+import { collection, query, orderBy, limit, doc } from 'firebase/firestore';
+import { SpotlightCard } from '@/components/shared/spotlight-card';
+import { 
+  Activity, 
+  TrendingUp, 
+  Zap, 
+  ArrowUpRight, 
+  ArrowDownRight, 
+  LayoutDashboard,
+  ShieldAlert
+} from 'lucide-react';
+import { Signal, MarketTicker, PortfolioSummary } from '@/lib/types';
+import { cn } from '@/lib/utils';
+import { AnimatedCounter } from '@/components/shared/animated-counter';
+import Link from 'next/link';
+
+export default function DashboardPage() {
+  const { user } = useUser();
+  const db = useFirestore();
+
+  const tickersQuery = useMemoFirebase(() => {
+    if (!db) return null;
+    return query(collection(db, 'marketTickers'), limit(6));
+  }, [db]);
+
+  const signalsQuery = useMemoFirebase(() => {
+    if (!db || !user) return null;
+    return query(collection(db, 'users', user.uid, 'signals'), orderBy('createdAt', 'desc'), limit(4));
+  }, [db, user]);
+
+  const summaryRef = useMemoFirebase(() => {
+    if (!db || !user) return null;
+    return doc(db, 'users', user.uid, 'portfolioSummary', user.uid);
+  }, [db, user]);
+
+  const { data: tickers } = useCollection<MarketTicker>(tickersQuery);
+  const { data: signals } = useCollection<Signal>(signalsQuery);
+  const { data: summary } = useDoc<PortfolioSummary>(summaryRef);
+
+  if (!user) return <AuthPlaceholder />;
+
   return (
-    <div className="p-8 space-y-8 pb-20">
-      <header className="space-y-1">
-        <h1 className="text-3xl font-black tracking-tight uppercase">Intelligence Dashboard</h1>
-        <p className="text-muted-foreground text-sm">Real-time algorithmic signals and portfolio tracking.</p>
+    <div className="p-6 lg:p-10 space-y-8 animate-in fade-in duration-700">
+      <header className="flex flex-col gap-1">
+        <h1 className="text-3xl font-black uppercase tracking-tighter gradient-text">Intelligence Terminal</h1>
+        <p className="text-muted-foreground text-sm font-medium">Real-time algorithmic consensus and portfolio optimization.</p>
       </header>
 
-      <HeroStats />
-
-      <div className="grid grid-cols-12 gap-6">
-        {/* Market Overview */}
-        <SpotlightCard className="col-span-12 lg:col-span-4 p-6">
-          <h3 className="text-sm font-bold uppercase text-text-muted mb-4">Market Overview</h3>
-          <div className="space-y-4">
-            {[
-              { asset: "BTCUSDT", price: 68420.50, change: 2.4, status: "up" },
-              { asset: "ETHUSDT", price: 3450.25, change: -1.2, status: "down" },
-              { asset: "SOLUSDT", price: 142.30, change: 5.8, status: "up" },
-            ].map((market) => (
-              <div key={market.asset} className="flex items-center justify-between p-3 rounded-lg bg-elevated/50 border border-border-subtle">
-                <div className="font-bold text-sm">{market.asset}</div>
-                <div className="text-right">
-                  <div className="text-sm font-mono">${market.price.toLocaleString()}</div>
-                  <div className={cn("text-[10px] font-bold flex items-center justify-end gap-0.5", market.status === "up" ? "text-green" : "text-red")}>
-                    {market.status === "up" ? <ArrowUpRight size={10} /> : <ArrowDownRight size={10} />}
-                    {market.change}%
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-          <button className="w-full mt-4 text-[10px] font-black uppercase text-primary hover:underline">View Intelligence →</button>
-        </SpotlightCard>
-
-        {/* Active Signals */}
-        <SpotlightCard className="col-span-12 lg:col-span-4 p-6" variant="accent">
+      {/* Hero Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <SpotlightCard className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-bold uppercase text-text-muted">Active Signals</h3>
-            <div className="px-2 py-0.5 rounded bg-primary/20 text-primary text-[10px] font-bold">LIVE</div>
-          </div>
-          <div className="space-y-3">
-            {mockActiveSignals.slice(0, 3).map((signal) => (
-              <div key={signal.id} className="p-3 rounded-lg border border-border-subtle bg-surface hover:border-primary/50 transition-colors group cursor-pointer">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className={cn("text-[10px] font-black px-1.5 py-0.5 rounded", signal.direction === "LONG" ? "bg-green/10 text-green" : "bg-red/10 text-red")}>
-                      {signal.direction}
-                    </span>
-                    <span className="text-sm font-bold">{signal.asset}</span>
-                  </div>
-                  <ConfidencePill score={signal.confidence} />
-                </div>
-                <div className="text-[10px] text-text-muted flex justify-between">
-                  <span>Strategy: {signal.strategy}</span>
-                  <span>2h ago</span>
-                </div>
-              </div>
-            ))}
-          </div>
-          <button className="w-full mt-4 text-[10px] font-black uppercase text-primary hover:underline">View Feed →</button>
-        </SpotlightCard>
-
-        {/* Sentiment */}
-        <SpotlightCard className="col-span-12 lg:col-span-4 p-6 flex flex-col items-center justify-center text-center">
-          <h3 className="text-sm font-bold uppercase text-text-muted mb-6">Market Sentiment</h3>
-          <div className="relative w-32 h-32 flex items-center justify-center">
-             <svg className="w-full h-full rotate-[-90deg]">
-                <circle cx="64" cy="64" r="58" stroke="currentColor" strokeWidth="12" fill="transparent" className="text-border-subtle" />
-                <circle cx="64" cy="64" r="58" stroke="currentColor" strokeWidth="12" fill="transparent" className="text-primary" strokeDasharray="364.4" strokeDashoffset="138.5" strokeLinecap="round" />
-             </svg>
-             <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-3xl font-black">62</span>
-                <span className="text-[10px] font-bold uppercase text-primary">Greed</span>
-             </div>
-          </div>
-          <p className="mt-4 text-xs text-text-muted max-w-[200px]">Market participants are displaying moderate greed. Volatility expected to increase.</p>
-        </SpotlightCard>
-
-        {/* Performance Graph Placeholder */}
-        <SpotlightCard className="col-span-12 lg:col-span-8 p-6 flex flex-col">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-sm font-bold uppercase text-text-muted">Portfolio Equity Curve</h3>
-            <div className="flex gap-2">
-              <span className="px-2 py-1 rounded bg-elevated text-[10px] font-bold">30D</span>
-              <span className="px-2 py-1 rounded text-[10px] font-bold text-text-muted hover:bg-elevated cursor-pointer">90D</span>
+            <div className="p-2 rounded-lg bg-primary/10 text-primary">
+              <Zap size={20} />
             </div>
+            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Portfolio Value</span>
           </div>
-          <div className="flex-1 flex items-end gap-1 min-h-[160px]">
-            {/* Simple CSS bar chart representation */}
-            {[40, 45, 38, 52, 60, 58, 65, 72, 68, 75, 82, 80, 85, 95, 90, 100].map((h, i) => (
-              <div 
-                key={i} 
-                className="flex-1 bg-primary/20 hover:bg-primary transition-colors rounded-t-sm" 
-                style={{ height: `${h}%` }}
-              />
-            ))}
+          <div className="text-3xl font-black font-mono tracking-tighter">
+            $<AnimatedCounter value={summary?.totalEquity || 0} decimals={2} />
+          </div>
+          <div className="mt-2 text-[10px] font-bold text-green flex items-center gap-1 uppercase">
+            <TrendingUp size={12} /> Institutional Alpha: +12.4%
           </div>
         </SpotlightCard>
 
-        {/* System Health */}
-        <SpotlightCard className="col-span-12 lg:col-span-4 p-6">
-          <h3 className="text-sm font-bold uppercase text-text-muted mb-4">Quick Alerts</h3>
+        <SpotlightCard className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-2 rounded-lg bg-accent/10 text-accent">
+              <Activity size={20} />
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Unrealized PnL</span>
+          </div>
+          <div className={cn(
+            "text-3xl font-black font-mono tracking-tighter",
+            (summary?.unrealizedPnl || 0) >= 0 ? "text-green" : "text-red"
+          )}>
+            {(summary?.unrealizedPnl || 0) >= 0 ? '+' : ''}
+            $<AnimatedCounter value={Math.abs(summary?.unrealizedPnl || 0)} decimals={2} />
+          </div>
+          <div className="mt-2 text-[10px] font-bold text-muted-foreground uppercase">
+            Aggregated Across 12 Clusters
+          </div>
+        </SpotlightCard>
+
+        <SpotlightCard className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-2 rounded-lg bg-green/10 text-green">
+              <TrendingUp size={20} />
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Active Signals</span>
+          </div>
+          <div className="text-3xl font-black font-mono tracking-tighter">
+            <AnimatedCounter value={signals?.length || 0} />
+          </div>
+          <div className="mt-2 text-[10px] font-bold text-primary flex items-center gap-1 uppercase">
+            High Confidence Consensus
+          </div>
+        </SpotlightCard>
+
+        <SpotlightCard className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-2 rounded-lg bg-amber-500/10 text-amber-500">
+              <LayoutDashboard size={20} />
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Risk Exposure</span>
+          </div>
+          <div className="text-3xl font-black font-mono tracking-tighter">
+            <AnimatedCounter value={summary?.marginUsed || 0} />%
+          </div>
+          <div className="mt-2 text-[10px] font-bold text-muted-foreground uppercase">
+            Balanced Regime
+          </div>
+        </SpotlightCard>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Market Overview */}
+        <SpotlightCard className="lg:col-span-2 p-8">
+          <div className="flex items-center justify-between mb-8">
+            <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
+              <Activity size={16} className="text-primary" />
+              Market Depth Aggregator
+            </h3>
+            <Link href="/market-intelligence" className="text-[10px] font-black uppercase text-primary hover:underline">
+              Full Intel Cluster
+            </Link>
+          </div>
           <div className="space-y-4">
-            <div className="flex gap-3">
-              <div className="w-8 h-8 rounded bg-red/10 flex items-center justify-center text-red shrink-0">
-                <AlertCircle size={16} />
+            {tickers?.map((ticker) => (
+              <div key={ticker.id} className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border border-border-subtle group hover:border-primary/50 transition-all">
+                <div className="flex items-center gap-4">
+                  <div className="font-black text-lg tracking-tighter">{ticker.asset}</div>
+                  <div className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Vol: {(ticker.volume24h / 1000000).toFixed(1)}M</div>
+                </div>
+                <div className="flex items-center gap-8 text-right">
+                  <div className="font-mono font-bold">${ticker.price.toLocaleString()}</div>
+                  <div className={cn(
+                    "text-xs font-black flex items-center gap-1 min-w-[60px] justify-end",
+                    ticker.change24h >= 0 ? "text-green" : "text-red"
+                  )}>
+                    {ticker.change24h >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+                    {ticker.change24h}%
+                  </div>
+                </div>
               </div>
-              <div>
-                <div className="text-xs font-bold">Drawdown Alert</div>
-                <div className="text-[10px] text-text-muted">Strategy "Momentum Breakout" reached 4% DD.</div>
+            ))}
+            {!tickers && <div className="text-center p-12 text-muted-foreground animate-pulse">Synchronizing market clusters...</div>}
+          </div>
+        </SpotlightCard>
+
+        {/* Recent Signals */}
+        <SpotlightCard className="p-8">
+          <div className="flex items-center justify-between mb-8">
+            <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
+              <Zap size={16} className="text-accent" />
+              Alpha Stream
+            </h3>
+            <Link href="/signals" className="text-[10px] font-black uppercase text-accent hover:underline">
+              All Signals
+            </Link>
+          </div>
+          <div className="space-y-4">
+            {signals?.map((signal) => (
+              <div key={signal.id} className="p-4 rounded-xl border border-border-subtle bg-muted/20 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-black tracking-tight">{signal.asset}</span>
+                  <span className={cn(
+                    "px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest",
+                    signal.direction === 'LONG' ? "bg-green/10 text-green" : "bg-red/10 text-red"
+                  )}>
+                    {signal.direction}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-[10px] font-bold">
+                  <span className="text-muted-foreground uppercase">Confidence</span>
+                  <span className="text-primary">{signal.confidence}%</span>
+                </div>
+                <div className="w-full bg-muted h-1 rounded-full overflow-hidden">
+                  <div 
+                    className="bg-primary h-full transition-all duration-1000" 
+                    style={{ width: `${signal.confidence}%` }} 
+                  />
+                </div>
               </div>
-            </div>
-            <div className="flex gap-3">
-              <div className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                <Zap size={16} />
-              </div>
-              <div>
-                <div className="text-xs font-bold">Model Retrained</div>
-                <div className="text-[10px] text-text-muted">ETH/USDT prediction model updated successfully.</div>
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <div className="w-8 h-8 rounded bg-green/10 flex items-center justify-center text-green shrink-0">
-                <TrendingUp size={16} />
-              </div>
-              <div>
-                <div className="text-xs font-bold">New ATH</div>
-                <div className="text-[10px] text-text-muted">Portfolio equity reached new high: $127.4k.</div>
-              </div>
-            </div>
+            ))}
+            {!signals && <div className="text-center p-12 text-muted-foreground animate-pulse">Scanning signal arrays...</div>}
           </div>
         </SpotlightCard>
       </div>
@@ -142,6 +194,23 @@ export default function Dashboard() {
   );
 }
 
-function cn(...inputs: any[]) {
-  return inputs.filter(Boolean).join(" ");
+function AuthPlaceholder() {
+  return (
+    <div className="h-[80vh] flex items-center justify-center p-6">
+      <SpotlightCard className="max-w-md w-full p-12 text-center space-y-6">
+        <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+          <ShieldAlert size={32} />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-2xl font-black uppercase tracking-tighter">Handshake Required</h2>
+          <p className="text-muted-foreground text-sm leading-relaxed">
+            AlphaForge institutional access is restricted to authorized entities. Please initialize a guest session or connect your node.
+          </p>
+        </div>
+        <button className="w-full h-12 bg-primary text-primary-foreground font-black uppercase text-xs tracking-widest rounded-lg hover:opacity-90 transition-opacity">
+          Initialize Session
+        </button>
+      </SpotlightCard>
+    </div>
+  );
 }

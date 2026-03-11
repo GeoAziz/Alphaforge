@@ -6,15 +6,15 @@
   :root {
     --background: 222 47% 4%;
     --foreground: 210 40% 98%;
-    --card: 222 47% 11%;
+    --card: 222 47% 6%;
     --card-foreground: 210 40% 98%;
-    --popover: 222 47% 11%;
+    --popover: 222 47% 6%;
     --popover-foreground: 210 40% 98%;
     --primary: 213 94% 68%;
     --primary-foreground: 222 47% 11%;
-    --secondary: 222 47% 15%;
+    --secondary: 222 47% 12%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 222 47% 15%;
+    --muted: 222 47% 12%;
     --muted-foreground: 215 20% 65%;
     --accent: 270 95% 75%;
     --accent-foreground: 222 47% 11%;
@@ -27,17 +27,12 @@
 
     /* AlphaForge Custom Tokens */
     --bg: #030712;
-    --surface: #0f1629;
-    --elevated: #1a2342;
-    --overlay: #1e2d4a;
-    --inset: #080f1f;
-    --border-subtle: #132035;
+    --surface: #0a0f1e;
+    --elevated: #111827;
+    --border-subtle: #1f2937;
     --green: #34d399;
     --red: #f87171;
     --amber: #fbbf24;
-    
-    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 }
 
@@ -47,70 +42,40 @@
   }
   body {
     background-color: var(--bg);
-    background-image:
-      radial-gradient(ellipse at 20% 50%, rgba(96, 165, 250, 0.06) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 20%, rgba(192, 132, 252, 0.05) 0%, transparent 50%),
-      radial-gradient(ellipse at 50% 80%, rgba(52, 211, 153, 0.04) 0%, transparent 50%);
+    background-image: 
+      radial-gradient(circle at 0% 0%, rgba(96, 165, 250, 0.03) 0%, transparent 50%),
+      radial-gradient(circle at 100% 100%, rgba(192, 132, 252, 0.03) 0%, transparent 50%);
     color: var(--foreground);
     @apply font-body antialiased;
-    min-height: 100dvh;
   }
-}
-
-.noise-surface {
-  position: relative;
-}
-.noise-surface::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-  pointer-events: none;
-  mix-blend-mode: overlay;
-  opacity: 0.35;
-  border-radius: inherit;
-  z-index: 0;
-}
-
-.noise-surface--subtle::after { opacity: 0.25; }
-.noise-surface--faint::after { opacity: 0.2; }
-
-@keyframes shimmer {
-  0%   { background-position: -400px 0; }
-  100% { background-position: 400px 0; }
-}
-.skeleton {
-  background: linear-gradient(90deg,
-    rgba(255,255,255,0.04) 0%,
-    rgba(255,255,255,0.08) 50%,
-    rgba(255,255,255,0.04) 100%);
-  background-size: 800px 100%;
-  animation: shimmer 1.5s infinite;
-  border-radius: 6px;
-}
-
-.gradient-text {
-  background: linear-gradient(135deg, #60a5fa, #c084fc, #34d399);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.glass {
-  background: rgba(26, 35, 66, 0.75);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .font-mono {
   font-variant-numeric: tabular-nums;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 150ms !important;
-  }
+.glass {
+  background: rgba(10, 15, 30, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #60a5fa 0%, #c084fc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.noise-surface {
+  position: relative;
+}
+
+.noise-surface::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: 1;
 }

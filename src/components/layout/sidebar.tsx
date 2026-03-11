@@ -1,8 +1,9 @@
+
 "use client";
 
 import { 
   LayoutDashboard, Zap, BarChart3, Wallet, Target, 
-  FlaskConical, Store, TrendingUp, Settings, ChevronLeft, ChevronRight 
+  FlaskConical, Store, TrendingUp, Settings, ChevronLeft, ChevronRight, Activity
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -21,6 +22,7 @@ import {
   useSidebar
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { useUser } from "@/firebase";
 
 const navItems = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -35,6 +37,7 @@ const navItems = [
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const { user } = useUser();
   const { toggleSidebar, state } = useSidebar();
   const isCollapsed = state === "collapsed";
 
@@ -42,7 +45,7 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className="border-r border-border-subtle bg-surface">
       <SidebarHeader className="p-4 flex flex-row items-center justify-between">
         <div className={cn("flex items-center gap-2", isCollapsed && "justify-center w-full")}>
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center font-bold text-primary-foreground">
+          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center font-bold text-primary-foreground shadow-[0_0_15px_rgba(96,165,250,0.4)]">
             AF
           </div>
           {!isCollapsed && <span className="font-bold text-lg tracking-tight">AlphaForge</span>}
@@ -77,7 +80,20 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-4 space-y-2">
+      <SidebarFooter className="p-4 space-y-4">
+        {!isCollapsed && user && (
+          <div className="p-3 rounded-xl bg-elevated/50 border border-border-subtle space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black uppercase text-text-muted">Node Status</span>
+              <div className="w-1.5 h-1.5 rounded-full bg-green animate-pulse" />
+            </div>
+            <div className="flex items-center gap-2">
+              <Activity size={12} className="text-primary" />
+              <span className="text-[10px] font-bold text-text-primary uppercase tracking-tighter">Syncing Institutional Core</span>
+            </div>
+          </div>
+        )}
+        
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton 

@@ -1,3 +1,4 @@
+
 {
   "placeholderImages": [
     {
@@ -23,6 +24,18 @@
       "description": "Close up of an encrypted terminal handshake sequence visualization.",
       "imageUrl": "https://picsum.photos/seed/handshake/800/600",
       "imageHint": "cyber security"
+    },
+    {
+      "id": "alpha-matrix",
+      "description": "Matrix of streaming financial data and green algorithmic code.",
+      "imageUrl": "https://picsum.photos/seed/matrix/1200/800",
+      "imageHint": "code data"
+    },
+    {
+      "id": "dashboard-glow",
+      "description": "Soft blue ambient glow reflecting off a dark glass interface.",
+      "imageUrl": "https://picsum.photos/seed/glow/1200/800",
+      "imageHint": "blue glow"
     }
   ]
 }

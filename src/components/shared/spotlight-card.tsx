@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import React, { useRef, useState } from "react";
-import { cn } from "@/lib/utils";
+import React, { useRef, useState } from 'react';
+import { cn } from '@/lib/utils';
 
 interface SpotlightCardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
-  variant?: "primary" | "accent";
+  variant?: 'default' | 'accent';
 }
 
 export function SpotlightCard({
   children,
-  variant = "primary",
   className,
+  variant = 'default',
   ...props
 }: SpotlightCardProps) {
   const divRef = useRef<HTMLDivElement>(null);
@@ -36,8 +36,6 @@ export function SpotlightCard({
     setOpacity(0);
   };
 
-  const glowColor = variant === "primary" ? "rgba(96, 165, 250, 0.15)" : "rgba(192, 132, 252, 0.15)";
-
   return (
     <div
       ref={divRef}
@@ -45,7 +43,7 @@ export function SpotlightCard({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       className={cn(
-        "relative flex h-full w-full flex-col overflow-hidden rounded-xl border border-border-subtle bg-surface transition-colors duration-300 hover:border-border",
+        "relative overflow-hidden rounded-2xl border border-border-subtle bg-surface transition-colors duration-300 hover:border-border",
         className
       )}
       {...props}
@@ -54,10 +52,10 @@ export function SpotlightCard({
         className="pointer-events-none absolute -inset-px transition duration-300"
         style={{
           opacity,
-          background: `radial-gradient(600px circle at ${position.x}px ${position.y}px, ${glowColor}, transparent 40%)`,
+          background: `radial-gradient(600px circle at ${position.x}px ${position.y}px, ${variant === 'accent' ? 'rgba(192, 132, 252, 0.08)' : 'rgba(96, 165, 250, 0.08)'}, transparent 40%)`,
         }}
       />
-      <div className="relative z-10 flex h-full flex-col">{children}</div>
+      <div className="relative z-10">{children}</div>
     </div>
   );
 }

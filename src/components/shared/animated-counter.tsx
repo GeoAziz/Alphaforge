@@ -1,55 +1,44 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
 interface AnimatedCounterProps {
   value: number;
-  duration?: number;
-  prefix?: string;
-  suffix?: string;
   decimals?: number;
+  duration?: number;
 }
 
-export function AnimatedCounter({
-  value,
-  duration = 1200,
-  prefix = "",
-  suffix = "",
-  decimals = 0,
-}: AnimatedCounterProps) {
+export function AnimatedCounter({ value, decimals = 0, duration = 1000 }: AnimatedCounterProps) {
   const [displayValue, setDisplayValue] = useState(0);
 
   useEffect(() => {
-    let startTime: number | null = null;
-    const startValue = 0;
+    let startTimestamp: number | null = null;
+    const startValue = displayValue;
 
-    const animate = (currentTime: number) => {
-      if (!startTime) startTime = currentTime;
-      const progress = Math.min((currentTime - startTime) / duration, 1);
+    const step = (timestamp: number) => {
+      if (!startTimestamp) startTimestamp = timestamp;
+      const progress = Math.min((timestamp - startTimestamp) / duration, 1);
       
-      // Ease out cubic
-      const easedProgress = 1 - Math.pow(1 - progress, 3);
+      // Easing function: easeOutExpo
+      const easedProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+      
       const current = startValue + easedProgress * (value - startValue);
-      
       setDisplayValue(current);
 
       if (progress < 1) {
-        requestAnimationFrame(animate);
+        window.requestAnimationFrame(step);
       }
     };
 
-    const requestId = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(requestId);
+    window.requestAnimationFrame(step);
   }, [value, duration]);
 
   return (
-    <span className="font-mono">
-      {prefix}
+    <span className="tabular-nums">
       {displayValue.toLocaleString(undefined, {
         minimumFractionDigits: decimals,
         maximumFractionDigits: decimals,
       })}
-      {suffix}
     </span>
   );
 }

@@ -1,0 +1,1258 @@
+{
+  "entities": {
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Represents a user's profile, containing personal preferences and application-specific settings.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserProfile entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The full name of the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address.",
+          "format": "email"
+        },
+        "plan": {
+          "type": "string",
+          "description": "The user's subscription plan level.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "riskTolerance": {
+          "type": "string",
+          "description": "The user's preferred risk tolerance level for trading activities.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "connectedExchanges": {
+          "type": "array",
+          "description": "A list of exchanges the user has connected to their profile.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "onboardingComplete": {
+          "type": "boolean",
+          "description": "Indicates whether the user has completed the initial onboarding flow."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "email",
+        "plan",
+        "riskTolerance",
+        "connectedExchanges",
+        "onboardingComplete"
+      ]
+    },
+    "ConnectedExchange": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ConnectedExchange",
+      "type": "object",
+      "description": "Details about an exchange connection for a user. This is an embedded object within UserProfile.",
+      "properties": {
+        "exchange": {
+          "type": "string",
+          "description": "The name of the connected exchange platform.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "connected": {
+          "type": "boolean",
+          "description": "Indicates if the connection to the exchange is currently active."
+        },
+        "connectedAt": {
+          "type": "string",
+          "description": "The timestamp when the exchange was successfully connected.",
+          "format": "date-time"
+        },
+        "permissions": {
+          "type": "array",
+          "description": "A list of permissions granted to AlphaForge on the connected exchange (e.g., read, trade).",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "exchange",
+        "connected",
+        "permissions"
+      ]
+    },
+    "PortfolioSummary": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PortfolioSummary",
+      "type": "object",
+      "description": "A summary of a user's portfolio, including equity, PnL, and trade statistics.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the PortfolioSummary entity (same as userId). (Relationship: UserProfile 1:1 PortfolioSummary)"
+        },
+        "totalEquity": {
+          "type": "number",
+          "description": "The total value of the user's portfolio equity."
+        },
+        "unrealizedPnl": {
+          "type": "number",
+          "description": "The unrealized Profit and Loss across all open positions."
+        },
+        "realizedPnl": {
+          "type": "number",
+          "description": "The total realized Profit and Loss from closed trades."
+        },
+        "totalTrades": {
+          "type": "number",
+          "description": "The total number of trades executed."
+        },
+        "openPositions": {
+          "type": "number",
+          "description": "The number of currently open trading positions."
+        },
+        "marginUsed": {
+          "type": "number",
+          "description": "The total margin currently being used by open positions."
+        }
+      },
+      "required": [
+        "id",
+        "totalEquity",
+        "unrealizedPnl",
+        "realizedPnl",
+        "totalTrades",
+        "openPositions",
+        "marginUsed"
+      ]
+    },
+    "Position": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Position",
+      "type": "object",
+      "description": "Represents an active trading position held by a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Position entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N Position)"
+        },
+        "asset": {
+          "type": "string",
+          "description": "The trading asset for this position (e.g., 'BTCUSDT')."
+        },
+        "direction": {
+          "type": "string",
+          "description": "The direction of the trade (LONG or SHORT).",
+          "items": {
+            "type": "string"
+          }
+        },
+        "entryPrice": {
+          "type": "number",
+          "description": "The price at which the position was opened."
+        },
+        "currentPrice": {
+          "type": "number",
+          "description": "The current market price of the asset."
+        },
+        "quantity": {
+          "type": "number",
+          "description": "The quantity of the asset held in this position."
+        },
+        "unrealizedPnl": {
+          "type": "number",
+          "description": "The current unrealized Profit and Loss for this position."
+        },
+        "unrealizedPnlPercent": {
+          "type": "number",
+          "description": "The current unrealized Profit and Loss as a percentage."
+        },
+        "riskExposure": {
+          "type": "number",
+          "description": "The percentage of the total portfolio value exposed to this position."
+        },
+        "signalId": {
+          "type": "string",
+          "description": "Reference to the Signal that initiated this position. (Relationship: Signal 1:N Position)"
+        },
+        "openedAt": {
+          "type": "string",
+          "description": "The timestamp when the position was opened.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "asset",
+        "direction",
+        "entryPrice",
+        "currentPrice",
+        "quantity",
+        "unrealizedPnl",
+        "unrealizedPnlPercent",
+        "riskExposure",
+        "signalId",
+        "openedAt"
+      ]
+    },
+    "Trade": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Trade",
+      "type": "object",
+      "description": "Represents a historical trading transaction executed by a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Trade entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N Trade)"
+        },
+        "asset": {
+          "type": "string",
+          "description": "The trading asset involved in this trade."
+        },
+        "direction": {
+          "type": "string",
+          "description": "The direction of the trade (LONG or SHORT).",
+          "items": {
+            "type": "string"
+          }
+        },
+        "entryPrice": {
+          "type": "number",
+          "description": "The price at which the trade was entered."
+        },
+        "exitPrice": {
+          "type": "number",
+          "description": "The price at which the trade was exited."
+        },
+        "pnl": {
+          "type": "number",
+          "description": "The absolute Profit and Loss from this trade."
+        },
+        "pnlPercent": {
+          "type": "number",
+          "description": "The Profit and Loss from this trade as a percentage."
+        },
+        "status": {
+          "type": "string",
+          "description": "The outcome of the trade (win or loss).",
+          "items": {
+            "type": "string"
+          }
+        },
+        "strategy": {
+          "type": "string",
+          "description": "The name of the strategy used for this trade."
+        },
+        "signalId": {
+          "type": "string",
+          "description": "Reference to the Signal that prompted this trade. (Relationship: Signal 1:N Trade)"
+        },
+        "executedAt": {
+          "type": "string",
+          "description": "The timestamp when the trade was executed (opened).",
+          "format": "date-time"
+        },
+        "closedAt": {
+          "type": "string",
+          "description": "The timestamp when the trade was closed.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "asset",
+        "direction",
+        "entryPrice",
+        "exitPrice",
+        "pnl",
+        "pnlPercent",
+        "status",
+        "strategy",
+        "signalId",
+        "executedAt",
+        "closedAt"
+      ]
+    },
+    "MarketTicker": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "MarketTicker",
+      "type": "object",
+      "description": "Provides real-time ticker information for a specific market asset.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the MarketTicker entity."
+        },
+        "asset": {
+          "type": "string",
+          "description": "The trading asset (e.g., 'BTCUSDT')."
+        },
+        "price": {
+          "type": "number",
+          "description": "The current price of the asset."
+        },
+        "change24h": {
+          "type": "number",
+          "description": "The percentage change in price over the last 24 hours."
+        },
+        "change24hAbs": {
+          "type": "number",
+          "description": "The absolute change in price over the last 24 hours."
+        },
+        "volume24h": {
+          "type": "number",
+          "description": "The trading volume of the asset over the last 24 hours."
+        },
+        "high24h": {
+          "type": "number",
+          "description": "The highest price reached in the last 24 hours."
+        },
+        "low24h": {
+          "type": "number",
+          "description": "The lowest price reached in the last 24 hours."
+        }
+      },
+      "required": [
+        "id",
+        "asset",
+        "price",
+        "change24h",
+        "change24hAbs",
+        "volume24h",
+        "high24h",
+        "low24h"
+      ]
+    },
+    "FundingRate": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "FundingRate",
+      "type": "object",
+      "description": "Displays funding rate information for a perpetual futures contract on an exchange.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the FundingRate entity."
+        },
+        "asset": {
+          "type": "string",
+          "description": "The asset for which the funding rate applies (e.g., 'BTCUSDT')."
+        },
+        "exchange": {
+          "type": "string",
+          "description": "The exchange where the funding rate is observed."
+        },
+        "rate": {
+          "type": "number",
+          "description": "The current funding rate as a percentage."
+        },
+        "nextFundingTime": {
+          "type": "string",
+          "description": "The timestamp of the next funding payment.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "asset",
+        "exchange",
+        "rate",
+        "nextFundingTime"
+      ]
+    },
+    "OpenInterest": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "OpenInterest",
+      "type": "object",
+      "description": "Shows the total number of open derivatives contracts for a specific asset.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the OpenInterest entity."
+        },
+        "asset": {
+          "type": "string",
+          "description": "The asset for which open interest is measured."
+        },
+        "value": {
+          "type": "number",
+          "description": "The total open interest value."
+        },
+        "change24h": {
+          "type": "number",
+          "description": "The percentage change in open interest over the last 24 hours."
+        }
+      },
+      "required": [
+        "id",
+        "asset",
+        "value",
+        "change24h"
+      ]
+    },
+    "MarketSentiment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "MarketSentiment",
+      "type": "object",
+      "description": "Represents the overall market sentiment, often based on a fear and greed index.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the MarketSentiment entity."
+        },
+        "score": {
+          "type": "number",
+          "description": "A numerical score indicating market sentiment (e.g., 0-100)."
+        },
+        "label": {
+          "type": "string",
+          "description": "A descriptive label for the sentiment score (e.g., 'Greed', 'Fear').",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "score",
+        "label"
+      ]
+    },
+    "Strategy": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Strategy",
+      "type": "object",
+      "description": "Defines a trading strategy, including its performance metrics and risk profile.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Strategy entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the trading strategy."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description of the strategy."
+        },
+        "winRate": {
+          "type": "number",
+          "description": "The percentage of winning trades for this strategy."
+        },
+        "avgRoi": {
+          "type": "number",
+          "description": "The average Return on Investment per trade for this strategy."
+        },
+        "maxDrawdown": {
+          "type": "number",
+          "description": "The maximum observed percentage drop from a peak to a trough in the strategy's equity curve."
+        },
+        "sharpeRatio": {
+          "type": "number",
+          "description": "The Sharpe ratio, measuring risk-adjusted return."
+        },
+        "totalTrades": {
+          "type": "number",
+          "description": "The total number of trades executed by this strategy."
+        },
+        "profitFactor": {
+          "type": "number",
+          "description": "The profit factor, which is the ratio of gross profits to gross losses."
+        },
+        "riskLevel": {
+          "type": "string",
+          "description": "The assessed risk level of the strategy (Low, Medium, High).",
+          "items": {
+            "type": "string"
+          }
+        },
+        "isActive": {
+          "type": "boolean",
+          "description": "Indicates whether the strategy is currently active."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "winRate",
+        "avgRoi",
+        "maxDrawdown",
+        "sharpeRatio",
+        "totalTrades",
+        "profitFactor",
+        "riskLevel",
+        "isActive"
+      ]
+    },
+    "PerformancePoint": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PerformancePoint",
+      "type": "object",
+      "description": "A data point representing portfolio or strategy performance at a specific date.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the PerformancePoint entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile (Relationship: UserProfile 1:N PerformancePoint)."
+        },
+        "strategyId": {
+          "type": "string",
+          "description": "Optional reference to Strategy if this point is for a specific strategy's performance (Relationship: Strategy 1:N PerformancePoint)."
+        },
+        "backtestResultId": {
+          "type": "string",
+          "description": "Optional reference to BacktestResult if this point is part of a backtest equity curve (Relationship: BacktestResult 1:N PerformancePoint)."
+        },
+        "date": {
+          "type": "string",
+          "description": "The date for this performance data point.",
+          "format": "date"
+        },
+        "equity": {
+          "type": "number",
+          "description": "The equity value at this date."
+        },
+        "drawdown": {
+          "type": "number",
+          "description": "The drawdown percentage at this date."
+        },
+        "cumulativePnl": {
+          "type": "number",
+          "description": "The cumulative Profit and Loss up to this date."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "date",
+        "equity",
+        "drawdown",
+        "cumulativePnl"
+      ]
+    },
+    "StrategyPerformance": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "StrategyPerformance",
+      "type": "object",
+      "description": "Aggregated performance metrics for a specific strategy.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the StrategyPerformance entity (same as strategyId). (Relationship: Strategy 1:1 StrategyPerformance)"
+        },
+        "strategyName": {
+          "type": "string",
+          "description": "The name of the strategy."
+        },
+        "winRate": {
+          "type": "number",
+          "description": "The win rate of the strategy."
+        },
+        "roi": {
+          "type": "number",
+          "description": "The Return on Investment of the strategy."
+        },
+        "trades": {
+          "type": "number",
+          "description": "The total number of trades for the strategy."
+        },
+        "profitFactor": {
+          "type": "number",
+          "description": "The profit factor of the strategy."
+        }
+      },
+      "required": [
+        "id",
+        "strategyName",
+        "winRate",
+        "roi",
+        "trades",
+        "profitFactor"
+      ]
+    },
+    "Notification": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Notification",
+      "type": "object",
+      "description": "A notification sent to the user regarding signals, trades, risk, or system updates.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Notification entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N Notification)"
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of notification (signal, trade, risk, system).",
+          "items": {
+            "type": "string"
+          }
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the notification."
+        },
+        "message": {
+          "type": "string",
+          "description": "The full message content of the notification."
+        },
+        "read": {
+          "type": "boolean",
+          "description": "Indicates if the user has read the notification."
+        },
+        "critical": {
+          "type": "boolean",
+          "description": "Indicates if the notification is critical and requires immediate attention."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "The timestamp when the notification was created.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "type",
+        "title",
+        "message",
+        "read",
+        "critical",
+        "createdAt"
+      ]
+    },
+    "BacktestConfig": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "BacktestConfig",
+      "type": "object",
+      "description": "Configuration parameters for a backtest run.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the BacktestConfig entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N BacktestConfig)"
+        },
+        "asset": {
+          "type": "string",
+          "description": "The asset to backtest (e.g., 'BTCUSDT')."
+        },
+        "strategyId": {
+          "type": "string",
+          "description": "Reference to the Strategy being backtested. (Relationship: Strategy 1:N BacktestConfig)"
+        },
+        "timeframe": {
+          "type": "string",
+          "description": "The candlestick timeframe for backtesting (e.g., '1h', '1d').",
+          "items": {
+            "type": "string"
+          }
+        },
+        "startDate": {
+          "type": "string",
+          "description": "The start date for the backtest period.",
+          "format": "date"
+        },
+        "endDate": {
+          "type": "string",
+          "description": "The end date for the backtest period.",
+          "format": "date"
+        },
+        "initialCapital": {
+          "type": "number",
+          "description": "The initial capital used for the backtest simulation."
+        },
+        "riskPerTrade": {
+          "type": "number",
+          "description": "The percentage of capital risked per trade in the backtest."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "asset",
+        "strategyId",
+        "timeframe",
+        "startDate",
+        "endDate",
+        "initialCapital",
+        "riskPerTrade"
+      ]
+    },
+    "BacktestResult": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "BacktestResult",
+      "type": "object",
+      "description": "The results generated from a backtest run.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the BacktestResult entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N BacktestResult)"
+        },
+        "backtestConfigId": {
+          "type": "string",
+          "description": "Reference to the BacktestConfig that generated these results. (Relationship: BacktestConfig 1:1 BacktestResult)"
+        },
+        "winRate": {
+          "type": "number",
+          "description": "The win rate achieved in the backtest."
+        },
+        "totalTrades": {
+          "type": "number",
+          "description": "The total number of trades executed during the backtest."
+        },
+        "roi": {
+          "type": "number",
+          "description": "The Return on Investment achieved in the backtest."
+        },
+        "maxDrawdown": {
+          "type": "number",
+          "description": "The maximum drawdown observed during the backtest."
+        },
+        "sharpeRatio": {
+          "type": "number",
+          "description": "The Sharpe ratio of the backtest performance."
+        },
+        "sortinoRatio": {
+          "type": "number",
+          "description": "The Sortino ratio of the backtest performance."
+        },
+        "profitFactor": {
+          "type": "number",
+          "description": "The profit factor of the backtest performance."
+        },
+        "equityCurvePointIds": {
+          "type": "array",
+          "description": "References to PerformancePoint entities representing the equity curve of the backtest. (Relationship: BacktestResult 1:N PerformancePoint)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "backtestConfigId",
+        "winRate",
+        "totalTrades",
+        "roi",
+        "maxDrawdown",
+        "sharpeRatio",
+        "sortinoRatio",
+        "profitFactor",
+        "equityCurvePointIds"
+      ]
+    },
+    "MarketplaceStrategy": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "MarketplaceStrategy",
+      "type": "object",
+      "description": "Represents a trading strategy listed in the marketplace for subscription.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the MarketplaceStrategy entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the strategy."
+        },
+        "creator": {
+          "type": "string",
+          "description": "The name of the creator or provider of the strategy."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description of the marketplace strategy."
+        },
+        "winRate": {
+          "type": "number",
+          "description": "The win rate of the strategy."
+        },
+        "roi": {
+          "type": "number",
+          "description": "The Return on Investment of the strategy."
+        },
+        "maxDrawdown": {
+          "type": "number",
+          "description": "The maximum drawdown of the strategy."
+        },
+        "subscribers": {
+          "type": "number",
+          "description": "The number of users currently subscribed to this strategy."
+        },
+        "riskLevel": {
+          "type": "string",
+          "description": "The assessed risk level of the strategy (Low, Medium, High).",
+          "items": {
+            "type": "string"
+          }
+        },
+        "monthlyPrice": {
+          "type": "number",
+          "description": "The monthly subscription price for the strategy."
+        },
+        "isVerified": {
+          "type": "boolean",
+          "description": "Indicates if the strategy has been verified by the platform."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "creator",
+        "description",
+        "winRate",
+        "roi",
+        "maxDrawdown",
+        "subscribers",
+        "riskLevel",
+        "monthlyPrice",
+        "isVerified"
+      ]
+    },
+    "Signal": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Signal",
+      "type": "object",
+      "description": "A trading signal generated by a strategy, providing entry/exit points and confidence.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Signal entity."
+        },
+        "asset": {
+          "type": "string",
+          "description": "The asset targeted by the signal (e.g., 'BTCUSDT')."
+        },
+        "direction": {
+          "type": "string",
+          "description": "The suggested trade direction (LONG or SHORT).",
+          "items": {
+            "type": "string"
+          }
+        },
+        "entryPrice": {
+          "type": "number",
+          "description": "The recommended entry price for the trade."
+        },
+        "stopLoss": {
+          "type": "number",
+          "description": "The recommended stop loss price to limit potential losses."
+        },
+        "takeProfit": {
+          "type": "number",
+          "description": "The recommended take profit price to secure gains."
+        },
+        "confidence": {
+          "type": "number",
+          "description": "A confidence score (0-100) indicating the strength of the signal."
+        },
+        "strategy": {
+          "type": "string",
+          "description": "The name of the strategy that generated this signal."
+        },
+        "strategyId": {
+          "type": "string",
+          "description": "Reference to Strategy (Relationship: Strategy 1:N Signal)."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the signal (active, closed, expired, cancelled).",
+          "items": {
+            "type": "string"
+          }
+        },
+        "riskRewardRatio": {
+          "type": "number",
+          "description": "The calculated risk-to-reward ratio for the signal."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "The timestamp when the signal was created.",
+          "format": "date-time"
+        },
+        "closedAt": {
+          "type": "string",
+          "description": "The timestamp when the signal was closed or became inactive (null if still active).",
+          "format": "date-time"
+        },
+        "pnlPercent": {
+          "type": "number",
+          "description": "The Profit and Loss percentage achieved if the signal was closed (null if still active)."
+        },
+        "drivers": {
+          "type": "array",
+          "description": "A list of contributing factors or drivers for this signal.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "asset",
+        "direction",
+        "entryPrice",
+        "stopLoss",
+        "takeProfit",
+        "confidence",
+        "strategy",
+        "strategyId",
+        "status",
+        "riskRewardRatio",
+        "createdAt",
+        "drivers"
+      ]
+    },
+    "SignalDriver": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SignalDriver",
+      "type": "object",
+      "description": "A factor contributing to a trading signal. This is an embedded object within Signal.",
+      "properties": {
+        "label": {
+          "type": "string",
+          "description": "A descriptive label for the signal driver (e.g., 'Momentum breakout detected')."
+        },
+        "weight": {
+          "type": "number",
+          "description": "A numerical weight (0-1) indicating the importance or contribution of this driver."
+        },
+        "active": {
+          "type": "boolean",
+          "description": "Indicates if this driver is currently an active contributing factor to the signal."
+        }
+      },
+      "required": [
+        "label",
+        "weight",
+        "active"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores the core profile and settings for a specific user. The userId in the path matches request.auth.uid for authorization."
+        }
+      },
+      {
+        "path": "/users/{userId}/portfolioSummary",
+        "definition": {
+          "entityName": "PortfolioSummary",
+          "schema": {
+            "$ref": "#/backend/entities/PortfolioSummary"
+          },
+          "description": "A 1:1 summary of a user's portfolio. Its document ID will typically be the userId. Access is tied to the user's ID in the path."
+        }
+      },
+      {
+        "path": "/users/{userId}/positions/{positionId}",
+        "definition": {
+          "entityName": "Position",
+          "schema": {
+            "$ref": "#/backend/entities/Position"
+          },
+          "description": "Active trading positions for a specific user. Authorization is path-based on the userId.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who owns the position."
+            },
+            {
+              "name": "positionId",
+              "description": "The unique identifier for the trading position."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/trades/{tradeId}",
+        "definition": {
+          "entityName": "Trade",
+          "schema": {
+            "$ref": "#/backend/entities/Trade"
+          },
+          "description": "Historical trading transactions executed by a specific user. Authorization is path-based on the userId.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who executed the trade."
+            },
+            {
+              "name": "tradeId",
+              "description": "The unique identifier for the historical trade."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/notifications/{notificationId}",
+        "definition": {
+          "entityName": "Notification",
+          "schema": {
+            "$ref": "#/backend/entities/Notification"
+          },
+          "description": "Notifications sent to a specific user. Authorization is path-based on the userId.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user receiving the notification."
+            },
+            {
+              "name": "notificationId",
+              "description": "The unique identifier for the notification."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/strategies/{strategyId}",
+        "definition": {
+          "entityName": "Strategy",
+          "schema": {
+            "$ref": "#/backend/entities/Strategy"
+          },
+          "description": "User-defined trading strategies for personal use or backtesting. Authorization is path-based on the userId.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who owns the strategy."
+            },
+            {
+              "name": "strategyId",
+              "description": "The unique identifier for the user's private strategy."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/strategies/{strategyId}/performance",
+        "definition": {
+          "entityName": "StrategyPerformance",
+          "schema": {
+            "$ref": "#/backend/entities/StrategyPerformance"
+          },
+          "description": "Aggregated performance metrics for a specific user's private strategy. This document's ID will be 'performance'. Access is nested under the user's strategy.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who owns the strategy."
+            },
+            {
+              "name": "strategyId",
+              "description": "The unique identifier for the user's private strategy."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/backtestConfigs/{backtestConfigId}",
+        "definition": {
+          "entityName": "BacktestConfig",
+          "schema": {
+            "$ref": "#/backend/entities/BacktestConfig"
+          },
+          "description": "Configuration parameters for a backtest run initiated by a specific user. Authorization is path-based on the userId.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who created the backtest configuration."
+            },
+            {
+              "name": "backtestConfigId",
+              "description": "The unique identifier for the backtest configuration."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/backtestResults/{backtestResultId}",
+        "definition": {
+          "entityName": "BacktestResult",
+          "schema": {
+            "$ref": "#/backend/entities/BacktestResult"
+          },
+          "description": "Results generated from a backtest run for a specific user. Authorization is path-based on the userId.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who owns the backtest result."
+            },
+            {
+              "name": "backtestResultId",
+              "description": "The unique identifier for the backtest result."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/performancePoints/{performancePointId}",
+        "definition": {
+          "entityName": "PerformancePoint",
+          "schema": {
+            "$ref": "#/backend/entities/PerformancePoint"
+          },
+          "description": "Historical performance data points for a user's portfolio or specific backtest equity curves. Authorization is path-based on the userId.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user whose performance is being recorded."
+            },
+            {
+              "name": "performancePointId",
+              "description": "The unique identifier for the performance data point."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/signals/{signalId}",
+        "definition": {
+          "entityName": "Signal",
+          "schema": {
+            "$ref": "#/backend/entities/Signal"
+          },
+          "description": "Personalized trading signals delivered to a specific user, sourced from either subscribed marketplace strategies or their own private strategies. The backend denormalizes and populates this collection. Authorization is path-based on the userId.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who receives the signal."
+            },
+            {
+              "name": "signalId",
+              "description": "The unique identifier for the trading signal."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/marketplaceStrategies/{marketplaceStrategyId}",
+        "definition": {
+          "entityName": "MarketplaceStrategy",
+          "schema": {
+            "$ref": "#/backend/entities/MarketplaceStrategy"
+          },
+          "description": "Trading strategies available for subscription in the public marketplace. Readable by all authenticated users.",
+          "params": [
+            {
+              "name": "marketplaceStrategyId",
+              "description": "The unique identifier for the marketplace strategy."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/marketTickers/{tickerId}",
+        "definition": {
+          "entityName": "MarketTicker",
+          "schema": {
+            "$ref": "#/backend/entities/MarketTicker"
+          },
+          "description": "Real-time ticker information for market assets. Publicly readable by all authenticated users.",
+          "params": [
+            {
+              "name": "tickerId",
+              "description": "The unique identifier for the market ticker (e.g., asset pair)."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/fundingRates/{rateId}",
+        "definition": {
+          "entityName": "FundingRate",
+          "schema": {
+            "$ref": "#/backend/entities/FundingRate"
+          },
+          "description": "Funding rate information for perpetual futures contracts across exchanges. Publicly readable by all authenticated users.",
+          "params": [
+            {
+              "name": "rateId",
+              "description": "The unique identifier for the funding rate record."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/openInterests/{oiId}",
+        "definition": {
+          "entityName": "OpenInterest",
+          "schema": {
+            "$ref": "#/backend/entities/OpenInterest"
+          },
+          "description": "Total number of open derivatives contracts for specific assets. Publicly readable by all authenticated users.",
+          "params": [
+            {
+              "name": "oiId",
+              "description": "The unique identifier for the Open Interest record."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/marketSentiment/{sentimentId}",
+        "definition": {
+          "entityName": "MarketSentiment",
+          "schema": {
+            "$ref": "#/backend/entities/MarketSentiment"
+          },
+          "description": "Overall market sentiment based on indices. Likely a single document ('latest') or a time-series. Publicly readable by all authenticated users.",
+          "params": [
+            {
+              "name": "sentimentId",
+              "description": "The unique identifier for the market sentiment record (e.g., 'latest' for the current sentiment)."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed following the core principles of Authorization Independence, Structural Segregation, and DBAC. User-specific data is organized under `/users/{userId}/...` paths, ensuring that access can be granted simply by matching `request.auth.uid` with the `{userId}` wildcard in the path. This eliminates the need for `get()` operations in security rules, which is critical for atomic operations and debugging. For instance, user profiles, portfolios, positions, trades, backtest configurations, results, performance points, and personalized signals are all housed within their respective user subcollections.\n\nTo achieve Authorization Independence for signals, which originate from strategies (some public, some private), signals are explicitly denormalized into a user's personal `/users/{userId}/signals/{signalId}` collection. This means the backend is responsible for populating relevant signals for each user based on their subscribed strategies or owned private strategies. This denormalization guarantees that a user's access to a signal document is solely determined by their UID matching the path, avoiding any `get()` calls to check strategy ownership or subscription status in a parent document.\n\nStructural Segregation is applied by creating distinct top-level collections for global, publicly readable data such as `/marketTickers`, `/fundingRates`, `/openInterests`, `/marketSentiment`, and `/marketplaceStrategies`. These collections have a homogeneous security posture, meaning all documents within them share the same access rules (e.g., read-only for all authenticated users). This simplifies security rules and directly supports Query as a Permission (QAP), as rules are not used to filter data after it has been read, but rather to define what data can be accessed upfront based on its structural location. For example, a `list` operation on `/marketTickers` will return all documents because they are universally readable, and a `list` on `/users/{userId}/positions` will only return the current user's positions due to path-based authorization. This prevents over-fetching and ensures secure, robust `list` operations."
+  }
+}
