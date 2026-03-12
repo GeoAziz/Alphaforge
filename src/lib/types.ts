@@ -201,6 +201,11 @@ export interface MarketplaceStrategy {
   riskLevel: RiskLevel;
   monthlyPrice: number;
   isVerified: boolean;
+  reputationScore: number;
+  verificationStage: number; // 1-5
+  performanceBadge?: 'New' | 'Trending' | 'Best in Category';
+  paperTradeDelta?: number; // e.g., +0.5% (difference between paper and backtest)
+  pricingModel: 'Subscription' | 'Profit Share';
 }
 
 export interface Signal {
@@ -219,4 +224,111 @@ export interface Signal {
   closedAt?: string;
   pnlPercent?: number;
   drivers: string[];
+}
+
+export interface SignalDriver {
+  label: string;
+  weight: number;
+  active: boolean;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  timestamp: string;
+  action: string;
+  target: string;
+  userId: string;
+  status: 'Success' | 'Authorized' | 'Warning' | 'Failure';
+  node: string;
+}
+
+export interface KYCStatus {
+  userId: string;
+  status: 'Unverified' | 'Pending' | 'Verified' | 'Rejected';
+  level: 1 | 2 | 3;
+  verifiedAt?: string;
+}
+
+export interface RiskScore {
+  userId: string;
+  score: number;
+  label: 'Low' | 'Medium' | 'High';
+  factors: {
+    volatility: number;
+    leverage: number;
+    concentration: number;
+  };
+  updatedAt: string;
+}
+
+export interface ModelPerformance {
+  id: string;
+  modelName: string;
+  accuracy: number;
+  latency: number;
+  uptime: number;
+  lastTraining: string;
+}
+
+export interface SignalProof {
+  signalId: string;
+  hash: string;
+  merkleRoot: string;
+  timestamp: string;
+  verified: boolean;
+  txHash?: string;
+  hypothesis?: string;
+  backtestResult?: string;
+  paperResults?: string;
+  liveResults?: string;
+}
+
+export interface MarketDataQuality {
+  asset: string;
+  source: string;
+  freshness: number;
+  status: 'Optimal' | 'Degraded' | 'Offline';
+}
+
+export interface TrendIndicator {
+  asset: string;
+  strength: number; // 0-100
+  bias: 'Bullish' | 'Bearish' | 'Neutral';
+  ma20: number;
+  ma50: number;
+  ma200: number;
+}
+
+export interface SocialSentimentDetail {
+  asset: string;
+  score: number;
+  sources: {
+    name: string;
+    weight: number;
+    sentiment: 'Bullish' | 'Bearish' | 'Neutral';
+  }[];
+}
+
+export interface OnChainMetricDetail {
+  asset: string;
+  name: string;
+  value: string;
+  status: 'Overvalued' | 'Undervalued' | 'Neutral';
+  change24h: number;
+}
+
+export interface StrategyVerificationStep {
+  id: string;
+  name: string;
+  status: 'Pending' | 'In Progress' | 'Completed' | 'Rejected';
+  description: string;
+  timestamp?: string;
+}
+
+export interface CreatorVerificationStatus {
+  strategyId: string;
+  strategyName: string;
+  currentStage: number;
+  steps: StrategyVerificationStep[];
+  overallStatus: 'Active' | 'Review' | 'Denied';
 }

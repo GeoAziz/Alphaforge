@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, orderBy } from "firebase/firestore";
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -10,9 +10,12 @@ import { GradientBorder } from "@/components/shared/gradient-border";
 import { SignalDetailPanel } from "@/components/signals/signal-detail-panel";
 import { Signal, Position, Notification } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { ChevronRight, ShieldAlert, Filter, Clock } from "lucide-react";
+import { ChevronRight, ShieldAlert, Filter, Clock, Search, SlidersHorizontal } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 
 export default function SignalsPage() {
   const { user } = useUser();
@@ -21,6 +24,12 @@ export default function SignalsPage() {
   const [isExecuting, setIsExecuting] = useState(false);
   const [mounted, setMounted] = useState(false);
 
+  // Filter States
+  const [searchQuery, setSearchQuery] = useState("");
+  const [strategyFilter, setStrategyFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("active");
+  const [confidenceRange, setConfidenceRange] = useState([0]);
+
   useEffect(() => setMounted(true), []);
 
   const signalsQuery = useMemoFirebase(() => {
@@ -28,7 +37,19 @@ export default function SignalsPage() {
     return query(collection(db, "users", user.uid, "signals"), orderBy("createdAt", "desc"));
   }, [db, user]);
 
-  const { data: signals, isLoading } = useCollection<Signal>(signalsQuery);
+  const { data: rawSignals, isLoading } = useCollection<Signal>(signalsQuery);
+
+  // Apply Client-Side Filters for responsiveness
+  const filteredSignals = useMemo(() => {
+    if (!rawSignals) return [];
+    return rawSignals.filter(s => {
+      const matchesSearch = s.asset.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesStrategy = strategyFilter === "all" || s.strategy === strategyFilter;
+      const matchesStatus = statusFilter === "all" || s.status === statusFilter;
+      const matchesConfidence = s.confidence >= confidenceRange[0];
+      return matchesSearch && matchesStrategy && matchesStatus && matchesConfidence;
+    });
+  }, [rawSignals, searchQuery, strategyFilter, statusFilter, confidenceRange]);
 
   function handleExecuteSignal(signal: Signal) {
     if (!user || !db) return;
@@ -69,7 +90,6 @@ export default function SignalsPage() {
     }, 1500);
   }
 
-  // Calculate signal age visual decay
   const getSignalDecay = (createdAt: string) => {
     const age = Date.now() - new Date(createdAt).getTime();
     if (age > 3600000) return 'opacity-40 grayscale'; // 1hr
@@ -94,36 +114,80 @@ export default function SignalsPage() {
   return (
     <div className="flex h-full relative overflow-hidden animate-page">
       {/* Center Panel: Intelligence Stream */}
-      <div className="flex-1 p-8 space-y-8 overflow-y-auto scrollbar-hide pb-24 md:pb-8">
-        <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div className="space-y-1">
-            <h1 className="text-3xl font-black tracking-tighter uppercase leading-none">Intelligence Stream</h1>
-            <p className="text-muted-foreground text-sm font-medium">Real-time algorithmic consensus and institutional signal rationale.</p>
+      <div className="flex-1 flex flex-col min-w-0">
+        <header className="p-8 pb-4 space-y-6 border-b border-border-subtle bg-surface/50 backdrop-blur-md sticky top-0 z-20">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div className="space-y-1">
+              <h1 className="text-3xl font-black tracking-tighter uppercase leading-none">Intelligence Stream</h1>
+              <p className="text-muted-foreground text-sm font-medium">Real-time algorithmic consensus and institutional signal rationale.</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="h-9 px-4 rounded-md border border-border-subtle bg-elevated/20 flex items-center gap-2 text-[10px] font-black uppercase text-green">
+                <div className="w-1.5 h-1.5 rounded-full bg-green animate-pulse" />
+                Live Stream Active
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" className="h-9 px-4 border-border-subtle bg-elevated/20 text-[10px] font-black uppercase gap-2">
-              <Filter size={14} /> Filter Clusters
-            </Button>
-            <div className="h-9 px-4 rounded-md border border-border-subtle bg-elevated/20 flex items-center gap-2 text-[10px] font-black uppercase text-green">
-              <div className="w-1.5 h-1.5 rounded-full bg-green animate-pulse" />
-              Live Stream Active
+
+          {/* Filter Toolbar */}
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+              <Input 
+                placeholder="Search assets..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 h-10 bg-elevated/30 border-border-subtle text-xs font-bold uppercase"
+              />
+            </div>
+            <Select value={strategyFilter} onValueChange={setStrategyFilter}>
+              <SelectTrigger className="w-[180px] h-10 bg-elevated/30 border-border-subtle text-xs font-black uppercase">
+                <SelectValue placeholder="Strategy" />
+              </SelectTrigger>
+              <SelectContent className="glass">
+                <SelectItem value="all">All Strategies</SelectItem>
+                <SelectItem value="Momentum Breakout">Momentum Breakout</SelectItem>
+                <SelectItem value="Mean Reversion">Mean Reversion</SelectItem>
+                <SelectItem value="Volatility Expansion">Volatility Expansion</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[140px] h-10 bg-elevated/30 border-border-subtle text-xs font-black uppercase">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent className="glass">
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="closed">Closed</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <div className="flex items-center gap-4 px-4 h-10 rounded-lg bg-elevated/30 border border-border-subtle min-w-[200px]">
+              <span className="text-[9px] font-black uppercase text-text-muted whitespace-nowrap">Min Confidence: {confidenceRange[0]}%</span>
+              <Slider 
+                value={confidenceRange} 
+                onValueChange={setConfidenceRange} 
+                max={100} 
+                step={5} 
+                className="flex-1"
+              />
             </div>
           </div>
         </header>
 
-        <div className="grid grid-cols-1 gap-4">
+        <div className="flex-1 p-8 space-y-4 overflow-y-auto scrollbar-hide pb-24 md:pb-8">
           {isLoading ? (
             Array(5).fill(0).map((_, i) => (
               <div key={i} className="h-24 rounded-2xl bg-elevated/20 animate-pulse border border-border-subtle" />
             ))
-          ) : signals?.length === 0 ? (
+          ) : filteredSignals.length === 0 ? (
             <div className="py-20 text-center space-y-4">
               <div className="w-12 h-12 rounded-full bg-elevated mx-auto flex items-center justify-center text-text-muted">
                 <ShieldAlert size={24} />
               </div>
-              <div className="text-[10px] font-black uppercase text-text-muted tracking-widest">Scanning signal frequencies...</div>
+              <div className="text-[10px] font-black uppercase text-text-muted tracking-widest">No matching signals found in current frequency.</div>
             </div>
-          ) : signals?.map((signal, index) => (
+          ) : filteredSignals.map((signal, index) => (
             <div 
               key={signal.id} 
               style={{ transitionDelay: `${index * 50}ms` }}
@@ -133,7 +197,7 @@ export default function SignalsPage() {
                 getSignalDecay(signal.createdAt)
               )}
             >
-              <GradientBorder active={signal.confidence >= 90}>
+              <GradientBorder active={signal.confidence >= 85}>
                 <SpotlightCard 
                   className={cn(
                     "p-6 cursor-pointer group transition-all h-full bg-transparent border-none",

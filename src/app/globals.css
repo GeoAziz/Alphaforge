@@ -82,7 +82,63 @@
   }
 }
 
-/* Utilities */
+@layer utilities {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  .pl-safe {
+    padding-left: env(safe-area-inset-left);
+  }
+  .pr-safe {
+    padding-right: env(safe-area-inset-right);
+  }
+  
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+}
+
+/* Keyframes */
+@keyframes price-flash-up {
+  0% { background-color: rgba(52, 211, 153, 0.3); }
+  100% { background-color: transparent; }
+}
+
+@keyframes price-flash-down {
+  0% { background-color: rgba(248, 113, 113, 0.3); }
+  100% { background-color: transparent; }
+}
+
+@keyframes page-entrance {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes gradient-xy {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes terminal-pulse {
+  0%, 100% { opacity: 0.2; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.02); }
+}
+
+@keyframes anomaly-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(248, 113, 113, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0); }
+}
+
+/* Classes */
 .text-text-primary { color: var(--text-primary); }
 .text-text-secondary { color: var(--text-secondary); }
 .text-text-muted { color: var(--text-muted); }
@@ -90,6 +146,10 @@
 .font-mono {
   font-variant-numeric: tabular-nums;
   @apply font-code;
+}
+
+.gradient-text {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-primary via-accent to-primary bg-[length:200%_auto] animate-gradient-xy;
 }
 
 .glass {
@@ -113,51 +173,20 @@
   z-index: 100;
 }
 
-@keyframes price-flash-up {
-  0% { background-color: rgba(52, 211, 153, 0.3); }
-  100% { background-color: transparent; }
+.animate-price-up { animation: price-flash-up 0.6s var(--ease-out) forwards; }
+.animate-price-down { animation: price-flash-down 0.6s var(--ease-out) forwards; }
+.animate-page { animation: page-entrance 0.4s var(--ease-out) forwards; }
+.animate-gradient-xy { animation: gradient-xy 15s linear infinite; }
+.animate-terminal-pulse { animation: terminal-pulse 4s var(--ease-in-out) infinite; }
+.animate-anomaly { animation: anomaly-pulse 2s infinite; }
+
+.animate-skeleton {
+  background: linear-gradient(90deg, var(--elevated) 25%, var(--border-subtle) 50%, var(--elevated) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite linear;
 }
 
-@keyframes price-flash-down {
-  0% { background-color: rgba(248, 113, 113, 0.3); }
-  100% { background-color: transparent; }
-}
-
-.animate-price-up {
-  animation: price-flash-up 0.6s var(--ease-out) forwards;
-}
-
-.animate-price-down {
-  animation: price-flash-down 0.6s var(--ease-out) forwards;
-}
-
-@keyframes page-entrance {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.animate-page {
-  animation: page-entrance 0.4s var(--ease-out) forwards;
-}
-
-@keyframes slide-in-step {
-  from { opacity: 0; transform: translateX(40px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes slide-out-step {
-  from { opacity: 1; transform: translateX(0); }
-  to { opacity: 0; transform: translateX(-40px); }
-}
-
-.animate-step-in {
-  animation: slide-in-step 0.4s var(--ease-out) forwards;
-}
-
-.animate-step-out {
-  animation: slide-out-step 0.4s var(--ease-out) forwards;
-}
-
+/* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after {
     animation-delay: -1ms !important;
@@ -168,12 +197,12 @@
     transition-duration: 0s !important;
     transition-delay: 0s !important;
   }
+  .animate-page, .animate-gradient-xy, .animate-skeleton, .animate-terminal-pulse {
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
 }
 
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }

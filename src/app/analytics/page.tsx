@@ -22,7 +22,7 @@ import {
   Tooltip
 } from 'recharts';
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { Activity, PieChart as PieIcon, BarChart3, ShieldAlert, Cpu, Network, Zap, ShieldCheck, Timer } from 'lucide-react';
+import { Activity, PieChart as PieIcon, BarChart3, ShieldAlert, Cpu, Network, Zap, ShieldCheck, Timer, TrendingUp } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 
@@ -41,6 +41,16 @@ const accuracyHistory = [
   { time: '16:00', accuracy: 86 },
   { time: '20:00', accuracy: 84 },
   { time: '23:59', accuracy: 85 },
+];
+
+const winRateData = [
+  { day: 'Mon', rate: 65 },
+  { day: 'Tue', rate: 72 },
+  { day: 'Wed', rate: 68 },
+  { day: 'Thu', rate: 75 },
+  { day: 'Fri', rate: 82 },
+  { day: 'Sat', rate: 78 },
+  { day: 'Sun', rate: 70 },
 ];
 
 export default function AnalyticsPage() {
@@ -76,7 +86,7 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="p-8 space-y-8 pb-20">
+    <div className="p-8 space-y-8 pb-32">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <header className="space-y-1">
           <h1 className="text-3xl font-black tracking-tight uppercase">System Analytics</h1>
@@ -84,16 +94,12 @@ export default function AnalyticsPage() {
         </header>
 
         <div className="flex items-center gap-4">
-          <div className="hidden lg:flex items-center gap-2 text-[9px] font-black uppercase text-green bg-green/10 px-3 py-1 rounded-full border border-green/20">
-            <div className="w-1.5 h-1.5 rounded-full bg-green animate-pulse" />
-            Live Network Feed Active
-          </div>
           <Tabs value={timeframe} onValueChange={setTimeframe} className="w-fit">
             <TabsList className="bg-elevated/50 p-1 rounded-xl h-10">
-              <TabsTrigger value="7d" className="text-[10px] font-black uppercase px-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg transition-all">7D</TabsTrigger>
-              <TabsTrigger value="30d" className="text-[10px] font-black uppercase px-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg transition-all">30D</TabsTrigger>
-              <TabsTrigger value="90d" className="text-[10px] font-black uppercase px-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg transition-all">90D</TabsTrigger>
-              <TabsTrigger value="all" className="text-[10px] font-black uppercase px-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg transition-all">All</TabsTrigger>
+              <TabsTrigger value="7d" className="text-[10px] font-black uppercase px-4 data-[state=active]:bg-primary rounded-lg">7D</TabsTrigger>
+              <TabsTrigger value="30d" className="text-[10px] font-black uppercase px-4 data-[state=active]:bg-primary rounded-lg">30D</TabsTrigger>
+              <TabsTrigger value="90d" className="text-[10px] font-black uppercase px-4 data-[state=active]:bg-primary rounded-lg">90D</TabsTrigger>
+              <TabsTrigger value="all" className="text-[10px] font-black uppercase px-4 data-[state=active]:bg-primary rounded-lg">All</TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
@@ -158,136 +164,105 @@ export default function AnalyticsPage() {
       </div>
 
       <div className="grid grid-cols-12 gap-6">
-        {/* Alpha Distribution Chart */}
-        <SpotlightCard className="col-span-12 lg:col-span-8 p-8 border-primary/10">
+        {/* Main Equity Curve with Terminal Glow */}
+        <SpotlightCard className="col-span-12 p-8 border-primary/10 relative overflow-hidden">
           <div className="flex items-center justify-between mb-8">
             <div className="space-y-1">
               <h3 className="text-sm font-bold uppercase text-text-muted flex items-center gap-2">
-                <BarChart3 size={16} className="text-primary" />
-                Strategy Performance Alpha Map
+                <TrendingUp size={16} className="text-primary" />
+                Aggregated Network Equity Curve
               </h3>
-              <p className="text-[10px] text-text-muted font-bold uppercase">Comparing Win Rate vs ROI across top clusters</p>
+              <p className="text-[10px] text-text-muted font-bold uppercase">Combined alpha from all authorized institutional clusters</p>
             </div>
-            <div className="flex gap-4">
+            <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded bg-primary" />
-                <span className="text-[9px] font-black uppercase text-text-muted">Win Rate</span>
+                <span className="text-[9px] font-black uppercase text-text-muted">Equity</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded bg-green" />
-                <span className="text-[9px] font-black uppercase text-text-muted">ROI %</span>
+                <div className="w-2 h-2 rounded bg-red/40" />
+                <span className="text-[9px] font-black uppercase text-text-muted">Drawdown</span>
               </div>
             </div>
           </div>
-          <div className="h-[350px] w-full">
-            {isLoading ? (
-              <div className="h-full w-full flex items-center justify-center text-[10px] font-black uppercase text-text-muted animate-pulse">Syncing Strategy Cluster Data...</div>
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={strategyData}>
-                  <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                  <XAxis 
-                    dataKey="name" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fill: 'var(--text-muted)', fontSize: 10, fontWeight: 900 }} 
-                  />
-                  <YAxis 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fill: 'var(--text-muted)', fontSize: 10, fontWeight: 900 }} 
-                  />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px' }}
-                    itemStyle={{ color: 'var(--text-primary)', fontWeight: 'bold', fontSize: '10px' }}
-                  />
-                  <Bar dataKey="winRate" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="roi" fill="var(--green)" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-        </SpotlightCard>
-
-        {/* Asset Concentration Pie */}
-        <SpotlightCard className="col-span-12 lg:col-span-4 p-8">
-          <div className="space-y-1 mb-8">
-            <h3 className="text-sm font-bold uppercase text-text-muted flex items-center gap-2">
-              <PieIcon size={16} className="text-accent" />
-              Asset Concentration
-            </h3>
-            <p className="text-[10px] text-text-muted font-bold uppercase">Exposure by network asset</p>
-          </div>
-          <div className="h-[250px] w-full relative">
+          <div className="h-[400px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={assetDistribution}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {assetDistribution.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
+              <AreaChart data={accuracyHistory}>
+                <defs>
+                  <linearGradient id="colorEquity" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 10, fontWeight: 900 }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 10, fontWeight: 900 }} />
                 <Tooltip 
                   contentStyle={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px' }}
                   itemStyle={{ color: 'var(--text-primary)', fontWeight: 'bold', fontSize: '10px' }}
                 />
-              </PieChart>
+                <Area type="monotone" dataKey="accuracy" stroke="hsl(var(--primary))" strokeWidth={3} fill="url(#colorEquity)" animationDuration={2000} />
+              </AreaChart>
             </ResponsiveContainer>
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-2xl font-black leading-none">AF</span>
-              <span className="text-[8px] font-black uppercase text-text-muted">Core</span>
-            </div>
           </div>
-          <div className="grid grid-cols-2 gap-3 mt-6">
-            {assetDistribution.map((asset) => (
-              <div key={asset.name} className="flex items-center gap-2 p-2 rounded-lg bg-elevated/20 border border-border-subtle">
-                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: asset.color }} />
-                <span className="text-[10px] font-black uppercase text-text-muted">{asset.name}: {asset.value}%</span>
-              </div>
-            ))}
+          {/* Terminal Glow at right edge */}
+          <div className="absolute top-[20%] right-8 w-1 h-[60%] bg-primary shadow-[0_0_30px_rgba(96,165,250,0.8)] animate-pulse rounded-full opacity-50" />
+        </SpotlightCard>
+
+        {/* 4 Performance Charts */}
+        <SpotlightCard className="col-span-12 lg:col-span-6 p-6">
+          <h3 className="text-xs font-black uppercase tracking-widest text-text-muted mb-6">Win Rate Distribution</h3>
+          <div className="h-[250px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={winRateData}>
+                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 9 }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 9 }} />
+                <Bar dataKey="rate" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </SpotlightCard>
 
-        {/* Accuracy Over Time */}
-        <SpotlightCard className="col-span-12 p-8">
-          <div className="flex items-center justify-between mb-8">
-            <div className="space-y-1">
-              <h3 className="text-sm font-bold uppercase text-text-muted flex items-center gap-2">
-                <Activity size={16} className="text-green" />
-                Network Signal Consensus Accuracy (24H)
-              </h3>
-              <p className="text-[10px] text-text-muted font-bold uppercase">Stability of algorithmic predictions against tick results</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green animate-pulse" />
-              <span className="text-[10px] font-black text-green uppercase">Peak Accuracy: 88.2%</span>
+        <SpotlightCard className="col-span-12 lg:col-span-6 p-6">
+          <h3 className="text-xs font-black uppercase tracking-widest text-text-muted mb-6">Consensus Accuracy</h3>
+          <div className="h-[250px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={accuracyHistory}>
+                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 9 }} />
+                <Area type="monotone" dataKey="accuracy" stroke="var(--green)" fill="var(--green)" fillOpacity={0.1} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </SpotlightCard>
+
+        <SpotlightCard className="col-span-12 lg:col-span-4 p-6">
+          <h3 className="text-xs font-black uppercase tracking-widest text-text-muted mb-6">Asset Concentration</h3>
+          <div className="h-[250px] relative">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={assetDistribution} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
+                  {assetDistribution.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <span className="text-xl font-black">AF</span>
+              <span className="text-[8px] font-black uppercase text-text-muted">CORE</span>
             </div>
           </div>
-          <div className="h-[250px] w-full">
-             <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={accuracyHistory}>
-                  <defs>
-                    <linearGradient id="colorAccuracy" x1="0" x2="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--green)" stopOpacity={0.2}/>
-                      <stop offset="95%" stopColor="var(--green)" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                  <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 10, fontWeight: 900 }} />
-                  <YAxis domain={[70, 100]} axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 10, fontWeight: 900 }} />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px' }}
-                    itemStyle={{ color: 'var(--text-primary)', fontWeight: 'bold', fontSize: '10px' }}
-                  />
-                  <Area type="monotone" dataKey="accuracy" stroke="var(--green)" fillOpacity={1} fill="url(#colorAccuracy)" strokeWidth={2} />
-                </AreaChart>
+        </SpotlightCard>
+
+        <SpotlightCard className="col-span-12 lg:col-span-8 p-6">
+          <h3 className="text-xs font-black uppercase tracking-widest text-text-muted mb-6">Strategy Performance Map</h3>
+          <div className="h-[250px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={strategyData}>
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 9 }} />
+                <Bar dataKey="winRate" fill="hsl(var(--primary))" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="roi" fill="var(--green)" radius={[2, 2, 0, 0]} />
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </SpotlightCard>

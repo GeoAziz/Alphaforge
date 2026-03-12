@@ -1,4 +1,14 @@
-import { MarketTicker, MarketSentiment, FundingRate, OpenInterest, OnChainActivity, LiquidationCluster } from '@/lib/types';
+import { 
+  MarketTicker, 
+  MarketSentiment, 
+  FundingRate, 
+  OpenInterest, 
+  OnChainActivity, 
+  LiquidationCluster,
+  TrendIndicator,
+  SocialSentimentDetail,
+  OnChainMetricDetail
+} from '@/lib/types';
 
 export const mockTickers: MarketTicker[] = [
   { id: 'btc-usdt', asset: 'BTCUSDT', price: 68420.50, change24h: 2.45, change24hAbs: 1640.20, volume24h: 1240000000, high24h: 69200, low24h: 66800 },
@@ -28,7 +38,8 @@ export const mockFundingRates: FundingRate[] = [
 
 export const mockOpenInterest: OpenInterest[] = [
   { id: 'oi-1', asset: 'BTCUSDT', value: 12400000000, change24h: 4.2 },
-  { id: 'oi-2', asset: 'ETHUSDT', value: 8500000000, change24h: -1.5 }
+  { id: 'oi-2', asset: 'ETHUSDT', value: 8500000000, change24h: -1.5 },
+  { id: 'oi-3', asset: 'SOLUSDT', value: 2100000000, change24h: 8.4 }
 ];
 
 export const mockOnChainActivity: OnChainActivity[] = [
@@ -43,4 +54,39 @@ export const mockLiquidationClusters: LiquidationCluster[] = [
   { asset: 'SOL', value: 15, type: 'long' },
   { asset: 'LINK', value: 10, type: 'short' },
   { asset: 'ARB', value: 5, type: 'long' }
+];
+
+export const mockTrendIndicators: TrendIndicator[] = [
+  { asset: 'BTC', strength: 82, bias: 'Bullish', ma20: 67200, ma50: 64500, ma200: 58900 },
+  { asset: 'ETH', strength: 45, bias: 'Neutral', ma20: 3480, ma50: 3350, ma200: 2900 },
+  { asset: 'SOL', strength: 91, bias: 'Bullish', ma20: 138, ma50: 125, ma200: 98 },
+  { asset: 'ARB', strength: 22, bias: 'Bearish', ma20: 1.92, ma50: 2.05, ma200: 2.15 }
+];
+
+export const mockSocialSentimentDetails: SocialSentimentDetail[] = [
+  {
+    asset: 'BTC',
+    score: 78,
+    sources: [
+      { name: 'X (Twitter)', weight: 0.45, sentiment: 'Bullish' },
+      { name: 'Institutional News', weight: 0.35, sentiment: 'Neutral' },
+      { name: 'Reddit/Crypto', weight: 0.20, sentiment: 'Bullish' }
+    ]
+  },
+  {
+    asset: 'SOL',
+    score: 92,
+    sources: [
+      { name: 'X (Twitter)', weight: 0.50, sentiment: 'Bullish' },
+      { name: 'Developer Activity', weight: 0.30, sentiment: 'Bullish' },
+      { name: 'Sentiment Flows', weight: 0.20, sentiment: 'Bullish' }
+    ]
+  }
+];
+
+export const mockOnChainMetricDetails: OnChainMetricDetail[] = [
+  { asset: 'BTC', name: 'MVRV Z-Score', value: '2.45', status: 'Neutral', change24h: 1.2 },
+  { asset: 'BTC', name: 'SOPR (7D)', value: '1.04', status: 'Undervalued', change24h: -0.5 },
+  { asset: 'ETH', name: 'Exchange Reserve', value: '12.4M', status: 'Neutral', change24h: -2.1 },
+  { asset: 'ETH', name: 'Net Flow (24H)', value: '+$42M', status: 'Overvalued', change24h: 5.4 }
 ];

@@ -5,7 +5,7 @@ import { useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebas
 import { collection, query } from 'firebase/firestore';
 import { SpotlightCard } from '@/components/shared/spotlight-card';
 import { BacktestResult, Strategy } from '@/lib/types';
-import { Play, FlaskConical, Settings2, Loader2, Calendar, DollarSign, ShieldAlert, Zap, TrendingUp, Activity } from 'lucide-react';
+import { Play, FlaskConical, Settings2, Loader2, Calendar, DollarSign, ShieldAlert, Zap, TrendingUp, Activity, BarChart3, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
@@ -16,10 +16,12 @@ import {
   XAxis, 
   YAxis,
   CartesianGrid,
-  ResponsiveContainer
+  ResponsiveContainer,
+  Tooltip
 } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
 
 export default function BacktestingPage() {
   const { user } = useUser();
@@ -55,7 +57,6 @@ export default function BacktestingPage() {
     setIsRunning(true);
     setResults(null);
     
-    // Simulate high-compute institutional simulation
     setTimeout(() => {
       setResults({
         id: 'res-' + Math.random().toString(36).substr(2, 9),
@@ -82,17 +83,17 @@ export default function BacktestingPage() {
             <FlaskConical size={32} />
           </div>
           <h2 className="text-2xl font-black uppercase">Simulation Restricted</h2>
-          <p className="text-sm text-text-muted">Connect your session to access the institutional strategy backtesting lab and historical risk analyzers.</p>
+          <p className="text-sm text-text-muted">Connect your session to access the institutional strategy backtesting lab.</p>
         </SpotlightCard>
       </div>
     );
   }
 
   return (
-    <div className="p-8 space-y-8 pb-20">
+    <div className="p-8 space-y-8 pb-32">
       <header className="space-y-1">
         <h1 className="text-3xl font-black tracking-tight uppercase">Backtesting Lab</h1>
-        <p className="text-muted-foreground text-sm">Simulate institutional algorithmic performance against high-resolution historical market data.</p>
+        <p className="text-muted-foreground text-sm">Simulate institutional algorithmic performance against historical tick data.</p>
       </header>
 
       <div className="grid grid-cols-12 gap-8">
@@ -106,7 +107,7 @@ export default function BacktestingPage() {
               </h3>
               
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-text-muted">Algorithm Selection</label>
+                <Label className="text-[10px] font-black uppercase text-text-muted">Algorithm Selection</Label>
                 <Select onValueChange={setSelectedStrategy}>
                   <SelectTrigger className="bg-elevated/50 border-border-subtle h-12">
                     <SelectValue placeholder="Select Strategy Cluster" />
@@ -122,7 +123,7 @@ export default function BacktestingPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-text-muted">Asset Cluster</label>
+                  <Label className="text-[10px] font-black uppercase text-text-muted">Asset Cluster</Label>
                   <Select defaultValue="BTCUSDT">
                     <SelectTrigger className="bg-elevated/50 border-border-subtle h-12">
                       <SelectValue />
@@ -135,7 +136,7 @@ export default function BacktestingPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-text-muted">Resolution</label>
+                  <Label className="text-[10px] font-black uppercase text-text-muted">Resolution</Label>
                   <Select defaultValue="1h">
                     <SelectTrigger className="bg-elevated/50 border-border-subtle h-12">
                       <SelectValue />
@@ -150,21 +151,21 @@ export default function BacktestingPage() {
                 </div>
               </div>
 
-              <div className="space-y-6 py-2">
+              <div className="space-y-6">
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <label className="text-[10px] font-black uppercase text-text-muted">Capital Exposure (%)</label>
-                    <span className="text-xs font-bold text-primary">2.5%</span>
+                    <Label className="text-[10px] font-black uppercase text-text-muted">Initial Capital</Label>
+                    <span className="text-xs font-bold text-primary">$10,000</span>
                   </div>
-                  <Slider defaultValue={[2.5]} max={10} step={0.1} className="py-2" />
+                  <Input type="number" defaultValue={10000} className="bg-elevated/30 border-border-subtle h-12" />
                 </div>
                 
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <label className="text-[10px] font-black uppercase text-text-muted">Initial Liquidity</label>
-                    <span className="text-xs font-bold text-primary">$10,000</span>
+                    <Label className="text-[10px] font-black uppercase text-text-muted">Risk Per Trade (%)</Label>
+                    <span className="text-xs font-bold text-primary">2.5%</span>
                   </div>
-                  <Input type="number" defaultValue={10000} className="bg-elevated/30 border-border-subtle h-12" />
+                  <Slider defaultValue={[2.5]} max={10} step={0.1} />
                 </div>
               </div>
 
@@ -174,8 +175,14 @@ export default function BacktestingPage() {
                   <span className="text-[10px] font-black uppercase">Historical Window</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="text-[9px] font-bold text-text-muted uppercase">Start: 2024-01-01</div>
-                  <div className="text-[9px] font-bold text-text-muted uppercase">End: 2024-03-01</div>
+                  <div className="space-y-1">
+                    <Label className="text-[8px] font-bold text-text-muted uppercase">Start Date</Label>
+                    <Input type="date" defaultValue="2024-01-01" className="h-8 bg-surface text-[10px] uppercase font-bold" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[8px] font-bold text-text-muted uppercase">End Date</Label>
+                    <Input type="date" defaultValue="2024-03-01" className="h-8 bg-surface text-[10px] uppercase font-bold" />
+                  </div>
                 </div>
               </div>
             </div>
@@ -183,7 +190,7 @@ export default function BacktestingPage() {
             <Button 
               onClick={handleRunBacktest}
               disabled={isRunning || !selectedStrategy}
-              className="w-full h-14 bg-primary text-primary-foreground font-black uppercase text-xs hover:opacity-90 transition-all gap-2 shadow-[0_0_25px_rgba(96,165,250,0.3)] rounded-2xl"
+              className="w-full h-14 bg-primary text-primary-foreground font-black uppercase text-xs rounded-2xl shadow-lg"
             >
               {isRunning ? <Loader2 className="animate-spin" size={18} /> : <Play size={18} />}
               Execute Historical Simulation
@@ -194,143 +201,67 @@ export default function BacktestingPage() {
         {/* Results Panel */}
         <div className="col-span-12 lg:col-span-8 space-y-6">
           {isRunning ? (
-            <div className="h-full min-h-[600px] flex flex-col items-center justify-center space-y-6 rounded-2xl border border-border-subtle bg-surface/30 backdrop-blur-md">
-              <div className="relative">
-                <div className="w-24 h-24 rounded-full border-2 border-primary/20 animate-ping absolute inset-0" />
-                <div className="w-24 h-24 rounded-full border-t-2 border-primary animate-spin" />
-              </div>
-              <div className="text-center space-y-2">
-                <h3 className="text-xl font-black uppercase tracking-widest text-primary animate-pulse">Computing Alpha Cluster</h3>
-                <p className="text-[10px] font-bold text-text-muted uppercase tracking-tighter">Syncing node telemetry with historical tick data...</p>
+            <div className="h-[600px] flex flex-col items-center justify-center space-y-6 rounded-2xl border border-border-subtle bg-surface/30 backdrop-blur-md">
+              <Loader2 className="animate-spin text-primary" size={48} />
+              <div className="text-center">
+                <h3 className="text-xl font-black uppercase text-primary animate-pulse">Computing Alpha Cluster</h3>
+                <p className="text-[10px] font-bold text-text-muted uppercase">Syncing telemetry with historical tick data...</p>
               </div>
             </div>
           ) : results ? (
-            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-              {/* Primary Stats Grid */}
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <SpotlightCard className="p-6 border-green/20 bg-green/5">
                   <div className="text-[9px] font-black uppercase text-text-muted mb-2 flex items-center gap-1">
-                    <TrendingUp size={10} className="text-green" /> Total ROI
+                    <TrendingUp size={10} className="text-green" /> ROI
                   </div>
                   <div className="text-3xl font-black text-green">+{results.roi}%</div>
-                  <div className="text-[8px] font-bold text-green/70 uppercase mt-1">Institutional Grade</div>
                 </SpotlightCard>
                 <SpotlightCard className="p-6">
                   <div className="text-[9px] font-black uppercase text-text-muted mb-2">Win Rate</div>
-                  <div className="text-3xl font-black text-text-primary">{results.winRate}%</div>
-                  <div className="text-[8px] font-bold text-text-muted uppercase mt-1">97/142 Resolved</div>
+                  <div className="text-3xl font-black">{results.winRate}%</div>
                 </SpotlightCard>
                 <SpotlightCard className="p-6 border-primary/20 bg-primary/5">
                   <div className="text-[9px] font-black uppercase text-text-muted mb-2">Sharpe Ratio</div>
                   <div className="text-3xl font-black text-primary">{results.sharpeRatio}</div>
-                  <div className="text-[8px] font-bold text-primary/70 uppercase mt-1">Risk Adjusted</div>
                 </SpotlightCard>
                 <SpotlightCard className="p-6 border-red/20 bg-red/5">
-                  <div className="text-[9px] font-black uppercase text-text-muted mb-2">Max Drawdown</div>
+                  <div className="text-[9px] font-black uppercase text-text-muted mb-2">Drawdown</div>
                   <div className="text-3xl font-black text-red">{results.maxDrawdown}%</div>
-                  <div className="text-[8px] font-bold text-red/70 uppercase mt-1">Peak-to-Trough</div>
                 </SpotlightCard>
               </div>
 
-              {/* Secondary Metrics */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-4 rounded-xl bg-elevated/20 border border-border-subtle flex justify-between items-center">
-                  <span className="text-[10px] font-black uppercase text-text-muted">Profit Factor</span>
-                  <span className="font-mono font-bold text-green">{results.profitFactor}</span>
-                </div>
-                <div className="p-4 rounded-xl bg-elevated/20 border border-border-subtle flex justify-between items-center">
-                  <span className="text-[10px] font-black uppercase text-text-muted">Sortino Ratio</span>
-                  <span className="font-mono font-bold text-primary">{results.sortinoRatio}</span>
-                </div>
-                <div className="p-4 rounded-xl bg-elevated/20 border border-border-subtle flex justify-between items-center">
-                  <span className="text-[10px] font-black uppercase text-text-muted">Recovery Factor</span>
-                  <span className="font-mono font-bold">3.64</span>
-                </div>
-              </div>
-
-              {/* Equity Chart */}
-              <SpotlightCard className="p-8 border-primary/10">
-                <div className="flex items-center justify-between mb-10">
-                  <h3 className="text-sm font-bold uppercase text-text-muted flex items-center gap-2">
-                    <Activity size={16} className="text-primary" />
-                    Equity Curve & Drawdown Analysis
-                  </h3>
-                  <div className="flex gap-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-primary" />
-                      <span className="text-[9px] font-black uppercase text-text-muted">Equity</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-red/40" />
-                      <span className="text-[9px] font-black uppercase text-text-muted">Drawdown</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="h-[400px] w-full pb-4">
-                   <ResponsiveContainer width="100%" height="100%">
+              <SpotlightCard className="p-8 border-primary/10 relative overflow-hidden">
+                <h3 className="text-sm font-bold uppercase text-text-muted flex items-center gap-2 mb-8">
+                  <Activity size={16} className="text-primary" />
+                  Equity Curve Simulation
+                </h3>
+                <div className="h-[400px]">
+                  <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={performanceData}>
                       <defs>
-                        <linearGradient id="colorEquity" x1="0" y1="0" x2="0" y2="1">
+                        <linearGradient id="colorEquityLab" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
                           <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
                         </linearGradient>
-                        <linearGradient id="colorDD" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="var(--red)" stopOpacity={0.1}/>
-                          <stop offset="95%" stopColor="var(--red)" stopOpacity={0}/>
-                        </linearGradient>
                       </defs>
                       <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                      <XAxis 
-                        dataKey="date" 
-                        axisLine={false} 
-                        tickLine={false} 
-                        tick={{ fill: 'var(--text-muted)', fontSize: 10, fontWeight: 900 }}
-                      />
-                      <YAxis 
-                        axisLine={false} 
-                        tickLine={false} 
-                        tick={{ fill: 'var(--text-muted)', fontSize: 10, fontWeight: 900 }}
-                        tickFormatter={(v) => `$${v/1000}k`}
-                      />
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                      <Area 
-                        type="monotone" 
-                        dataKey="equity" 
-                        stroke="hsl(var(--primary))" 
-                        strokeWidth={3}
-                        fillOpacity={1} 
-                        fill="url(#colorEquity)" 
-                        animationDuration={2000}
-                      />
-                      <Area 
-                        type="monotone" 
-                        dataKey="dd" 
-                        stroke="var(--red)" 
-                        strokeWidth={1}
-                        fillOpacity={1} 
-                        fill="url(#colorDD)" 
-                        animationDuration={2000}
-                      />
+                      <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 10, fontWeight: 900 }} />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 10, fontWeight: 900 }} />
+                      <Tooltip contentStyle={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px' }} />
+                      <Area type="monotone" dataKey="equity" stroke="hsl(var(--primary))" strokeWidth={3} fill="url(#colorEquityLab)" animationDuration={2000} />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
-                <div className="mt-6 flex items-center justify-center gap-2 text-[9px] font-black uppercase text-text-muted italic opacity-50">
-                  <Zap size={10} /> Terminal Glow Active: Line termination visualization processing...
-                </div>
+                <div className="absolute top-[20%] right-8 w-1 h-[60%] bg-primary shadow-[0_0_30px_rgba(96,165,250,0.8)] animate-pulse rounded-full opacity-50" />
               </SpotlightCard>
             </div>
           ) : (
-            <div className="h-full min-h-[600px] flex flex-col items-center justify-center text-center space-y-6 rounded-2xl border border-dashed border-border-subtle bg-surface/30 group hover:bg-surface/40 transition-colors">
-              <div className="w-20 h-20 rounded-full bg-elevated/50 flex items-center justify-center text-text-muted group-hover:scale-110 group-hover:text-primary transition-all duration-500">
-                <FlaskConical size={40} />
-              </div>
+            <div className="h-[600px] flex flex-col items-center justify-center text-center space-y-6 rounded-2xl border border-dashed border-border-subtle bg-surface/30">
+              <FlaskConical size={40} className="text-text-muted" />
               <div className="space-y-2 max-w-xs">
-                <h3 className="text-xl font-black uppercase tracking-tight">Simulation Cluster Idle</h3>
-                <p className="text-xs text-text-muted leading-relaxed">Configure your algorithmic strategy parameters and run the executor to visualize institutional performance curves.</p>
-              </div>
-              <div className="flex gap-2">
-                <Badge variant="outline" className="text-[8px] font-black uppercase opacity-50">Tick Data: 2024-Q1 Ready</Badge>
-                <Badge variant="outline" className="text-[8px] font-black uppercase opacity-50">Node: Local Core 01</Badge>
+                <h3 className="text-xl font-black uppercase">Simulation Cluster Idle</h3>
+                <p className="text-xs text-text-muted">Configure strategy parameters and execute the lab to visualize performance curves.</p>
               </div>
             </div>
           )}

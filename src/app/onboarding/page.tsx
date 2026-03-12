@@ -35,6 +35,15 @@ const RISK_LEVELS = [
   { id: 'aggressive', label: 'Aggressive', description: 'High-frequency pursuit of alpha with significant exposure.', icon: TrendingUp },
 ];
 
+/**
+ * OnboardingPage
+ * 
+ * Accessibility refinements:
+ * - Semantic landmarks
+ * - Progress indicators with labels
+ * - Explicit labels for all inputs
+ * - Live regions for status updates
+ */
 export default function OnboardingPage() {
   const { user, isUserLoading } = useUser();
   const db = useFirestore();
@@ -89,8 +98,9 @@ export default function OnboardingPage() {
 
   if (isUserLoading) {
     return (
-      <div className="h-screen w-full flex items-center justify-center bg-background">
+      <div className="h-screen w-full flex items-center justify-center bg-background" aria-live="assertive">
         <Loader2 className="animate-spin text-primary" size={32} />
+        <span className="sr-only">Initializing node session...</span>
       </div>
     );
   }
@@ -99,13 +109,13 @@ export default function OnboardingPage() {
     <div className="h-screen w-full flex items-center justify-center bg-background p-6 overflow-hidden">
       <div className="max-w-2xl w-full space-y-8">
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary mb-4 font-black text-primary-foreground shadow-[0_0_20px_rgba(96,165,250,0.4)]">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary mb-4 font-black text-primary-foreground shadow-[0_0_20px_rgba(96,165,250,0.4)]" aria-hidden="true">
             AF
           </div>
           <h1 className="text-4xl font-black uppercase tracking-tighter">Terminal Initialization</h1>
           
           {/* Progress Stepper */}
-          <div className="flex items-center justify-center gap-2 mt-6">
+          <div className="flex items-center justify-center gap-2 mt-6" aria-label={`Step ${step} of 6`}>
             {Array.from({ length: 6 }).map((_, i) => (
               <div 
                 key={i} 
@@ -113,30 +123,38 @@ export default function OnboardingPage() {
                   "h-1 rounded-full transition-all duration-500",
                   step === i + 1 ? "w-8 bg-primary" : i + 1 < step ? "w-4 bg-primary/40" : "w-4 bg-elevated"
                 )}
+                aria-hidden="true"
               />
             ))}
           </div>
         </div>
 
-        <div className={cn(
-          "transition-all duration-500",
-          direction === 'next' ? "animate-step-in" : "animate-step-in"
-        )} key={step}>
+        <div 
+          role="region" 
+          aria-labelledby="step-title"
+          className={cn(
+            "transition-all duration-500",
+            direction === 'next' ? "animate-step-in" : "animate-step-in"
+          )} 
+          key={step}
+        >
           <SpotlightCard className="p-10 shadow-2xl border-primary/10 bg-surface/50 backdrop-blur-xl">
             {step === 1 && (
               <div className="space-y-8">
                 <div className="space-y-4">
-                  <h2 className="text-xl font-black uppercase tracking-tight">Identity Handshake</h2>
+                  <h2 id="step-title" className="text-xl font-black uppercase tracking-tight">Identity Handshake</h2>
                   <p className="text-sm text-text-muted leading-relaxed uppercase font-bold text-[10px]">
                     Step 1: AlphaForge requires a node identifier for session persistence and institutional reporting.
                   </p>
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase text-text-muted">Display Name</Label>
+                    <Label htmlFor="node-name" className="text-[10px] font-black uppercase text-text-muted">Display Name</Label>
                     <Input 
+                      id="node-name"
                       value={name} 
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Enter your node identifier..."
                       className="h-14 bg-elevated/50 border-border-subtle focus:ring-primary/20 font-bold"
+                      aria-required="true"
                     />
                   </div>
                 </div>
@@ -153,15 +171,15 @@ export default function OnboardingPage() {
             {step === 2 && (
               <div className="space-y-8">
                 <div className="space-y-4">
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-4" aria-hidden="true">
                     <Globe size={24} />
                   </div>
-                  <h2 className="text-xl font-black uppercase tracking-tight">Exchange Connectivity</h2>
+                  <h2 id="step-title" className="text-xl font-black uppercase tracking-tight">Exchange Connectivity</h2>
                   <p className="text-sm text-text-muted leading-relaxed">
                     Establish an institutional bridge to your trading platform. AlphaForge uses <span className="text-primary font-bold">idempotent handshake protocols</span> to ensure connection stability.
                   </p>
-                  <div className="p-4 rounded-xl bg-elevated/20 border border-border-subtle flex gap-3 items-start">
-                    <Info size={14} className="text-primary mt-1 shrink-0" />
+                  <div className="p-4 rounded-xl bg-elevated/20 border border-border-subtle flex gap-3 items-start" role="note">
+                    <Info size={14} className="text-primary mt-1 shrink-0" aria-hidden="true" />
                     <p className="text-[10px] font-bold text-text-muted uppercase leading-snug">You can skip this step and use the simulated data stream for now.</p>
                   </div>
                 </div>
@@ -175,11 +193,11 @@ export default function OnboardingPage() {
             {step === 3 && (
               <div className="space-y-8">
                 <div className="space-y-4">
-                  <h2 className="text-xl font-black uppercase tracking-tight">Regime Sensitivity</h2>
+                  <h2 id="step-title" className="text-xl font-black uppercase tracking-tight">Regime Sensitivity</h2>
                   <p className="text-sm text-text-muted leading-relaxed">
                     Select your institutional risk tolerance. This calibrates signal filtering and margin exposure alerts.
                   </p>
-                  <RadioGroup value={risk} onValueChange={setRisk} className="grid grid-cols-1 gap-4">
+                  <RadioGroup value={risk} onValueChange={setRisk} className="grid grid-cols-1 gap-4" aria-labelledby="step-title">
                     {RISK_LEVELS.map((level) => (
                       <div key={level.id}>
                         <RadioGroupItem value={level.id} id={level.id} className="peer sr-only" />
@@ -193,7 +211,7 @@ export default function OnboardingPage() {
                           <div className={cn(
                             "mt-1 w-8 h-8 rounded-lg flex items-center justify-center",
                             risk === level.id ? "bg-primary text-primary-foreground" : "bg-elevated text-text-muted"
-                          )}>
+                          )} aria-hidden="true">
                             <level.icon size={18} />
                           </div>
                           <div className="space-y-1">
@@ -204,9 +222,9 @@ export default function OnboardingPage() {
                       </div>
                     ))}
                   </RadioGroup>
-                  <div className="p-4 rounded-xl bg-red/5 border border-red/10 space-y-2">
+                  <div className="p-4 rounded-xl bg-red/5 border border-red/10 space-y-2" role="alert">
                     <div className="flex items-center gap-2 text-red">
-                      <ShieldAlert size={14} />
+                      <ShieldAlert size={14} aria-hidden="true" />
                       <span className="text-[10px] font-black uppercase">Regulatory Disclosure</span>
                     </div>
                     <p className="text-[9px] text-text-muted font-bold uppercase leading-tight">Past performance is not indicative of future alpha. Trading derivatives involves significant risk.</p>
@@ -222,27 +240,27 @@ export default function OnboardingPage() {
             {step === 4 && (
               <div className="space-y-8">
                 <div className="space-y-4">
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-4" aria-hidden="true">
                     <Bell size={24} />
                   </div>
-                  <h2 className="text-xl font-black uppercase tracking-tight">Notification Nodes</h2>
+                  <h2 id="step-title" className="text-xl font-black uppercase tracking-tight">Notification Nodes</h2>
                   <p className="text-sm text-text-muted leading-relaxed">
                     Enable real-time telemetry for signal execution and risk alerts. AlphaForge nodes synchronize globally for <span className="text-primary font-bold">sub-10ms delivery</span>.
                   </p>
                   <div className="space-y-4 pt-4">
                     <div className="flex items-center justify-between p-4 rounded-xl bg-elevated/20 border border-border-subtle">
                       <div className="space-y-0.5">
-                        <Label className="text-[10px] font-black uppercase">Alpha Signals</Label>
-                        <p className="text-[9px] text-text-muted font-bold uppercase">Real-time trading opportunities</p>
+                        <Label htmlFor="notify-alpha" className="text-[10px] font-black uppercase">Alpha Signals</Label>
+                        <p id="notify-alpha-desc" className="text-[9px] text-text-muted font-bold uppercase">Real-time trading opportunities</p>
                       </div>
-                      <Switch defaultChecked />
+                      <Switch id="notify-alpha" defaultChecked aria-describedby="notify-alpha-desc" />
                     </div>
                     <div className="flex items-center justify-between p-4 rounded-xl bg-elevated/20 border border-border-subtle">
                       <div className="space-y-0.5">
-                        <Label className="text-[10px] font-black uppercase">Risk Alerts</Label>
-                        <p className="text-[9px] text-text-muted font-bold uppercase">Margin and drawdown triggers</p>
+                        <Label htmlFor="notify-risk" className="text-[10px] font-black uppercase">Risk Alerts</Label>
+                        <p id="notify-risk-desc" className="text-[9px] text-text-muted font-bold uppercase">Margin and drawdown triggers</p>
                       </div>
-                      <Switch defaultChecked />
+                      <Switch id="notify-risk" defaultChecked aria-describedby="notify-risk-desc" />
                     </div>
                   </div>
                 </div>
@@ -256,16 +274,16 @@ export default function OnboardingPage() {
             {step === 5 && (
               <div className="space-y-8">
                 <div className="space-y-4">
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-4" aria-hidden="true">
                     <Eye size={24} />
                   </div>
-                  <h2 className="text-xl font-black uppercase tracking-tight">Terminal Walkthrough</h2>
+                  <h2 id="step-title" className="text-xl font-black uppercase tracking-tight">Terminal Walkthrough</h2>
                   <p className="text-sm text-text-muted leading-relaxed">
                     Your institutional workspace is divided into <span className="text-primary font-bold">Intelligence</span>, <span className="text-primary font-bold">Execution</span>, and <span className="text-primary font-bold">Analytics</span> clusters.
                   </p>
                   <div className="p-6 rounded-2xl bg-primary/5 border border-primary/10 space-y-4">
                     <div className="flex items-center gap-3">
-                      <Database size={18} className="text-primary" />
+                      <Database size={18} className="text-primary" aria-hidden="true" />
                       <span className="text-xs font-black uppercase tracking-tight">Immutable Audit Trail</span>
                     </div>
                     <p className="text-[10px] text-text-secondary leading-relaxed font-medium uppercase">Every action in this terminal is logged to an ISO-27001 compliant audit trail for institutional transparency.</p>
@@ -281,16 +299,16 @@ export default function OnboardingPage() {
             {step === 6 && (
               <div className="space-y-8">
                 <div className="space-y-4">
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-4" aria-hidden="true">
                     <Scale size={24} />
                   </div>
-                  <h2 className="text-xl font-black uppercase tracking-tight">Compliance & Data Privacy</h2>
+                  <h2 id="step-title" className="text-xl font-black uppercase tracking-tight">Compliance & Data Privacy</h2>
                   <p className="text-sm text-text-muted leading-relaxed">
                     AlphaForge requires mandatory consent for GDPR/CCPA data handling. We encrypt all institutional PII at rest.
                   </p>
                   <div className="space-y-4 pt-4">
                     <div className="flex items-start gap-3 p-4 rounded-xl bg-elevated/20 border border-border-subtle">
-                      <Checkbox id="gdpr" checked={gdpr} onCheckedChange={(v) => setGdpr(v as boolean)} className="mt-1" />
+                      <Checkbox id="gdpr" checked={gdpr} onCheckedChange={(v) => setGdpr(v as boolean)} className="mt-1" aria-required="true" />
                       <Label htmlFor="gdpr" className="text-[10px] font-bold text-text-muted uppercase leading-snug cursor-pointer">
                         I acknowledge the data retention policies and consent to high-frequency telemetry processing for institutional reporting.
                       </Label>

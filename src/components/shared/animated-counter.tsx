@@ -12,6 +12,7 @@ interface AnimatedCounterProps {
 
 /**
  * AnimatedCounter provides a smooth transition between numerical values.
+ * Respects 'prefers-reduced-motion' by resolving immediately.
  */
 export function AnimatedCounter({ 
   value, 
@@ -20,9 +21,17 @@ export function AnimatedCounter({
   prefix = '',
   suffix = ''
 }: AnimatedCounterProps) {
-  const [displayValue, setDisplayValue] = useState(value);
+  const [displayValue, setDisplayValue] = useState(0);
 
   useEffect(() => {
+    // Check for reduced motion preference
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    
+    if (prefersReducedMotion) {
+      setDisplayValue(value);
+      return;
+    }
+
     let startTimestamp: number | null = null;
     const startValue = displayValue;
 

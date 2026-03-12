@@ -8,10 +8,13 @@ import { PerformanceSummary } from '@/components/dashboard/performance-summary';
 import { MarketOverview } from '@/components/dashboard/market-overview';
 import { MarketHeatmap } from '@/components/dashboard/market-heatmap';
 import { AlphaStream } from '@/components/dashboard/alpha-stream';
+import { MarketSentimentCell } from '@/components/dashboard/market-sentiment';
+import { QuickAlerts } from '@/components/dashboard/quick-alerts';
 import { ShieldAlert, Loader2 } from 'lucide-react';
 import { PortfolioSummary } from '@/lib/types';
 import { EmptyState } from '@/components/shared/empty-state';
 import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
+import { cn } from '@/lib/utils';
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
@@ -52,7 +55,7 @@ export default function DashboardPage() {
 
   return (
     <div className={cn(
-      "p-6 lg:p-8 space-y-8 pb-24 md:pb-10 transition-all duration-700",
+      "p-6 lg:p-8 space-y-8 pb-24 md:pb-10 transition-all duration-1000 ease-out-custom",
       mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
     )}>
       <header className="flex flex-col gap-1">
@@ -60,36 +63,65 @@ export default function DashboardPage() {
         <p className="text-text-secondary text-sm font-medium tracking-tight">Real-time algorithmic consensus and portfolio optimization cluster.</p>
       </header>
 
-      {/* Asymmetric 12-Column Bento Grid */}
+      {/* Institutional 12-Column Asymmetric Bento Grid */}
       <div className="grid grid-cols-12 gap-6 auto-rows-[minmax(180px,auto)]">
         
-        {/* Hero Section: 4 col x 2 row dominant anchor */}
-        <div className="col-span-12 xl:col-span-4 xl:row-span-2">
+        {/* Hero Section: Stagger 0ms */}
+        <div className={cn(
+          "col-span-12 xl:col-span-4 xl:row-span-2 transition-all duration-700",
+          mounted ? "opacity-100 scale-100" : "opacity-0 scale-95"
+        )}>
           <HeroSection summary={summary} isLoading={isSummaryLoading} />
         </div>
 
-        {/* Performance Summary Stats: 8 col */}
-        <div className="col-span-12 xl:col-span-8">
+        {/* Performance Summary Stats: Stagger 100ms */}
+        <div className={cn(
+          "col-span-12 xl:col-span-8 transition-all duration-700 delay-100",
+          mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+        )}>
           <PerformanceSummary summary={summary} isLoading={isSummaryLoading} />
         </div>
 
-        {/* Market Overview: 8 col */}
-        <div className="col-span-12 xl:col-span-8">
+        {/* Market Overview: Stagger 200ms */}
+        <div className={cn(
+          "col-span-12 xl:col-span-8 transition-all duration-700 delay-200",
+          mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+        )}>
           <MarketOverview />
         </div>
 
-        {/* Market Heatmap: 7 col */}
-        <div className="col-span-12 lg:col-span-7">
-          <MarketHeatmap />
+        {/* Market Sentiment Cell: Stagger 300ms */}
+        <div className={cn(
+          "col-span-12 md:col-span-6 xl:col-span-4 transition-all duration-700 delay-300",
+          mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+        )}>
+          <MarketSentimentCell />
         </div>
 
-        {/* Alpha Stream: 5 col */}
-        <div className="col-span-12 lg:col-span-5">
+        {/* Alpha Stream: Stagger 400ms */}
+        <div className={cn(
+          "col-span-12 md:col-span-6 xl:col-span-4 transition-all duration-700 delay-400",
+          mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+        )}>
           <AlphaStream />
+        </div>
+
+        {/* Quick Alerts Node: Stagger 500ms */}
+        <div className={cn(
+          "col-span-12 md:col-span-6 xl:col-span-4 transition-all duration-700 delay-500",
+          mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+        )}>
+          <QuickAlerts />
+        </div>
+
+        {/* Market Heatmap: Stagger 600ms */}
+        <div className={cn(
+          "col-span-12 transition-all duration-700 delay-600",
+          mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+        )}>
+          <MarketHeatmap />
         </div>
       </div>
     </div>
   );
 }
-
-import { cn } from '@/lib/utils';

@@ -12,6 +12,9 @@ import { NoiseOverlay } from '@/components/shared/noise-overlay';
 /**
  * LayoutShell decides whether to render the full Terminal interface 
  * (Sidebar + Topbar) or just the plain content (for Onboarding).
+ * 
+ * Accessibility:
+ * - Landarks: header (topbar), nav (sidebar/mobileNav), main (children)
  */
 export function LayoutShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -19,7 +22,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
 
   if (isOnboarding) {
     return (
-      <main className="h-screen w-full bg-background overflow-auto noise-surface">
+      <main id="main-content" className="h-screen w-full bg-background overflow-auto noise-surface">
         <NoiseOverlay />
         {children}
       </main>
@@ -28,13 +31,13 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider>
-      <div className="flex h-screen w-full bg-background noise-surface overflow-hidden">
+      <div className="flex h-screen w-full bg-background noise-surface overflow-hidden relative">
         <NoiseOverlay />
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
           <ScrollProgress />
           <Topbar />
-          <main className="flex-1 overflow-y-auto relative pb-16 md:pb-0 noise-surface">
+          <main id="main-content" className="flex-1 overflow-y-auto relative pb-20 md:pb-0 noise-surface scroll-smooth scrollbar-hide focus:outline-none">
             {children}
           </main>
           <MobileNav />
