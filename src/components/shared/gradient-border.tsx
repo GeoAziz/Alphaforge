@@ -10,9 +10,8 @@ interface GradientBorderProps {
 }
 
 /**
- * GradientBorder implements the high-confidence signal glow.
- * When active (≥85% confidence), it applies an animated multi-stop gradient border.
- * Features rotating technical conic-style sweep simulation.
+ * GradientBorder - Animated technical conic-gradient wrapper.
+ * Triggered for high-confidence nodes (>= 85%).
  */
 export function GradientBorder({ children, className, active = false }: GradientBorderProps) {
   return (

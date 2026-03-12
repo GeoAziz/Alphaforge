@@ -7,9 +7,10 @@ import { HeroSection } from '@/components/dashboard/hero-section';
 import { PerformanceSummary } from '@/components/dashboard/performance-summary';
 import { MarketOverview } from '@/components/dashboard/market-overview';
 import { MarketHeatmap } from '@/components/dashboard/market-heatmap';
-import { AlphaStream } from '@/components/dashboard/alpha-stream';
+import { ActiveSignalsPanel } from '@/components/dashboard/active-signals-panel';
 import { MarketSentimentCell } from '@/components/dashboard/market-sentiment';
 import { QuickAlerts } from '@/components/dashboard/quick-alerts';
+import { RecentSignals } from '@/components/dashboard/recent-signals';
 import { ShieldAlert, Loader2 } from 'lucide-react';
 import { PortfolioSummary } from '@/lib/types';
 import { EmptyState } from '@/components/shared/empty-state';
@@ -98,12 +99,12 @@ export default function DashboardPage() {
           <MarketSentimentCell />
         </div>
 
-        {/* Alpha Stream: Stagger 400ms */}
+        {/* Active Signals Node: Stagger 400ms */}
         <div className={cn(
           "col-span-12 md:col-span-6 xl:col-span-4 transition-all duration-700 delay-400",
           mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
         )}>
-          <AlphaStream />
+          <ActiveSignalsPanel />
         </div>
 
         {/* Quick Alerts Node: Stagger 500ms */}
@@ -116,10 +117,18 @@ export default function DashboardPage() {
 
         {/* Market Heatmap: Stagger 600ms */}
         <div className={cn(
-          "col-span-12 transition-all duration-700 delay-600",
+          "col-span-12 xl:col-span-8 transition-all duration-700 delay-600",
           mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
         )}>
           <MarketHeatmap />
+        </div>
+
+        {/* Recent Signals Resolution Node: Stagger 700ms */}
+        <div className={cn(
+          "col-span-12 xl:col-span-4 transition-all duration-700 delay-700",
+          mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+        )}>
+          <RecentSignals />
         </div>
       </div>
     </div>

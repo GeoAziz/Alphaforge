@@ -3,9 +3,8 @@
 import { useEffect, useState } from 'react';
 
 /**
- * ScrollProgress provides a global 2px gradient progress bar at the top of the viewport.
- * Synchronized with the terminal's institutional design tokens.
- * Features real-time tracking and technical shadow glow.
+ * ScrollProgress provides a global 2px technical gradient bar at the top.
+ * Synchronized with terminal design tokens and features a lead-edge glow.
  */
 export function ScrollProgress() {
   const [progress, setProgress] = useState(0);
@@ -27,8 +26,7 @@ export function ScrollProgress() {
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    // Initial check for long pages on mount
-    setTimeout(handleScroll, 100);
+    handleScroll();
 
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -41,7 +39,6 @@ export function ScrollProgress() {
         className="h-full bg-gradient-to-r from-primary via-accent to-primary bg-[length:200%_auto] animate-gradient-xy shadow-[0_0_15px_rgba(96,165,250,0.8)] transition-all duration-150 ease-out relative" 
         style={{ width: `${progress}%` }} 
       >
-        {/* Terminal Glow Tip */}
         <div className="absolute right-0 top-0 bottom-0 w-4 bg-white/20 blur-sm animate-pulse" />
       </div>
     </div>

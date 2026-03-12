@@ -8,6 +8,10 @@ interface SpotlightCardProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: 'default' | 'accent';
 }
 
+/**
+ * SpotlightCard - Mouse-tracking hardware surface.
+ * Creates a responsive radial glow following the cursor handshake.
+ */
 export function SpotlightCard({
   children,
   className,
@@ -27,20 +31,12 @@ export function SpotlightCard({
     setPosition({ x: e.clientX - rect.left, y: e.clientY - rect.top });
   };
 
-  const handleMouseEnter = () => {
-    setOpacity(1);
-  };
-
-  const handleMouseLeave = () => {
-    setOpacity(0);
-  };
-
   return (
     <div
       ref={divRef}
       onMouseMove={handleMouseMove}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+      onMouseEnter={() => setOpacity(1)}
+      onMouseLeave={() => setOpacity(0)}
       className={cn(
         "relative overflow-hidden rounded-2xl border border-border-subtle bg-surface transition-all duration-300 hover:border-border-subtle group/card noise-surface",
         className

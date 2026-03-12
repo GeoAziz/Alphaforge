@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/layout/sidebar';
@@ -8,17 +9,16 @@ import { MobileNav } from '@/components/layout/mobile-nav';
 import { CommandPalette } from '@/components/shared/command-palette';
 import { ScrollProgress } from '@/components/shared/scroll-progress';
 import { NoiseOverlay } from '@/components/shared/noise-overlay';
+import { ChatPanel } from '@/components/chat/chat-panel';
 
 /**
  * LayoutShell decides whether to render the full Terminal interface 
  * (Sidebar + Topbar) or just the plain content (for Onboarding).
- * 
- * Accessibility:
- * - Landarks: header (topbar), nav (sidebar/mobileNav), main (children)
  */
 export function LayoutShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isOnboarding = pathname === '/onboarding';
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   if (isOnboarding) {
     return (
@@ -33,7 +33,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
     <SidebarProvider>
       <div className="flex h-screen w-full bg-background noise-surface overflow-hidden relative">
         <NoiseOverlay />
-        <AppSidebar />
+        <AppSidebar onOpenChat={() => setIsChatOpen(true)} />
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
           <ScrollProgress />
           <Topbar />
@@ -42,6 +42,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
           </main>
           <MobileNav />
           <CommandPalette />
+          <ChatPanel isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
         </div>
       </div>
     </SidebarProvider>

@@ -6,12 +6,6 @@
  * organizing user-specific data within the /users/{userId} hierarchy. Access is granted 
  * primarily by verifying that the authenticated user's UID matches the {userId} wildcard in the 
  * document path.
- *
- * Data Structure:
- * - Private User Data: Nested under /users/{userId}/[subcollection]. This includes profiles, 
- *   portfolios, active positions, trade history, personalized strategies, and notifications.
- * - Global Market Data: Top-level collections like /marketTickers, /fundingRates, and 
- *   /marketplaceStrategies provide read-only access to all authenticated users.
  */
 
 rules_version = '2';
@@ -40,87 +34,13 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId) && fieldMatches(request.resource.data, 'id', userId);
-      allow update: if isExistingOwner(userId) && fieldMatches(request.resource.data, 'id', resource.data.id);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
 
-      match /portfolioSummary/{summaryId} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && fieldMatches(request.resource.data, 'id', userId);
-        allow update: if isExistingOwner(userId) && fieldMatches(request.resource.data, 'id', resource.data.id);
-        allow delete: if isExistingOwner(userId);
-      }
-
-      match /positions/{id} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && fieldMatches(request.resource.data, 'userId', userId);
-        allow update: if isExistingOwner(userId) && fieldMatches(request.resource.data, 'userId', resource.data.userId);
-        allow delete: if isExistingOwner(userId);
-      }
-
-      match /trades/{id} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && fieldMatches(request.resource.data, 'userId', userId);
-        allow update: if isExistingOwner(userId) && fieldMatches(request.resource.data, 'userId', resource.data.userId);
-        allow delete: if isExistingOwner(userId);
-      }
-
-      match /notifications/{id} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && fieldMatches(request.resource.data, 'userId', userId);
-        allow update: if isExistingOwner(userId) && fieldMatches(request.resource.data, 'userId', resource.data.userId);
-        allow delete: if isExistingOwner(userId);
-      }
-
-      match /signals/{id} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId);
-        allow update, delete: if isExistingOwner(userId);
-      }
-
-      match /strategies/{strategyId} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId);
-        allow update, delete: if isExistingOwner(userId);
-
-        match /performance {
-          allow get, list: if isOwner(userId);
-          allow create: if isOwner(userId);
-          allow update, delete: if isExistingOwner(userId);
-        }
-      }
-
-      match /backtestConfigs/{id} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && fieldMatches(request.resource.data, 'userId', userId);
-        allow update: if isExistingOwner(userId) && fieldMatches(request.resource.data, 'userId', resource.data.userId);
-        allow delete: if isExistingOwner(userId);
-      }
-
-      match /backtestResults/{id} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && fieldMatches(request.resource.data, 'userId', userId);
-        allow update: if isExistingOwner(userId) && fieldMatches(request.resource.data, 'userId', resource.data.userId);
-        allow delete: if isExistingOwner(userId);
-      }
-
-      match /performancePoints/{id} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && fieldMatches(request.resource.data, 'userId', userId);
-        allow update: if isExistingOwner(userId) && fieldMatches(request.resource.data, 'userId', resource.data.userId);
-        allow delete: if isExistingOwner(userId);
-      }
-
-      match /connectedExchanges/{id} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId);
-        allow update, delete: if isExistingOwner(userId);
-      }
-
-      match /subscriptions/{id} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId);
-        allow update, delete: if isExistingOwner(userId);
+      // Recursive match for all subcollections under a user
+      match /{allSubcollections=**} {
+        allow get, list, create, update, delete: if isOwner(userId);
       }
     }
 
@@ -145,6 +65,26 @@ service cloud.firestore {
     }
 
     match /marketSentiment/{id} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if false;
+    }
+    
+    match /trendIndicators/{id} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if false;
+    }
+    
+    match /socialSentiment/{id} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if false;
+    }
+    
+    match /onChainMetrics/{id} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if false;
+    }
+    
+    match /marketDataQuality/{id} {
       allow get, list: if isSignedIn();
       allow create, update, delete: if false;
     }

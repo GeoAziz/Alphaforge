@@ -13,6 +13,7 @@ export interface UserProfile {
   connectedExchanges: string[];
   onboardingComplete: boolean;
   createdAt?: string;
+  kycStatus?: 'Unverified' | 'Pending' | 'Verified' | 'Rejected';
 }
 
 export interface ConnectedExchange {
@@ -331,4 +332,61 @@ export interface CreatorVerificationStatus {
   currentStage: number;
   steps: StrategyVerificationStep[];
   overallStatus: 'Active' | 'Review' | 'Denied';
+}
+
+export interface ExternalSignal {
+  id: string;
+  source: 'tradingview';
+  asset: string;
+  direction: SignalDirection;
+  confidence?: number;
+  timestamp: string;
+  webhookPayload: Record<string, any>;
+  status: 'received' | 'validated' | 'processed' | 'executed' | 'rejected';
+  rejectionReason?: string;
+  executionContext?: {
+    riskMultiplier: number;
+    positionSize: number;
+    executedAt: string;
+    orderId?: string;
+  };
+}
+
+export interface SignalIngestionRule {
+  id: string;
+  userId: string;
+  minConfidence: number;
+  autoExecute: boolean;
+  cooldownSeconds: number;
+  maxPositionsOpen: number;
+  riskMultiplier: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WebhookEvent {
+  id: string;
+  userId: string;
+  timestamp: string;
+  sourceIp?: string;
+  signatureValid: boolean;
+  payload: Record<string, any>;
+  processingStatus: 'pending' | 'processed' | 'failed';
+  errorMessage?: string;
+  matchedSignalId?: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
+  actions?: ChatAction[];
+}
+
+export interface ChatAction {
+  label: string;
+  type: 'copy_strategy' | 'view_backtest' | 'view_signal' | 'trade' | 'link';
+  targetId?: string;
+  url?: string;
 }

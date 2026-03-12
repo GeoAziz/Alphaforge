@@ -18,9 +18,17 @@ import {
   ExternalLink,
   Cpu,
   Fingerprint,
-  TrendingUp
+  TrendingUp,
+  Microscope,
+  Info
 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { 
+  Tooltip, 
+  TooltipContent, 
+  TooltipProvider, 
+  TooltipTrigger 
+} from "@/components/ui/tooltip";
 
 interface SignalDetailPanelProps {
   signal: Signal | null;
@@ -31,11 +39,7 @@ interface SignalDetailPanelProps {
 
 /**
  * SignalDetailPanel - Institutional Intelligence View
- * 
- * Accessibility:
- * - Landmarks: aside
- * - Keyboard: Escape key closes the panel
- * - ARIA: aria-label for clarity
+ * Features an enhanced Model Integrity footer with blockchain proof telemetry.
  */
 export function SignalDetailPanel({ 
   signal, 
@@ -46,7 +50,6 @@ export function SignalDetailPanel({
   const [proof, setProof] = useState<SignalProof | null>(null);
   const [isLoadingProof, setIsLoadingProof] = useState(false);
 
-  // Keyboard listener for Escape key
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Escape') onDismiss();
   }, [onDismiss]);
@@ -119,10 +122,10 @@ export function SignalDetailPanel({
             <Activity size={14} className="text-primary" />
             Alpha Drivers
           </h3>
-          <div className="space-y-3" role="list">
+          <div className="space-y-3">
             {signal.drivers.map((driver, index) => (
-              <div key={index} role="listitem" className="flex items-center gap-3 p-4 rounded-xl bg-elevated/20 border border-border-subtle hover:bg-elevated/40 transition-all cursor-default group">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary group-hover:scale-150 transition-transform" aria-hidden="true" />
+              <div key={index} className="flex items-center gap-3 p-4 rounded-xl bg-elevated/20 border border-border-subtle hover:bg-elevated/40 transition-all cursor-default group">
+                <div className="w-1.5 h-1.5 rounded-full bg-primary group-hover:scale-150 transition-transform" />
                 <span className="text-[11px] font-bold text-text-secondary uppercase leading-relaxed">{driver}</span>
               </div>
             ))}
@@ -135,62 +138,65 @@ export function SignalDetailPanel({
             <span className="text-[9px] font-black uppercase text-text-muted">Risk/Reward Ratio</span>
             <span className="text-xs font-black text-text-primary">1 : {signal.riskRewardRatio}</span>
           </div>
-          <div className="h-1.5 w-full bg-elevated rounded-full overflow-hidden" role="progressbar" aria-valuenow={(1/signal.riskRewardRatio)*100} aria-valuemin={0} aria-valuemax={100}>
+          <div className="h-1.5 w-full bg-elevated rounded-full overflow-hidden">
             <div className="h-full bg-primary" style={{ width: `${(1/signal.riskRewardRatio) * 100}%` }} />
-          </div>
-          <div className="flex justify-between items-center text-[9px] font-bold uppercase text-text-muted" aria-hidden="true">
-            <span>Aggressive</span>
-            <span>Optimal</span>
-            <span>Conservative</span>
           </div>
         </div>
 
-        {/* Model Integrity Footer */}
+        {/* Model Integrity Footer - NEW Institutional Section */}
         <div className="pt-4 space-y-6">
           <Separator className="bg-border-subtle" />
           <div className="space-y-4">
-            <h3 className="text-[10px] font-black uppercase text-text-muted tracking-widest flex items-center gap-2">
-              <ShieldCheck size={14} className="text-green" />
-              Model Integrity
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-[10px] font-black uppercase text-text-muted tracking-widest flex items-center gap-2">
+                <ShieldCheck size={14} className="text-green" />
+                Model Integrity Node
+              </h3>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button className="text-text-muted hover:text-text-primary transition-colors"><Info size={12} /></button>
+                  </TooltipTrigger>
+                  <TooltipContent className="glass border-border-subtle p-3 max-w-[200px]">
+                    <p className="text-[9px] font-bold uppercase leading-relaxed">Immutable cryptographic proof of signal issuance and paper-trade validation results.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
             
-            <div className="grid grid-cols-1 gap-3">
-              <div className="p-4 rounded-xl bg-elevated/10 border border-border-subtle flex items-center justify-between group hover:border-primary/30 transition-colors">
-                <div className="flex items-center gap-3">
-                  <Cpu size={16} className="text-text-muted group-hover:text-primary transition-colors" aria-hidden="true" />
-                  <div>
-                    <div className="text-[9px] font-black text-text-muted uppercase">Logic Node</div>
-                    <div className="text-xs font-bold uppercase">AlphaEngine v4.2.0</div>
-                  </div>
-                </div>
-                <Badge variant="outline" className="text-[8px] font-black border-primary/20 text-primary">Stable</Badge>
-              </div>
-
+            <div className="space-y-3">
               <div className="p-4 rounded-xl bg-elevated/10 border border-border-subtle space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <Fingerprint size={16} className="text-text-muted" aria-hidden="true" />
+                    <Fingerprint size={16} className="text-text-muted" />
                     <span className="text-[9px] font-black text-text-muted uppercase">Audit Hash</span>
                   </div>
                   <span className="text-[10px] font-mono font-bold text-text-primary">0x7f8e...3a2b</span>
                 </div>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between border-t border-border-subtle/50 pt-3">
                   <div className="flex items-center gap-3">
-                    <Database size={16} className="text-text-muted" aria-hidden="true" />
-                    <span className="text-[9px] font-black text-text-muted uppercase">Blockchain Proof</span>
+                    <Database size={16} className="text-text-muted" />
+                    <span className="text-[9px] font-black text-text-muted uppercase">Blockchain Anchor</span>
                   </div>
-                  <button className="flex items-center gap-1.5 text-xs text-primary font-bold hover:underline focus:outline-none focus-visible:ring-1 focus-visible:ring-primary rounded">
-                    Verified <ExternalLink size={10} />
-                  </button>
+                  <Badge variant="outline" className="text-[8px] font-black border-green/30 text-green h-5 px-2 uppercase">Verified Sync</Badge>
                 </div>
               </div>
 
-              <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-between">
-                <div>
-                  <div className="text-[9px] font-black text-primary uppercase mb-1">Backtest vs Live</div>
-                  <div className="text-xs font-bold uppercase tracking-tight">Sharpe Delta: +0.12</div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-4 rounded-xl bg-elevated/10 border border-border-subtle group hover:border-primary/30 transition-colors">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Microscope size={14} className="text-primary" />
+                    <span className="text-[8px] font-black text-text-muted uppercase">Gate Status</span>
+                  </div>
+                  <div className="text-[10px] font-black text-green uppercase">Passed 28D</div>
                 </div>
-                <TrendingUp size={16} className="text-primary" aria-hidden="true" />
+                <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
+                  <div className="flex items-center gap-2 mb-2">
+                    <TrendingUp size={14} className="text-primary" />
+                    <span className="text-[8px] font-black text-text-muted uppercase">Perf Delta</span>
+                  </div>
+                  <div className="text-[10px] font-black text-primary uppercase">+0.12 Sharpe</div>
+                </div>
               </div>
             </div>
           </div>

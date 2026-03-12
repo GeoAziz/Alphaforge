@@ -15,14 +15,15 @@ import {
   Settings,
   LayoutDashboard,
   X,
-  ArrowRight
+  Share2
 } from 'lucide-react';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard, keywords: "home main overview", cluster: "Primary" },
   { name: "Signals", href: "/signals", icon: Zap, keywords: "alpha alerts trades long short", cluster: "Intelligence" },
+  { name: "External Signals", href: "/external-signals", icon: Share2, keywords: "tradingview webhook alerts ingestion", cluster: "Intelligence" },
   { name: "Market Intel", href: "/market-intelligence", icon: BarChart3, keywords: "tickers sentiment data prices", cluster: "Intelligence" },
   { name: "Portfolio", href: "/portfolio", icon: Wallet, keywords: "assets balance holding pnl", cluster: "Execution" },
   { name: "Strategies", href: "/strategies", icon: Target, keywords: "algo logic performance", cluster: "Execution" },
@@ -32,6 +33,10 @@ const NAV_ITEMS = [
   { name: "Settings", href: "/settings", icon: Settings, keywords: "profile api keys risk config", cluster: "System" },
 ];
 
+/**
+ * CommandPalette - The institutional handshake hub.
+ * Features ⌘K traversal, grouped nodes, and mobile bottom-sheet adaptation.
+ */
 export function CommandPalette() {
   const [open, setOpen] = React.useState(false);
   const router = useRouter();
@@ -60,34 +65,28 @@ export function CommandPalette() {
         "fixed inset-x-0 bottom-0 sm:inset-auto sm:top-[20%] sm:left-[50%] sm:translate-x-[-50%] sm:translate-y-0",
         "flex flex-col sm:block h-[80vh] sm:h-auto rounded-t-3xl sm:rounded-none"
       )}>
-        {/* Mobile Bottom Sheet Drag Handle */}
-        <div className="sm:hidden h-1 bg-gradient-to-r from-transparent via-border-subtle to-transparent rounded-full mx-auto my-2 w-10" />
-        
         <Command className={cn(
           "glass flex-1 sm:flex-none sm:rounded-2xl overflow-hidden border border-white/10 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)]",
           "rounded-t-3xl sm:rounded-2xl",
           "animate-in fade-in slide-in-from-bottom-24 sm:slide-in-from-top-4 sm:zoom-in-95 duration-400 ease-out-custom"
         )}>
-          <div className="flex items-center border-b border-border-subtle px-4 relative sm:px-4 sm:py-0 py-3 gap-3 sm:gap-1">
+          <div className="flex items-center border-b border-border-subtle px-4 relative py-3 sm:py-0 gap-3">
             <Search className="w-5 h-5 text-text-muted shrink-0" />
             <Command.Input 
               placeholder="Traverse terminal nodes... (⌘K)" 
-              className="flex h-16 sm:h-16 w-full bg-transparent px-4 sm:px-4 text-sm sm:text-sm outline-none placeholder:text-text-muted font-black uppercase tracking-tighter text-text-primary"
+              className="flex h-16 w-full bg-transparent text-sm outline-none placeholder:text-text-muted font-black uppercase tracking-tighter text-text-primary"
             />
-            <button 
-              onClick={() => setOpen(false)}
-              className="sm:hidden p-2 text-text-muted hover:text-text-primary active:text-primary"
-            >
+            <button onClick={() => setOpen(false)} className="sm:hidden p-2 text-text-muted">
               <X size={24} />
             </button>
           </div>
           
-          <Command.List className="flex-1 overflow-y-auto p-4 scrollbar-hide">
+          <Command.List className="flex-1 overflow-y-auto p-4 scrollbar-hide max-h-[400px]">
             <Command.Empty className="py-20 text-center space-y-4">
               <div className="w-16 h-16 rounded-full bg-elevated/50 mx-auto flex items-center justify-center text-text-muted opacity-20">
                 <Search size={32} />
               </div>
-              <div className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">Node identifier not recognized.</div>
+              <div className="text-[10px] font-black text-text-muted uppercase tracking-widest">Node identifier not recognized.</div>
             </Command.Empty>
             
             <Command.Group heading="Navigation Clusters" className="px-2 py-3 text-[10px] font-black uppercase text-text-muted tracking-widest">
@@ -96,9 +95,9 @@ export function CommandPalette() {
                   key={item.href}
                   value={item.name + " " + item.keywords}
                   onSelect={() => onSelect(item.href)}
-                  className="flex items-center gap-3 px-3 sm:px-3 py-3 sm:py-3 rounded-xl sm:rounded-xl cursor-pointer hover:bg-primary/10 hover:text-primary active:bg-primary/20 sm:active:bg-primary/10 transition-all aria-selected:bg-primary/10 aria-selected:text-primary group"
+                  className="flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition-all aria-selected:bg-primary/10 aria-selected:text-primary group"
                 >
-                  <div className="w-8 h-8 sm:w-8 sm:h-8 rounded-lg bg-elevated flex items-center justify-center text-text-muted group-aria-selected:text-primary group-aria-selected:shadow-[0_0_15px_rgba(96,165,250,0.3)] transition-all">
+                  <div className="w-8 h-8 rounded-lg bg-elevated flex items-center justify-center text-text-muted group-aria-selected:text-primary group-aria-selected:shadow-[0_0_15px_rgba(96,165,250,0.3)]">
                     <item.icon className="w-4 h-4" />
                   </div>
                   <div className="flex flex-col">
@@ -110,15 +109,15 @@ export function CommandPalette() {
             </Command.Group>
           </Command.List>
           
-          <div className="flex items-center justify-between px-6 py-4 bg-elevated/20 border-t border-border-subtle shrink-0">
+          <div className="flex items-center justify-between px-6 py-4 bg-elevated/20 border-t border-border-subtle">
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">
                 <kbd className="px-2 py-1 rounded-lg bg-surface text-[10px] font-black text-text-muted border border-border-subtle shadow-inner">ESC</kbd>
-                <span className="text-[9px] font-black text-text-muted uppercase tracking-widest">Close</span>
+                <span className="text-[9px] font-black text-text-muted uppercase">Close</span>
               </div>
               <div className="flex items-center gap-2">
                 <kbd className="px-2 py-1 rounded-lg bg-surface text-[10px] font-black text-text-muted border border-border-subtle shadow-inner">↵</kbd>
-                <span className="text-[9px] font-black text-text-muted uppercase tracking-widest">Engage</span>
+                <span className="text-[9px] font-black text-text-muted uppercase">Engage</span>
               </div>
             </div>
             <div className="hidden sm:flex items-center gap-2 text-[9px] font-black text-primary/50 uppercase tracking-widest">

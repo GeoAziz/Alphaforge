@@ -6,6 +6,6 @@
  */
 export function NoiseOverlay() {
   return (
-    <div className="fixed inset-0 pointer-events-none z-[100] opacity-[0.03] noise-surface" aria-hidden="true" />
+    <div className="fixed inset-0 pointer-events-none z-[100] opacity-[0.03] noise-surface pointer-events-none select-none" aria-hidden="true" />
   );
 }

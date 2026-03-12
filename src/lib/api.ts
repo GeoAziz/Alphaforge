@@ -20,7 +20,10 @@ import {
   OpenInterest,
   OnChainActivity,
   LiquidationCluster,
-  CreatorVerificationStatus
+  CreatorVerificationStatus,
+  ExternalSignal,
+  WebhookEvent,
+  SignalIngestionRule
 } from './types';
 
 import { mockUserProfile } from '@/data/mock-user-profile';
@@ -44,6 +47,7 @@ import { mockRiskScore } from '@/data/mock-risk-score';
 import { mockModelPerformances } from '@/data/mock-model-performance';
 import { mockSignalProofs } from '@/data/mock-signal-proof';
 import { mockMarketDataQualities } from '@/data/mock-market-data-quality';
+import { mockExternalSignals, mockWebhookEvents, mockIngestionRule } from '@/data/mock-external-signals';
 
 /**
  * Institutional Data API
@@ -130,6 +134,17 @@ export const api = {
         liveResults: 'Signal resolved with a +4.2% ROI within 12 hours of issuance.'
       };
     },
+  },
+  external: {
+    getSignals: async (userId: string): Promise<ExternalSignal[]> => {
+      return mockExternalSignals;
+    },
+    getWebhookEvents: async (userId: string): Promise<WebhookEvent[]> => {
+      return mockWebhookEvents;
+    },
+    getIngestionRule: async (userId: string): Promise<SignalIngestionRule> => {
+      return mockIngestionRule;
+    }
   },
   creator: {
     getVerificationPipeline: async (userId: string): Promise<CreatorVerificationStatus[]> => {
