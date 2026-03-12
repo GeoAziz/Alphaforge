@@ -131,6 +131,17 @@ export interface Strategy {
   profitFactor: number;
   riskLevel: RiskLevel;
   isActive: boolean;
+  maxLeverage?: number;
+  signals?: number;
+  status?: string;
+  createdAt?: string;
+}
+
+export interface PaperTradeResult {
+  duration: number;
+  signalCount: number;
+  roi: number;
+  maxDrawdown: number;
 }
 
 export interface PerformancePoint {

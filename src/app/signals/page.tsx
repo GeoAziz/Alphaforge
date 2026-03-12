@@ -145,14 +145,18 @@ export default function SignalsPage() {
               </div>
             ) : (
               filteredSignals.map((signal, index) => (
-                <SignalCard 
-                  key={signal.id} 
-                  signal={signal} 
-                  onClick={setSelectedSignal}
-                  isSelected={selectedSignal?.id === signal.id}
+                <div
+                  key={signal.id}
                   style={{ animationDelay: `${index * 50}ms` }}
                   className="animate-in fade-in slide-in-from-top-4 duration-500"
-                />
+                >
+                  <SignalCard 
+                    signal={signal} 
+                    onClick={setSelectedSignal}
+                    isSelected={selectedSignal?.id === signal.id}
+                    className=""
+                  />
+                </div>
               ))
             )}
           </div>

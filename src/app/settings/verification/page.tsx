@@ -180,7 +180,7 @@ export default function VerificationHubPage() {
               <div className="space-y-0.5">
                 <div className="text-[9px] font-black uppercase text-accent">Node Requirements</div>
                 <p className="text-[8px] font-bold text-text-muted uppercase leading-relaxed">
-                  Alpha providers must maintain a live Sharpe > 1.0 for 28 consecutive days to finalize verification.
+                  Alpha providers must maintain a live Sharpe &gt; 1.0 for 28 consecutive days to finalize verification.
                 </p>
               </div>
             </div>

@@ -4,6 +4,7 @@ import { ChatMessage } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { Bot, User, Cpu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { MessageActions } from './message-actions';
 import Link from 'next/link';
 
 interface MessageBubbleProps {
@@ -38,23 +39,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         </div>
 
         {isAI && message.actions && message.actions.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {message.actions.map((action, i) => (
-              <Button 
-                key={i} 
-                variant="outline" 
-                size="sm" 
-                asChild
-                className="h-8 border-primary/20 text-[9px] font-black uppercase bg-primary/5 hover:bg-primary/10 text-primary rounded-lg"
-              >
-                {action.url ? (
-                  <Link href={action.url}>{action.label}</Link>
-                ) : (
-                  <span>{action.label}</span>
-                )}
-              </Button>
-            ))}
-          </div>
+          <MessageActions actions={message.actions} />
         )}
 
         <div className="text-[8px] font-black text-text-muted uppercase tracking-widest px-1">

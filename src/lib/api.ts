@@ -114,6 +114,9 @@ export const api = {
     getPerformance: async (id: string) => {
       return mockStrategyPerformances.find(p => p.id === id) || null;
     },
+    getStrategyPaperTradeResult: async (id: string) => {
+      return null; // Mock implementation - returns null for now
+    },
   },
   signals: {
     getLiveSignals: async (userId: string): Promise<Signal[]> => {
