@@ -1,13 +1,19 @@
 # AlphaForge — Frontend Build Guide
 
-Version: 1.0
-Stack: Next.js 14+ (App Router) · TypeScript · Tailwind CSS · shadcn/ui · Framer Motion
-Hosting: Vercel
-Backend: Mock data layer (real API integration deferred)
+Version: 1.1 (Updated for Phase 1: AlphaAI Chat, Mobile, TradingView Integration)
+Stack: Next.js 14+ (App Router) · TypeScript · Tailwind CSS · shadcn/ui · Framer Motion · Anthropic SDK · React Native (Phase 2)
+Hosting: Vercel (Web) · Expo (Mobile - Phase 2)
+Backend: Mock data layer (real API integration deferred) + Anthropic Claude Opus (Chat)
 
 ---
 
 This document is the single source of truth for building the AlphaForge frontend. It covers every page, every component, every animation, every mock data shape, and every edge case. There is no design file — this is the design file. Build exactly what is described here. If something is not described here, it does not exist yet.
+
+**Phase 1 Additions (Updated March 2026):**
+- ✅ **AlphaAI Chat System** — Conversational AI assistant with real-time WebSocket connection (Section 10)
+- ✅ **TradingView Alert Integration** — External signal ingestion from webhooks (Section 9.9-9.10)
+- ✅ **React Native Mobile (Phase 2 Spec)** — iOS/Android app structure, Nx monorepo, push notifications (Section 19)
+- ✅ **Mobile navigation, chat on mobile, responsive optimizations**
 
 ---
 
@@ -36,6 +42,12 @@ npm install lightweight-charts recharts
 
 # Icons
 npm install lucide-react
+
+# Real-time WebSocket (AlphaAI Chat)
+npm install ws
+
+# AI Chat Integration (Anthropic API)
+npm install @anthropic-ai/sdk
 
 # Utilities
 npm install clsx tailwind-merge class-variance-authority
@@ -72,12 +84,12 @@ const interTight = localFont({
 
 If Inter Tight is not available as a Google font at build time, use Inter weight 900 with letter-spacing -0.05em as fallback for hero stats.
 
-## 1.4 Project Structure
+## 1.4 Project Structure (Next.js Web App)
 
 ```
 src/
 ├── app/
-│   ├── layout.tsx                    # Root layout — fonts, providers, sidebar, noise
+│   ├── layout.tsx                    # Root layout — fonts, providers, sidebar, chat panel
 │   ├── page.tsx                      # Dashboard
 │   ├── signals/
 │   │   └── page.tsx                  # Signals feed
@@ -93,8 +105,11 @@ src/
 │   │   └── page.tsx                  # Strategy marketplace
 │   ├── analytics/
 │   │   └── page.tsx                  # Performance analytics
+│   ├── external-signals/             # NEW: TradingView integration (Phase 1)
+│   │   └── page.tsx                  # External signals feed + configuration
 │   ├── settings/
-│   │   └── page.tsx                  # Settings page
+│   │   ├── page.tsx                  # Settings page
+│   │   └── external-signals-setup.tsx # NEW: TradingView webhook URL + ingestion rules
 │   └── onboarding/
 │       └── page.tsx                  # Onboarding flow
 │
@@ -102,7 +117,8 @@ src/
 │   ├── layout/
 │   │   ├── sidebar.tsx               # Collapsible sidebar
 │   │   ├── topbar.tsx                # Top bar with search + notifications
-│   │   ├── mobile-nav.tsx            # Bottom tab bar (mobile)
+│   │   ├── chat-panel.tsx            # NEW: AlphaAI Chat panel (sidebar toggle or modal)
+│   │   ├── mobile-nav.tsx            # Bottom tab bar (mobile web)
 │   │   ├── command-palette.tsx       # ⌘K command palette
 │   │   ├── scroll-progress.tsx       # Scroll-linked progress bar
 │   │   └── page-wrapper.tsx          # Shared page animation wrapper
@@ -152,6 +168,20 @@ src/
 │   │   ├── verification-badge.tsx    # 5-stage verification process badge
 │   │   ├── paper-trade-gate.tsx      # Mandatory paper trade result before copy CTA
 │   │   └── marketplace-disclaimer.tsx # Risk/past-performance disclaimer modal
+│   │
+│   ├── chat/                         # NEW: AlphaAI Chat components (Phase 1)
+│   │   ├── chat-panel.tsx            # Main chat container, message list, input
+│   │   ├── message-bubble.tsx        # Individual message (user or AI)
+│   │   ├── message-actions.tsx       # Copy signal, view backtest, etc from AI response
+│   │   ├── chat-input.tsx            # Text input with context selector
+│   │   └── chat-loader.tsx           # Streaming response animation with token count
+│   │
+│   ├── external-signals/             # NEW: TradingView integration (Phase 1)
+│   │   ├── external-signal-feed.tsx  # Feed of ingested TradingView alerts
+│   │   ├── external-signal-card.tsx  # Card for single alert (source, confidence, action)
+│   │   ├── ingestion-rules-panel.tsx # Configure signal filters (confidence threshold, etc)
+│   │   ├── tradingview-webhook-setup.tsx # Step-by-step setup guide + copy webhook URL
+│   │   └── webhook-history.tsx       # Log of webhook hits (debugging)
 │   │
 │   ├── analytics/
 │   │   ├── performance-charts.tsx    # Accuracy, profit factor, drawdown charts
@@ -208,7 +238,9 @@ src/
 │   ├── mock-sentiment-detail.ts     # Per-asset NLP sentiment scores breakdown
 │   ├── mock-onchain.ts              # Whale movements, exchange inflows/outflows
 │   ├── mock-audit-log.ts            # Sample user action audit log entries
-│   └── mock-marketplace.ts          # Expanded marketplace data (reputation, verification, paper trade)
+│   ├── mock-marketplace.ts          # Expanded marketplace data (reputation, verification, paper trade)
+│   ├── mock-external-signals.ts     # NEW: Mock TradingView alerts (Phase 1)
+│   └── mock-chat-context.ts         # NEW: Mock user context for chat system (Phase 1)
 │
 ├── lib/
 │   ├── api.ts                       # Data layer — returns mock data now, API calls later
@@ -225,7 +257,9 @@ src/
 │   ├── use-media-query.ts           # Responsive breakpoint hook
 │   ├── use-data-quality.ts          # Polls data validation status, surfaces anomaly warnings
 │   ├── use-paper-trade.ts           # Manages paper trade simulation state for a strategy
-│   └── use-audit-log.ts             # Fetches and paginates user audit log entries
+│   ├── use-audit-log.ts             # Fetches and paginates user audit log entries
+│   ├── use-chat-websocket.ts        # NEW: Manages WebSocket connection to AlphaAI Chat (Phase 1)
+│   └── use-chat-messages.ts         # NEW: Manages chat message state, streaming (Phase 1)
 │
 └── styles/
     └── globals.css                  # Tokens, mesh bg, noise, base styles
@@ -884,6 +918,84 @@ export interface ConnectedExchange {
   connected: boolean
   connectedAt: string | null
   permissions: string[]
+}
+
+// ── AlphaAI Chat (Phase 1) ──
+
+export interface ChatMessage {
+  id: string
+  role: 'user' | 'assistant'
+  content: string
+  timestamp: string
+  context?: {
+    signalId?: string
+    strategyId?: string
+    currentPageContext?: string  // e.g. 'signals', 'portfolio', 'backtesting'
+  }
+  actions?: ChatAction[]          // suggested next actions (copy strategy, view backtest, etc)
+  tokenCount?: number             // for usage tracking
+}
+
+export interface ChatAction {
+  label: string                   // e.g. "Copy Strategy", "View Backtest"
+  type: 'copy_strategy' | 'view_backtest' | 'view_signal' | 'trade' | 'link'
+  targetId?: string               // strategy ID, signal ID, etc
+  url?: string
+}
+
+export interface ChatContext {
+  userId: string
+  currentBalance: number
+  openPositions: Position[]
+  recentSignals: Signal[]
+  activeStrategy?: Strategy
+  portfolioPnL: number
+}
+
+// ── External Signals / TradingView (Phase 1) ──
+
+export interface ExternalSignal {
+  id: string
+  source: 'tradingview'           // extensible for other sources
+  asset: string
+  direction: SignalDirection
+  confidence?: number              // parsed from webhook payload if available
+  timestamp: string
+  webhookPayload: Record<string, any>  // raw alert message for debugging
+  status: 'received' | 'validated' | 'processed' | 'executed' | 'rejected'
+  rejectionReason?: string         // if rejected by ingestion rules
+  executionContext?: {
+    riskMultiplier: number
+    positionSize: number
+    executedAt: string
+    orderId?: string
+  }
+}
+
+export interface SignalIngestionRule {
+  id: string
+  userId: string
+  minConfidence: number           // 0-100, reject if external signal confidence below this
+  maxConfidence?: number          // optional upper limit
+  allowedStrategies?: string[]    // if empty, all strategies allowed
+  autoExecute: boolean            // auto-copy or just log
+  cooldownSeconds: number         // minimum seconds between signals
+  maxPositionsOpen: number        // reject if user has N+ open positions
+  riskMultiplier: number          // how much to scale position size
+  createdAt: string
+  updatedAt: string
+}
+
+export interface WebhookEvent {
+  id: string
+  userId: string
+  timestamp: string
+  sourceIp?: string
+  signatureValid: boolean
+  payload: Record<string, any>
+  processingStatus: 'pending' | 'processed' | 'failed'
+  errorMessage?: string
+  matchedSignalId?: string
 }
 ```
 
@@ -2277,7 +2389,111 @@ All charts animate on mount (fade in + slight scale). Hover states show tooltips
 
 Loading: skeleton chart placeholders for each chart area.
 
-## 9.9 Settings Page
+## 9.9 External Signals Page (NEW - Phase 1: TradingView)
+
+Route: `/external-signals`
+
+This page displays all signals ingested from external sources (TradingView alerts). Shows webhook activity, execution logs, and configuration.
+
+### Layout
+- **Top section:** TradingView webhook setup guide (collapsible)
+- **Middle:** Ingestion rules configuration panel (adjustable settings)
+- **Bottom:** External signals feed (chronological list)
+
+### TradingView Setup Guide (Collapsible Card)
+When collapsed: "TradingView Integration Setup — Step 1 of 3" with expand arrow.
+When expanded:
+```
+Step 1: Authorize webhook URL
+[Copy webhook URL]        [View webhook logs]
+
+Step 2: Create TradingView Alert
+Go to TradingView → Create Alert
+Alert Name: AlphaForge Trade Alert
+Condition: Your strategy condition
+Message Format: {
+  "symbol": "{{exchange}}:{{ticker}}",
+  "direction": "LONG",
+  "confidence": 0.87,
+  "pattern": "momentum_breakout"
+}
+Webhook URL: https://alphaforge.com/api/webhooks/tradingview?token=USER_TOKEN
+
+Step 3: Launch Alert
+Test by triggering a fake alert (if available in TradingView)
+Check "Webhook Activity" section below to confirm receipt.
+```
+
+Button: "View Full Setup Guide" (links to docs).
+
+### Ingestion Rules Panel (3-column form)
+Left: "Signal Filters"
+- Min Confidence Threshold: slider, 0-100 (default 70)
+- Max Confidence: optional slider (default: empty)
+- Auto-Execute: toggle (default: OFF — just log)
+
+Middle: "Risk Controls"
+- Max Concurrent Positions: input (default: 5)
+- Risk Multiplier: slider, 0.1x-2.0x (default: 1.0x)
+- Cooldown Between Signals: dropdown (30s, 1m, 5m, 15m, default: 1m)
+
+Right: "Strategy Filters"
+- Allowed Strategies: multi-select checkbox (if empty, all allowed)
+- [Save Changes] button
+
+When rules are updated: toast notification "Ingestion rules updated".
+
+### Webhook Activity (Small Log Panel)
+Title: "Webhook Activity — Last 24H (NEW)"
+Columns: Timestamp | Source | Symbol | Status | Reason (if rejected) | Action
+
+Example rows:
+- 2026-03-12 14:23:45 | TradingView | BTCUSDT | ✅ Processed | — | View
+- 2026-03-12 14:15:12 | TradingView | ETHUSDT | 🚫 Rejected | Confidence 45% < 70% threshold | Dismiss
+- 2026-03-12 14:05:00 | TradingView | BNBUSDT | ✅ Executed | — | View Trade
+
+Max 10 rows visible, pagination or scroll.
+
+### External Signals Feed
+Below webhook log: chronological feed of external signals sorted by newest first.
+
+Each card layout (similar to signal-card.tsx but marked with external source badge):
+```
+┌─────────────────────────────────────┐
+│ TradingView  BTCUSDT  LONG  📤       │  ← source badge + symbol + direction + copy icon
+│ 2026-03-12 14:23:45                 │  ← timestamp
+│ Confidence: 87% | Position: +$520   │  ← parsed from webhook
+│ [View Raw Alert]  [Copy]  [Dismiss] │  ← actions
+└─────────────────────────────────────┘
+```
+
+Status indicator: ✅ Processed, 🟡 Pending Execution, 🚫 Rejected
+
+If status is rejected: show rejection reason inline (e.g., "Confidence 45% below 70% threshold").
+
+Empty state: "No external signals yet. Set up TradingView alerts to get started."
+
+Loading: skeleton signal cards while fetching webhook history.
+
+---
+
+## 9.10 Settings → External Signals Config (Sub-page)
+
+Route: `/settings?tab=external-signals` or `/settings/external-signals`
+
+Duplicate of the Ingestion Rules panel from the External Signals page (above). Allows users to adjust rules without leaving settings.
+
+Also shows:
+- Webhook URL (copy button)
+- Webhook Secret Key (for signature verification, rotate button)
+- Last webhook timestamp
+- Total webhooks received (all-time)
+- Webhooks processed (all-time)
+- Webhooks rejected (all-time)
+
+---
+
+## 9.11 Settings Page (Updated)
 
 Route: `/settings`
 
@@ -2619,6 +2835,190 @@ Dashboard shows a dismissible "Complete your setup" banner if onboarding was ski
 
 ---
 
+# 10. AlphaAI Chat System (NEW - Phase 1)
+
+AlphaAI Chat is a real-time conversational interface where users ask questions about signals, strategies, portfolio, and risk. Powered by Anthropic's Claude Opus API (using `@anthropic-ai/sdk`).
+
+## Architecture Overview
+
+**Chat Flow:**
+1. User types question in chat input
+2. Question + context (current portfolio, open signals, strategy) sent to `/api/chat` endpoint
+3. Backend calls Anthropic API with system prompt (includes signal reasoning, risk context, etc.)
+4. Response streamed back via WebSocket; displayed in real-time with typing animation
+5. AI response includes optional actions (links to signals, backtests, copy buttons)
+
+**Component Structure:**
+
+`src/components/layout/chat-panel.tsx` — Main container (sidebar panel or modal toggle)
+- Imports `ChatMessage`, `ChatInput`, `MessageBubble`, `ChatLoader`
+- Manages message state via `use-chat-messages` hook
+- WebSocket connection via `use-chat-websocket` hook
+- Scroll to bottom on new message
+
+`src/components/chat/message-bubble.tsx` — Individual message (user or AI)
+- User messages: right-aligned, blue accent
+- AI messages: left-aligned, with avatar badge "AlphaAI"
+- AI responses may include markdown + embedded action buttons
+- Streaming AI responses: character-by-character animation
+
+`src/components/chat/chat-input.tsx` — Text input + context selector
+- Text input field (multiline, 160px max height, resize-y)
+- Placeholder: "Ask about signals, strategies, risk... ⌘↵ to send"
+- Send button (arrow icon) or keyboard shortcut ⌘↵
+- Optional: context selector dropdown (toggle between "Current Signal", "Portfolio", "Settings")
+
+`src/components/chat/chat-loader.tsx` — Streaming response animation
+- Animated dots or pulsing cards showing "AlphaAI is thinking..."
+- Shows token count as response streams (e.g., "(47 tokens)")
+
+`src/components/chat/message-actions.tsx` — Action buttons embedded in AI response
+- Buttons may appear at end of AI message: "[Copy Strategy]" "[View Backtest]" etc
+- onClick handlers navigate or trigger copy actions
+
+**Hooks:**
+
+`src/hooks/use-chat-websocket.ts` — Manages WebSocket connection
+- Connects to `wss://alphaforge.com/chat`
+- Auto-reconnect on disconnect (exponential backoff)
+- Sends auth token in headers
+- Emits 'message' events, catches 'error' events
+
+`src/hooks/use-chat-messages.ts` — Manages chat state
+- State: `messages: ChatMessage[]`, `isLoading: boolean`, `error?: string`
+- Functions: `addMessage()`, `clearChat()`, `streamMessage()` (for AI responses)
+- Persists last 50 messages to localStorage for recovery
+
+**System Prompt (Backend):**
+
+The backend includes a system prompt for Claude that injects user context:
+
+```
+You are AlphaAI, the intelligent trading assistant for AlphaForge.
+Your role is to explain signal decisions, analyze portfolio risk, and help users trade intelligently.
+
+Current User Context:
+- Portfolio Equity: [auto-inserted from backend]
+- Open Positions: [list of positions]
+- Recent Signals: [list of recent signals with P&L]
+- Active Risk Score: [current portfolio risk level]
+
+When answering questions:
+1. Reference specific signals/positions by name and timestamp
+2. Explain the reasoning for any signal (e.g., "momentum divergence on hourly MACD detected")
+3. Include relevant metrics (Sharpe ratio, win rate, max drawdown, etc.)
+4. Suggest actionable next steps (copy strategy, adjust risk limits, view backtest)
+5. Be concise. Use bullet points when listing items. Wrap technical terms in backticks.
+6. Always include a risk disclaimer if discussing any trades or positions.
+
+If user asks about "why did signal X trigger?", search their recent signals and provide the breakdown.
+If user asks "what's my max loss?", calculate from open positions + risk limits.
+If user asks recommendations, suggest based on their risk profile + historical performance.
+```
+
+## Chat Panel UI (Sidebar Toggle)
+
+**Layout:**
+
+In `src/components/layout/sidebar.tsx`:
+- Add toggle button at bottom: "💬 Chat" (or icon)
+- On click: toggles `isChatOpen` state
+- If open: slides in a 360px-wide panel from right side of screen (mobile: full width modal)
+- Chat panel floats above other content (z-index 50)
+
+**Chat Panel Container:**
+
+```tsx
+<div className="fixed right-0 top-0 h-screen w-96 bg-surface border-l border-border flex flex-col z-50">
+  {/* Header */}
+  <div className="p-4 border-b border-border flex justify-between items-center">
+    <h2 className="text-lg font-semibold">AlphaAI Chat</h2>
+    <button onClick={() => setIsChatOpen(false)}>✕</button>
+  </div>
+
+  {/* Messages Area */}
+  <div className="flex-1 overflow-y-auto p-4 space-y-3">
+    {messages.map(msg => <MessageBubble key={msg.id} message={msg} />)}
+    {isLoading && <ChatLoader />}
+  </div>
+
+  {/* Input Area */}
+  <ChatInput onSend={handleSendMessage} disabled={isLoading} />
+</div>
+```
+
+**Animation:**
+- Panel slides in from right: `animate-slide-in-right 300ms ease-out`
+- New messages fade in: `animate-fade-in 200ms ease-out`
+- AI response streams character-by-character: 20ms per character
+
+**Mobile Behavior:**
+
+On mobile (< 640px): Chat opens as full-screen modal instead of side panel.
+
+## Example Chat Interactions
+
+**Example 1: Signal Explanation**
+```
+User: Why did my BTC signal trigger?
+
+AI: Your BTC signal triggered on 2026-03-12 at 14:32 UTC due to a momentum breakout:
+
+• Momentum Divergence: Price made a new high (45,320 USDT) while hourly MACD diverged downward
+• Volume Surge: 23% above 20-period MA, confirming breakout intensity
+• Pattern: Classic bull rounding bottom + breakout
+• Confidence: 87% (high)
+• Risk/Reward: 1:3.2
+
+This pattern has a 72% historical win rate in your backtests. Your current equity allows a $520 position. [Copy Signal] [View Backtest]
+```
+
+**Example 2: Portfolio Risk Check**
+```
+User: What's my current risk exposure?
+
+AI: Current Portfolio Risk Assessment:
+
+Position Summary:
+• 3 open positions (BTCUSDT, ETHUSDT, BNBUSDT)
+• Total notional: $2,840
+• Margin used: 28% of maximum ($10k)
+• Max loss (SL triggers): -$520 (18% of equity)
+• Value at Risk (95% conf): -$1,240 over 1-day horizon
+
+Risk Level: 🟡 Medium
+
+Recommendation: You have room for 1-2 more positions before hitting your 50% max allocation. [Adjust Risk Limits]
+```
+
+**Example 3: Strategy Comparison**
+```
+User: Which strategy should I copy?
+
+AI: Based on your risk profile (Conservative), here are top recommendations:
+
+1. SteadyFlow (4.2★, 65% win rate, 0.94 Sharpe)
+   • Low volatility, 8% monthly return
+   • Best for: Long-term consistent gains
+   • [Copy] [View Performance]
+
+2. MomentumFollower (4.0★, 58% win rate, 1.2 Sharpe)
+   • Higher risk, 15% monthly return
+   • Best for: Growth-focused traders
+   • [Copy] [View Performance]
+
+Your risk settings suggest SteadyFlow is a better fit. [Adjust My Risk Profile]
+```
+
+## Rate Limiting & Token Budget
+
+- Max 50 requests per user per day (free tier)
+- Tokens spent tracked and displayed in header ("47 / 5,000 tokens used today")
+- If limit exceeded: "You've reached your chat query limit. Requests resume tomorrow."
+- Suggested queries shown: "[Explain Recent Signals]" "[Portfolio Risk Check]" "[Strategy Recommendations]"
+
+---
+
 # 10. Notification Center
 
 Accessed via bell icon in top bar.
@@ -2864,7 +3264,265 @@ This is the recommended order. Each step produces a demoable increment.
 
 ---
 
-# 19. Deployment
+# 19. React Native Mobile App (Phase 2 - Scheduled Post-MVP)
+
+## Overview
+
+Alphaforge will expand to iOS/Android via React Native **after Phase 1 MVP ships** (estimated Phase 2, weeks 6-10 post-launch).
+
+Mobile app targets **notification-driven workflows**: signal alerts push → tap → instant copying, portfolio check,  and lightweight chat.
+
+## Monorepo Structure (Nx)
+
+After MVP, restructure the project into a monorepo managed by **Nx** for code sharing between web and mobile:
+
+```
+alphaforge/                    # Monorepo root
+├── nx.json                    # Nx configuration
+├── package.json               # Root package.json with shared deps
+├── tsconfig.base.json         # Shared TypeScript config
+│
+├── apps/
+│   ├── web/                   # Next.js web app (existing src/ moves here)
+│   │   ├── public/
+│   │   ├── src/
+│   │   ├── package.json
+│   │   ├── next.config.ts
+│   │   └── tsconfig.json
+│   │
+│   └── mobile/                # React Native app (NEW)
+│       ├── ios/               # Generated Xcode project
+│       ├── android/           # Generated Android project
+│       ├── src/
+│       │   ├── screens/       # Mobile-specific screens
+│       │   ├── components/    # Mobile-specific components
+│       │   ├── navigation/    # React Navigation setup
+│       │   ├── assets/
+│       │   └── App.tsx
+│       ├── package.json
+│       ├── app.json           # Expo config
+│       └── tsconfig.json
+│
+└── packages/                  # Shared code via monorepo
+    ├── shared-types/          # TypeScript interfaces (src/lib/types.ts → packages/shared-types/src/index.ts)
+    ├── shared-api/            # API client + mock data layer
+    ├── shared-hooks/          # Reusable hooks (useAnimatedCounter, useMockRealtime, etc.)
+    ├── shared-utils/          # Utils (formatCurrency, cn(), constants)
+    └── shared-ui/             # Headless UI components (if building custom cross-platform UI)
+```
+
+**Setup (One-time):**
+
+```bash
+# Install Nx globally
+npm install -g nx
+
+# Create monorepo from existing project
+npx nx init
+npx nx generate @nx/react-native:application mobile
+
+# Build the shared packages
+npx nx run shared-types:build
+npx nx run shared-api:build
+```
+
+## Mobile App Structure (React Native with Expo)
+
+**Framework:** Expo + React Native + React Navigation
+
+**Why Expo?** Managed hosting for iOS/Android builds, over-the-air updates, fast iteration.
+
+### Screens (MVP Mobile Features)
+
+**1. Dashboard (Home)**
+- Portfolio equity card (big number)
+- PnL status (red/green)
+- Recent signals (last 5, scrollable)
+- Quick action buttons: [View Portfolio] [View Signals] [Copy Strategy]
+
+**2. Signals Feed**
+- Infinite scroll list of signals
+- Each card: asset + direction + confidence + entry/SL/TP
+- Tap to copy, swipe for details
+- Filter by asset or time
+
+**3. Portfolio**
+- Equity bar chart (equity curve over 7D)
+- Positions list (long rows, each row: asset, entry, current, PnL, %)
+- Swipe position to close or adjust SL/TP
+
+**4. Chat (AlphaAI)**
+- Integrated with web chat (same messages via WebSocket)
+- Tap mic to record voice question? (Optional, deferred to Phase 2.5)
+- Otherwise text input only
+- Full-width message list
+
+**5. Settings (Mobile)**
+- Risk limits (sliders)
+- Notification preferences (toggles)
+- Exchange connection (API key entry modal)
+- Logout
+
+### Navigation
+
+```tsx
+// src/navigation/RootNavigator.tsx
+<NavigationContainer>
+  <Tab.Navigator>
+    <Tab.Screen name="Home" component={DashboardScreen} />
+    <Tab.Screen name="Signals" component={SignalsScreen} />
+    <Tab.Screen name="Portfolio" component={PortfolioScreen} />
+    <Tab.Screen name="Chat" component={ChatScreen} />
+    <Tab.Screen name="Settings" component={SettingsScreen} />
+  </Tab.Navigator>
+</NavigationContainer>
+```
+
+Bottom tab bar (iOS style on iOS, Material style on Android).
+
+### Push Notifications
+
+```tsx
+// src/utils/notifications.ts
+import * as Notifications from 'expo-notifications';
+
+export async function registerForPushNotifications() {
+  const { status } = await Notifications.requestPermissionsAsync();
+  if (status === 'granted') {
+    const token = (await Notifications.getExpoPushTokenAsync()).data;
+    // Send token to backend to register user for alerts
+    await api.post('/notifications/tokens', { token });
+  }
+}
+
+// Listen for incoming notifications
+Notifications.addNotificationResponseListener(response => {
+  const { data } = response.notification;
+  if (data.type === 'signal') {
+    // Navigate to signal detail, pre-populate copy action
+  }
+});
+```
+
+**Backend sends push via Expo:**
+```bash
+curl -X POST https://exp.host/--/api/v2/push/send \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to": "ExponentPushToken[TOKEN]",
+    "title": "New Signal",
+    "body": "BTC LONG @ 45,320. Confidence: 87%",
+    "data": { "type": "signal", "signalId": "sig_123" }
+  }'
+```
+
+### Data Persistence & Offline Support
+
+```tsx
+// src/storage/queryClient.ts
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { QueryClient } from '@tanstack/react-query';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      cacheTime: 10 * 60 * 1000, // 10 min cache
+      staleTime: 2 * 60 * 1000,   // 2 min stale
+      networkMode: 'online',       // Graceful degradation if offline
+    },
+  },
+});
+
+// Persist cache to disk
+export const persistCache = async () => {
+  const cache = queryClient.getQueryCache().findAll();
+  await AsyncStorage.setItem('queryCache', JSON.stringify(cache));
+};
+```
+
+### Styling
+
+```tsx
+// src/theme/colors.ts
+export const Colors = {
+  bg: '#030712',
+  surface: '#0f1629',
+  primary: '#60a5fa',
+  text: '#f1f5f9',
+  // ... sync with web globals.css vars
+};
+
+// src/components/Button.tsx (cross-platform)
+import { TouchableOpacity, Text } from 'react-native';
+
+export function Button({ label, onPress }: Props) {
+  return (
+    <TouchableOpacity style={[styles.button]} onPress={onPress}>
+      <Text style={styles.label}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+```
+
+### Shared Types & Utils
+
+All TypeScript types, API functions, and utilities imported from `@alphaforge/shared-*` packages:
+
+```tsx
+// src/screens/SignalsScreen.tsx
+import { Signal, SignalDirection } from '@alphaforge/shared-types';
+import { formatCurrency, formatPercent } from '@alphaforge/shared-utils';
+import { useSignals } from '@alphaforge/shared-api';
+
+export function SignalsScreen() {
+  const { data: signals, isLoading } = useSignals();
+  // ... component code
+}
+```
+
+## Build & Deployment
+
+**iOS:**
+```bash
+npx eas build --platform ios
+# Output: .ipa file, submit to App Store via Xcode
+```
+
+**Android:**
+```bash
+npx eas build --platform android
+# Output: .apk or .aab, upload to Google Play Console
+```
+
+**Over-the-Air Updates (Expo Updates):**
+```bash
+npx expo publish
+# Pushes new JS code to live users without app store resubmission
+```
+
+## Timeline & Scope
+
+**Phase 2 (Week 6-10 post-MVP):**
+1. Set up monorepo (Nx) + shared packages
+2. Generate React Native scaffolding with Expo
+3. Implement 5 core mobile screens
+4. Wire up push notifications (Firebase Cloud Messaging)
+5. Data persistence layer (AsyncStorage)
+6. Testing on iOS simulator + Android emulator
+7. Submit to App Store and Google Play
+
+**NOT included in Phase 2:**
+- Biometric auth (fingerprint, face ID)
+- Voice chat
+- In-app payments / premium tiers
+- Custom charting (use simplified versions)
+- Background task execution
+
+These features are Phase 3+ enhancements.
+
+---
+
+# 20. Deployment
 
 Deploy to Vercel. Connect the GitHub repo. Vercel auto-deploys on push to main.
 
@@ -2880,7 +3538,7 @@ Preview deployments: Vercel gives a unique URL per branch/PR — use these for t
 
 ---
 
-# 20. Backend Integration Plan (Future)
+# 21. Backend Integration Plan (Future)
 
 When the Python FastAPI backend is deployed on Render:
 
