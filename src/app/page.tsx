@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils';
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
-  const { auth } = useAuth();
+  const auth = useAuth();
   const db = useFirestore();
   const [mounted, setMounted] = useState(false);
 

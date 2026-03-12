@@ -33,6 +33,41 @@ import {
   TableRow 
 } from "@/components/ui/table";
 
+const LiquidationTreemapContent = (props: any) => {
+  const { x, y, width, height, name, type } = props;
+  return (
+    <g>
+      <rect
+        x={x}
+        y={y}
+        width={width}
+        height={height}
+        style={{
+          fill: type === 'long' ? 'rgba(52, 211, 153, 0.15)' : 'rgba(248, 113, 113, 0.15)',
+          stroke: type === 'long' ? 'var(--green)' : 'var(--red)',
+          strokeWidth: 1,
+        }}
+      />
+      {width > 40 && height > 20 && (
+        <text
+          x={x + width / 2}
+          y={y + height / 2 + 4}
+          textAnchor="middle"
+          style={{
+            fill: 'currentColor',
+            fontSize: '10px',
+            fontWeight: 900,
+            textTransform: 'uppercase',
+            letterSpacing: '-0.02em',
+          }}
+        >
+          {name}
+        </text>
+      )}
+    </g>
+  );
+};
+
 export default function MarketIntelligencePage() {
   const { user } = useUser();
   const db = useFirestore();
@@ -316,35 +351,7 @@ export default function MarketIntelligencePage() {
                 aspectRatio={4 / 3}
                 stroke="#fff"
                 fill="#8884d8"
-                content={(props: any) => {
-                  const { x, y, width, height, name, type } = props;
-                  return (
-                    <g>
-                      <rect
-                        x={x}
-                        y={y}
-                        width={width}
-                        height={height}
-                        style={{
-                          fill: type === 'long' ? 'rgba(52, 211, 153, 0.15)' : 'rgba(248, 113, 113, 0.15)',
-                          stroke: type === 'long' ? 'var(--green)' : 'var(--red)',
-                          strokeWidth: 1,
-                        }}
-                      />
-                      {width > 40 && height > 20 && (
-                        <text
-                          x={x + width / 2}
-                          y={y + height / 2 + 4}
-                          textAnchor="middle"
-                          fill="currentColor"
-                          className="text-[9px] lg:text-[10px] font-black uppercase tracking-tighter"
-                        >
-                          {name}
-                        </text>
-                      )}
-                    </g>
-                  );
-                }}
+                content={<LiquidationTreemapContent />}
               />
             </ResponsiveContainer>
           </div>
