@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { Search, Bell, User, Loader2, LogIn, ChevronDown, Activity } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -9,37 +10,41 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
-import { useAuth, useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { initiateAnonymousSignIn } from "@/firebase/non-blocking-login";
+import { useUser } from "@/firebase";
+// Firebase hooks removed in MVP mock mode:
+// import { useAuth, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+// import { initiateAnonymousSignIn } from "@/firebase/non-blocking-login";
+// import { collection, query, orderBy, limit } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
-import { collection, query, orderBy, limit } from "firebase/firestore";
 import { Notification } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { usePathname } from "next/navigation";
 
+const MOCK_NOTIFICATIONS: Notification[] = [
+  { id: 'n-1', userId: 'mock-user-001', type: 'signal', title: 'BTCUSDT Long Signal Triggered', message: 'Momentum Breakout node: 92% confidence breakout on 4H cluster.', read: false, critical: false, createdAt: new Date().toISOString() },
+  { id: 'n-2', userId: 'mock-user-001', type: 'trade', title: 'Position Established — SOLUSDT', message: 'Institutional LONG position confirmed at 142.30 entry.', read: false, critical: false, createdAt: new Date(Date.now() - 1800000).toISOString() },
+  { id: 'n-3', userId: 'mock-user-001', type: 'system', title: 'Node Sync Initialized', message: 'Institutional handshake established with AF-NODE-US-01.', read: true, critical: false, createdAt: new Date(Date.now() - 3600000).toISOString() },
+  { id: 'n-4', userId: 'mock-user-001', type: 'risk', title: 'Risk Threshold Advisory', message: 'Portfolio margin utilization reached 14.5%. Review cluster exposure.', read: false, critical: true, createdAt: new Date(Date.now() - 7200000).toISOString() },
+];
+
 export function Topbar() {
-  const auth = useAuth();
-  const db = useFirestore();
-  const pathname = usePathname();
   const { user, isUserLoading } = useUser();
+  const pathname = usePathname();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
-  const notificationsQuery = useMemoFirebase(() => {
-    if (!user || !db) return null;
-    return query(collection(db, 'users', user.uid, 'notifications'), orderBy('createdAt', 'desc'), limit(5));
-  }, [user, db]);
+  useEffect(() => {
+    // Mock mode: load mock notifications
+    setNotifications(MOCK_NOTIFICATIONS);
+  }, []);
 
-  const { data: notifications } = useCollection<Notification>(notificationsQuery);
-  const unreadCount = notifications?.filter(n => !n.read).length || 0;
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   const pageTitle = pathname === '/' ? 'Terminal Home' : 
                     pathname.split('/').filter(Boolean).pop()?.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'Dashboard';
 
-  function handleConnect() {
-    if (auth) {
-      initiateAnonymousSignIn(auth);
-    }
-  }
+  // Mock mode: user is always connected — no connect button shown
+  // function handleConnect() { initiateAnonymousSignIn(auth); }
 
   return (
     <header className="h-14 border-b border-border-subtle bg-surface/80 backdrop-blur-xl flex items-center justify-between px-6 z-40 sticky top-0 shrink-0 select-none">
@@ -110,8 +115,8 @@ export function Topbar() {
         <div className="h-4 w-px bg-border-subtle" />
 
         {!user ? (
+          // Mock mode: user is always connected, this block never renders
           <Button 
-            onClick={handleConnect} 
             disabled={isUserLoading}
             variant="outline" 
             size="sm" 
@@ -147,7 +152,7 @@ export function Topbar() {
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-border-subtle" />
               <DropdownMenuItem 
-                onClick={() => auth.signOut()}
+                onClick={() => {/* Mock mode: signOut disabled — restore when using Firebase */}}
                 className="text-red focus:bg-red/10 focus:text-red text-[11px] font-black uppercase cursor-pointer rounded-lg px-3 py-2.5"
               >
                 Terminate Node session

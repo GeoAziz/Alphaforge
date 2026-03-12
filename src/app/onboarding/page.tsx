@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
-import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { useUser } from '@/firebase';
+// Firebase hooks removed in MVP mock mode:
+// import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+// import { doc } from 'firebase/firestore';
+// import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { SpotlightCard } from '@/components/shared/spotlight-card';
 import { Button } from '@/components/ui/button';
 import { Loader2, ArrowRight, ArrowLeft } from 'lucide-react';
@@ -22,9 +24,11 @@ import { StepRegulatoryConsent } from '@/components/onboarding/step-regulatory-c
 
 export default function OnboardingPage() {
   const { user, isUserLoading } = useUser();
-  const db = useFirestore();
   const router = useRouter();
   
+  // Mock mode: profile loading disabled (no Firestore)
+  const isProfileLoading = false;
+
   const [step, setStep] = useState(1);
   const [direction, setDirection] = useState<'next' | 'back'>('next');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -39,19 +43,6 @@ export default function OnboardingPage() {
     disclaimer: false
   });
 
-  const profileRef = useMemoFirebase(() => {
-    if (!user || !db) return null;
-    return doc(db, 'users', user.uid);
-  }, [user, db]);
-
-  const { data: profile, isLoading: isProfileLoading } = useDoc(profileRef);
-
-  useEffect(() => {
-    if (profile?.onboardingComplete) {
-      router.push('/');
-    }
-  }, [profile, router]);
-
   function handleNext() {
     setDirection('next');
     setStep(s => s + 1);
@@ -63,22 +54,10 @@ export default function OnboardingPage() {
   }
 
   function handleComplete() {
-    if (!profileRef || !user) return;
     setIsSubmitting(true);
-
-    const onboardingData = {
-      id: user.uid,
-      name: formData.name || 'Institutional Node',
-      email: user.email || '',
-      plan: 'free',
-      riskTolerance: formData.risk,
-      onboardingComplete: true,
-      paperTradingStartDate: new Date().toISOString(),
-      createdAt: new Date().toISOString(),
-    };
-
-    setDocumentNonBlocking(profileRef, onboardingData, { merge: true });
-    
+    // Mock mode: Firebase write disabled — navigate directly
+    // When upgrading to Blaze: restore setDocumentNonBlocking to persist onboarding profile
+    console.info('[Mock] Onboarding complete for:', user?.uid, formData);
     setTimeout(() => {
       router.push('/');
     }, 1000);

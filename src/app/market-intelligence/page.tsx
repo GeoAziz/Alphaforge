@@ -1,8 +1,16 @@
 'use client';
 
-import { useState } from 'react';
-import { useFirestore, useCollection, useDoc, useMemoFirebase, useUser } from '@/firebase';
-import { collection, doc, query, limit } from 'firebase/firestore';
+import { useState, useEffect } from 'react';
+import { useUser } from '@/firebase';
+// Firebase hooks removed in MVP mock mode:
+// import { useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
+// import { collection, doc, query, limit } from 'firebase/firestore';
+import { api } from '@/lib/api';
+import {
+  mockTrendIndicators,
+  mockSocialSentimentDetails,
+  mockOnChainMetricDetails
+} from '@/data/mock-market-data';
 import { SpotlightCard } from '@/components/shared/spotlight-card';
 import { generateMarketInsights, MarketInsightsOutput } from '@/ai/flows/market-insights-flow';
 import { 
@@ -70,59 +78,36 @@ const LiquidationTreemapContent = (props: any) => {
 
 export default function MarketIntelligencePage() {
   const { user } = useUser();
-  const db = useFirestore();
   const [aiInsights, setAiInsights] = useState<MarketInsightsOutput | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
 
-  // Firestore Queries
-  const tickersQuery = useMemoFirebase(() => {
-    if (!db || !user) return null;
-    return query(collection(db, 'marketTickers'), limit(12));
-  }, [db, user]);
+  // Mock data state (replaces 8 Firestore queries)
+  const [tickers, setTickers] = useState<MarketTicker[]>([]);
+  const [sentiment, setSentiment] = useState<MarketSentiment | null>(null);
+  const [fundingRates, setFundingRates] = useState<FundingRate[]>([]);
+  const [openInterest, setOpenInterest] = useState<OpenInterest[]>([]);
+  const [quality, setQuality] = useState<MarketDataQuality[]>([]);
 
-  const sentimentRef = useMemoFirebase(() => {
-    if (!db || !user) return null;
-    return doc(db, 'marketSentiment', 'latest');
-  }, [db, user]);
+  // These come from mock data directly (not in api.ts yet)
+  const trends: TrendIndicator[] = mockTrendIndicators;
+  const social: SocialSentimentDetail[] = mockSocialSentimentDetails;
+  const metrics: OnChainMetricDetail[] = mockOnChainMetricDetails;
 
-  const fundingQuery = useMemoFirebase(() => {
-    if (!db || !user) return null;
-    return query(collection(db, 'fundingRates'), limit(10));
-  }, [db, user]);
-
-  const openInterestQuery = useMemoFirebase(() => {
-    if (!db || !user) return null;
-    return query(collection(db, 'openInterests'), limit(10));
-  }, [db, user]);
-
-  const trendQuery = useMemoFirebase(() => {
-    if (!db || !user) return null;
-    return query(collection(db, 'trendIndicators'), limit(6));
-  }, [db, user]);
-
-  const socialQuery = useMemoFirebase(() => {
-    if (!db || !user) return null;
-    return query(collection(db, 'socialSentiment'), limit(4));
-  }, [db, user]);
-
-  const metricsQuery = useMemoFirebase(() => {
-    if (!db || !user) return null;
-    return query(collection(db, 'onChainMetrics'), limit(8));
-  }, [db, user]);
-
-  const qualityQuery = useMemoFirebase(() => {
-    if (!db || !user) return null;
-    return query(collection(db, 'marketDataQuality'), limit(5));
-  }, [db, user]);
-
-  const { data: tickers } = useCollection<MarketTicker>(tickersQuery);
-  const { data: sentiment } = useDoc<MarketSentiment>(sentimentRef);
-  const { data: fundingRates } = useCollection<FundingRate>(fundingQuery);
-  const { data: openInterest } = useCollection<OpenInterest>(openInterestQuery);
-  const { data: trends } = useCollection<TrendIndicator>(trendQuery);
-  const { data: social } = useCollection<SocialSentimentDetail>(socialQuery);
-  const { data: metrics } = useCollection<OnChainMetricDetail>(metricsQuery);
-  const { data: quality } = useCollection<MarketDataQuality>(qualityQuery);
+  useEffect(() => {
+    Promise.all([
+      api.market.getTickers(),
+      api.market.getSentiment(),
+      api.market.getFundingRates(),
+      api.market.getOpenInterest(),
+      api.market.getDataQuality(),
+    ]).then(([t, s, f, o, q]) => {
+      setTickers(t);
+      setSentiment(s);
+      setFundingRates(f);
+      setOpenInterest(o);
+      setQuality(q);
+    });
+  }, []);
 
   const liquidationData = [
     { name: 'BTC Longs', size: 45, type: 'long' },

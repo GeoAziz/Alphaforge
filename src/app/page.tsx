@@ -1,8 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useUser } from '@/firebase';
+// Firebase hooks removed in MVP mock mode:
+// import { useFirestore, useDoc, useMemoFirebase, useAuth } from '@/firebase';
+// import { doc } from 'firebase/firestore';
+// import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
+import { api } from '@/lib/api';
 import { HeroSection } from '@/components/dashboard/hero-section';
 import { PerformanceSummary } from '@/components/dashboard/performance-summary';
 import { MarketOverview } from '@/components/dashboard/market-overview';
@@ -11,48 +15,22 @@ import { ActiveSignalsPanel } from '@/components/dashboard/active-signals-panel'
 import { MarketSentimentCell } from '@/components/dashboard/market-sentiment';
 import { QuickAlerts } from '@/components/dashboard/quick-alerts';
 import { RecentSignals } from '@/components/dashboard/recent-signals';
-import { ShieldAlert, Loader2 } from 'lucide-react';
 import { PortfolioSummary } from '@/lib/types';
-import { EmptyState } from '@/components/shared/empty-state';
-import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
 import { cn } from '@/lib/utils';
 
 export default function DashboardPage() {
-  const { user, isUserLoading } = useUser();
-  const auth = useAuth();
-  const db = useFirestore();
+  const { user } = useUser();
   const [mounted, setMounted] = useState(false);
+  const [summary, setSummary] = useState<PortfolioSummary | null>(null);
+  const [isSummaryLoading, setIsSummaryLoading] = useState(true);
 
   useEffect(() => {
     setMounted(true);
+    api.portfolio.getSummary('mock-user-001').then(data => {
+      setSummary(data);
+      setIsSummaryLoading(false);
+    });
   }, []);
-
-  const summaryRef = useMemoFirebase(() => {
-    if (!db || !user) return null;
-    return doc(db, 'users', user.uid, 'portfolioSummary', user.uid);
-  }, [db, user]);
-
-  const { data: summary, isLoading: isSummaryLoading } = useDoc<PortfolioSummary>(summaryRef);
-
-  if (isUserLoading) {
-    return (
-      <div className="h-full w-full flex items-center justify-center">
-        <Loader2 className="animate-spin text-primary" size={32} />
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <EmptyState 
-        title="Institutional Handshake Required"
-        description="AlphaForge access is restricted to authorized entities. Please initialize a guest node session or connect your institutional credentials."
-        icon={ShieldAlert}
-        actionLabel="Initialize Node Session"
-        onAction={() => initiateAnonymousSignIn(auth)}
-      />
-    );
-  }
 
   return (
     <div className={cn(

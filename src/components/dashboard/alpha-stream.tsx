@@ -1,9 +1,12 @@
 
 'use client';
 
+import { useEffect, useState } from 'react';
 import { SpotlightCard } from '@/components/shared/spotlight-card';
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy, limit } from 'firebase/firestore';
+// Firebase hooks removed in MVP mock mode:
+// import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+// import { collection, query, orderBy, limit } from 'firebase/firestore';
+import { api } from '@/lib/api';
 import { Signal } from '@/lib/types';
 import { Zap, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -11,15 +14,15 @@ import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 
 export function AlphaStream() {
-  const { user } = useUser();
-  const db = useFirestore();
+  const [signals, setSignals] = useState<Signal[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const signalsQuery = useMemoFirebase(() => {
-    if (!db || !user) return null;
-    return query(collection(db, 'users', user.uid, 'signals'), orderBy('createdAt', 'desc'), limit(4));
-  }, [db, user]);
-
-  const { data: signals, isLoading } = useCollection<Signal>(signalsQuery);
+  useEffect(() => {
+    api.signals.getLiveSignals('mock-user-001').then(data => {
+      setSignals(data.slice(0, 4));
+      setIsLoading(false);
+    });
+  }, []);
 
   return (
     <SpotlightCard className="p-8 h-full">

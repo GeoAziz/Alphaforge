@@ -1,11 +1,14 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy, doc } from 'firebase/firestore';
-import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { useState, useMemo, useEffect } from 'react';
+import { useUser } from '@/firebase';
+// Firebase hooks removed in MVP mock mode:
+// import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+// import { collection, query, orderBy, doc } from 'firebase/firestore';
+// import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { api } from '@/lib/api';
 import { SpotlightCard } from '@/components/shared/spotlight-card';
-import { MarketplaceStrategy, Notification } from '@/lib/types';
+import { MarketplaceStrategy } from '@/lib/types';
 import { 
   ShoppingBag, 
   Search, 
@@ -37,8 +40,9 @@ import { MarketplaceDisclaimer } from '@/components/marketplace/marketplace-disc
 
 export default function MarketplacePage() {
   const { user } = useUser();
-  const db = useFirestore();
   const isMobile = useIsMobile();
+  const [strategies, setStrategies] = useState<MarketplaceStrategy[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedStrategy, setSelectedStrategy] = useState<MarketplaceStrategy | null>(null);
   const [subscribingId, setSubscribingId] = useState<string | null>(null);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
@@ -57,12 +61,12 @@ export default function MarketplacePage() {
     confirmation: false
   });
 
-  const marketplaceQuery = useMemoFirebase(() => {
-    if (!db || !user) return null;
-    return query(collection(db, 'marketplaceStrategies'), orderBy('subscribers', 'desc'));
-  }, [db, user]);
-
-  const { data: strategies, isLoading } = useCollection<MarketplaceStrategy>(marketplaceQuery);
+  useEffect(() => {
+    api.strategies.getMarketplaceStrategies().then(data => {
+      setStrategies(data);
+      setIsLoading(false);
+    });
+  }, []);
 
   const filteredStrategies = useMemo(() => {
     if (!strategies) return [];
@@ -88,29 +92,13 @@ export default function MarketplacePage() {
   }
 
   function handleFinalizeSubscription() {
-    if (!user || !db || !selectedStrategy) return;
+    if (!selectedStrategy) return;
     setSubscribingId(selectedStrategy.id);
     setShowDisclaimer(false);
 
-    const subscriptionRef = doc(db, 'users', user.uid, 'subscriptions', selectedStrategy.id);
-    const notificationRef = doc(collection(db, 'users', user.uid, 'notifications'));
-
-    setDocumentNonBlocking(subscriptionRef, { 
-      strategyId: selectedStrategy.id,
-      subscribedAt: new Date().toISOString(),
-      status: 'paper_trade' 
-    }, { merge: true });
-
-    const notification: Partial<Notification> = {
-      type: 'system',
-      userId: user.uid,
-      title: 'Node Sync Initialized',
-      message: `Established institutional handshake with ${selectedStrategy.name}. Paper trading node activated.`,
-      read: false,
-      critical: false,
-      createdAt: new Date().toISOString(),
-    };
-    setDocumentNonBlocking(notificationRef, notification, { merge: true });
+    // Mock mode: Firebase writes disabled — log subscription action
+    // When upgrading to Blaze: restore setDocumentNonBlocking for subscriptions + notifications
+    console.info('[Mock] Subscribing to strategy:', selectedStrategy.id, selectedStrategy.name);
 
     setTimeout(() => {
       setSubscribingId(null);

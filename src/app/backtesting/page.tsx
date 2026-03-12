@@ -1,9 +1,11 @@
-
 'use client';
 
-import { useState } from 'react';
-import { useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query } from 'firebase/firestore';
+import { useState, useEffect } from 'react';
+import { useUser } from '@/firebase';
+// Firebase hooks removed in MVP mock mode:
+// import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+// import { collection, query } from 'firebase/firestore';
+import { api } from '@/lib/api';
 import { BacktestResult, Strategy } from '@/lib/types';
 import { FlaskConical, Loader2 } from 'lucide-react';
 import { SpotlightCard } from '@/components/shared/spotlight-card';
@@ -13,16 +15,13 @@ import { EquityCurve } from '@/components/backtesting/equity-curve';
 
 export default function BacktestingPage() {
   const { user } = useUser();
-  const db = useFirestore();
   const [isRunning, setIsRunning] = useState(false);
   const [results, setResults] = useState<BacktestResult | null>(null);
+  const [strategies, setStrategies] = useState<Strategy[]>([]);
 
-  const strategiesQuery = useMemoFirebase(() => {
-    if (!db || !user) return null;
-    return query(collection(db, 'users', user.uid, 'strategies'));
-  }, [db, user]);
-
-  const { data: strategies } = useCollection<Strategy>(strategiesQuery);
+  useEffect(() => {
+    api.strategies.getUserStrategies(user?.uid || 'mock-user-001').then(setStrategies);
+  }, [user]);
 
   const performanceData = [
     { date: '2024-01-01', equity: 10000 },

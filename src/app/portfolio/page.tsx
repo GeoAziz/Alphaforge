@@ -1,7 +1,11 @@
 'use client';
 
-import { useFirestore, useUser, useCollection, useDoc, useMemoFirebase } from '@/firebase';
-import { collection, doc, query, orderBy } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
+import { useUser } from '@/firebase';
+// Firebase hooks removed in MVP mock mode:
+// import { useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
+// import { collection, doc, query, orderBy } from 'firebase/firestore';
+import { api } from '@/lib/api';
 import { SpotlightCard } from '@/components/shared/spotlight-card';
 import { AnimatedCounter } from '@/components/shared/animated-counter';
 import { Position, Trade, PortfolioSummary } from '@/lib/types';
@@ -19,26 +23,19 @@ import { TradeHistory } from '@/components/portfolio/trade-history';
 
 export default function PortfolioPage() {
   const { user } = useUser();
-  const db = useFirestore();
+  const [summary, setSummary] = useState<PortfolioSummary | null>(null);
+  const [positions, setPositions] = useState<Position[]>([]);
+  const [trades, setTrades] = useState<Trade[]>([]);
+  const [isSummaryLoading, setIsSummaryLoading] = useState(true);
+  const [isPositionsLoading, setIsPositionsLoading] = useState(true);
+  const [isTradesLoading, setIsTradesLoading] = useState(true);
 
-  const summaryRef = useMemoFirebase(() => {
-    if (!user || !db) return null;
-    return doc(db, 'users', user.uid, 'portfolioSummary', user.uid);
-  }, [user, db]);
-
-  const positionsQuery = useMemoFirebase(() => {
-    if (!user || !db) return null;
-    return collection(db, 'users', user.uid, 'positions');
-  }, [user, db]);
-
-  const tradesQuery = useMemoFirebase(() => {
-    if (!user || !db) return null;
-    return query(collection(db, 'users', user.uid, 'trades'), orderBy('closedAt', 'desc'));
-  }, [user, db]);
-
-  const { data: summary, isLoading: isSummaryLoading } = useDoc<PortfolioSummary>(summaryRef);
-  const { data: positions, isLoading: isPositionsLoading } = useCollection<Position>(positionsQuery);
-  const { data: trades, isLoading: isTradesLoading } = useCollection<Trade>(tradesQuery);
+  useEffect(() => {
+    const uid = user?.uid || 'mock-user-001';
+    api.portfolio.getSummary(uid).then(d => { setSummary(d); setIsSummaryLoading(false); });
+    api.portfolio.getPositions(uid).then(d => { setPositions(d); setIsPositionsLoading(false); });
+    api.portfolio.getTrades(uid).then(d => { setTrades(d); setIsTradesLoading(false); });
+  }, [user]);
 
   if (!user) {
     return (

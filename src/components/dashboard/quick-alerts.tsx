@@ -1,22 +1,32 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { SpotlightCard } from '@/components/shared/spotlight-card';
 import { Bell, Zap, ShieldAlert, CheckCircle2 } from 'lucide-react';
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy, limit } from 'firebase/firestore';
+// Firebase hooks removed in MVP mock mode:
+// import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+// import { collection, query, orderBy, limit } from 'firebase/firestore';
 import { Notification } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
+const MOCK_ALERTS: Notification[] = [
+  { id: 'a-1', userId: 'mock-user-001', type: 'signal', title: 'BTCUSDT Long Signal Triggered', message: 'Momentum Breakout node identified 92% confidence breakout on 4H cluster.', read: false, critical: false, createdAt: new Date().toISOString() },
+  { id: 'a-2', userId: 'mock-user-001', type: 'trade', title: 'Position Established — SOLUSDT', message: 'Institutional LONG position confirmed at 142.30 node entry.', read: true, critical: false, createdAt: new Date(Date.now() - 3600000).toISOString() },
+  { id: 'a-3', userId: 'mock-user-001', type: 'risk', title: 'Risk Threshold Advisory', message: 'Portfolio margin utilization reached 14.5%. Review cluster exposure.', read: false, critical: true, createdAt: new Date(Date.now() - 7200000).toISOString() },
+];
+
 export function QuickAlerts() {
-  const { user } = useUser();
-  const db = useFirestore();
+  const [alerts, setAlerts] = useState<Notification[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const alertsQuery = useMemoFirebase(() => {
-    if (!db || !user) return null;
-    return query(collection(db, 'users', user.uid, 'notifications'), orderBy('createdAt', 'desc'), limit(3));
-  }, [db, user]);
-
-  const { data: alerts, isLoading } = useCollection<Notification>(alertsQuery);
+  useEffect(() => {
+    // Mock mode: simulate async load with mock data
+    const t = setTimeout(() => {
+      setAlerts(MOCK_ALERTS);
+      setIsLoading(false);
+    }, 300);
+    return () => clearTimeout(t);
+  }, []);
 
   return (
     <SpotlightCard className="p-8 h-full">

@@ -7,6 +7,7 @@ import { KYCStatus, CreatorVerificationStatus } from '@/lib/types';
 import { SpotlightCard } from '@/components/shared/spotlight-card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import { 
   ShieldCheck, 
   ShieldAlert, 

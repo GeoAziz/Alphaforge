@@ -1,34 +1,33 @@
 'use client';
 
-import { useState } from 'react';
-import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { useState, useEffect } from 'react';
+import { useUser } from '@/firebase';
+// Firebase hooks removed in MVP mock mode:
+// import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+// import { collection, query, orderBy } from 'firebase/firestore';
+import { api } from '@/lib/api';
 import { SpotlightCard } from '@/components/shared/spotlight-card';
-import { StrategyCard } from '@/components/strategies/strategy-card';
 import { StrategyDetailPanel } from '@/components/strategies/strategy-detail-panel';
 import { StrategyGrid } from '@/components/strategies/strategy-grid';
 import { Strategy } from '@/lib/types';
-import { ShieldAlert } from 'lucide-react';
 
 export default function StrategiesPage() {
   const { user } = useUser();
-  const db = useFirestore();
+  const [strategies, setStrategies] = useState<Strategy[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedStrategy, setSelectedStrategy] = useState<Strategy | null>(null);
 
-  const strategiesQuery = useMemoFirebase(() => {
-    if (!db || !user) return null;
-    return query(collection(db, 'users', user.uid, 'strategies'), orderBy('winRate', 'desc'));
-  }, [db, user]);
-
-  const { data: strategies, isLoading } = useCollection<Strategy>(strategiesQuery);
+  useEffect(() => {
+    api.strategies.getUserStrategies(user?.uid || 'mock-user-001').then(data => {
+      setStrategies(data);
+      setIsLoading(false);
+    });
+  }, [user]);
 
   if (!user) {
     return (
       <div className="h-full flex items-center justify-center p-8">
         <SpotlightCard className="max-w-md p-10 text-center space-y-6">
-          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto text-primary">
-            <ShieldAlert size={32} />
-          </div>
           <h2 className="text-2xl font-black uppercase">Strategies Restricted</h2>
           <p className="text-sm text-text-muted">Please connect your session to browse proprietary algorithmic engines.</p>
         </SpotlightCard>

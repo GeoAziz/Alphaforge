@@ -1,20 +1,24 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, orderBy } from "firebase/firestore";
-import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { useUser } from "@/firebase";
+// Firebase hooks removed in MVP mock mode:
+// import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+// import { collection, query, orderBy } from "firebase/firestore";
+// import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { api } from "@/lib/api";
 import { SignalCard } from "@/components/signals/signal-card";
 import { SignalFilters } from "@/components/signals/signal-filters";
 import { SignalDetailPanel } from "@/components/signals/signal-detail-panel";
-import { Signal, Position, Notification } from "@/lib/types";
+import { Signal } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { ShieldAlert, Activity } from "lucide-react";
 import { SpotlightCard } from "@/components/shared/spotlight-card";
 
 export default function SignalsPage() {
   const { user } = useUser();
-  const db = useFirestore();
+  const [rawSignals, setRawSignals] = useState<Signal[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedSignal, setSelectedSignal] = useState<Signal | null>(null);
   const [isExecuting, setIsExecuting] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -25,14 +29,13 @@ export default function SignalsPage() {
   const [status, setStatus] = useState("active");
   const [confidence, setConfidence] = useState(0);
 
-  useEffect(() => setMounted(true), []);
-
-  const signalsQuery = useMemoFirebase(() => {
-    if (!db || !user) return null;
-    return query(collection(db, "users", user.uid, "signals"), orderBy("createdAt", "desc"));
-  }, [db, user]);
-
-  const { data: rawSignals, isLoading } = useCollection<Signal>(signalsQuery);
+  useEffect(() => {
+    setMounted(true);
+    api.signals.getLiveSignals(user?.uid || 'mock-user-001').then(data => {
+      setRawSignals(data);
+      setIsLoading(false);
+    });
+  }, [user]);
 
   const filteredSignals = useMemo(() => {
     if (!rawSignals) return [];
@@ -46,37 +49,11 @@ export default function SignalsPage() {
   }, [rawSignals, search, strategy, status, confidence]);
 
   function handleExecuteSignal(signal: Signal) {
-    if (!user || !db) return;
     setIsExecuting(true);
 
-    const positionsRef = collection(db, "users", user.uid, "positions");
-    const notificationsRef = collection(db, "users", user.uid, "notifications");
-
-    const newPosition: Partial<Position> = {
-      asset: signal.asset,
-      direction: signal.direction,
-      entryPrice: signal.entryPrice,
-      currentPrice: signal.entryPrice,
-      quantity: 1,
-      unrealizedPnl: 0,
-      unrealizedPnlPercent: 0,
-      riskExposure: 2.5,
-      signalId: signal.id,
-      openedAt: new Date().toISOString(),
-    };
-
-    const newNotification: Partial<Notification> = {
-      type: 'trade',
-      userId: user.uid,
-      title: 'Position Established',
-      message: `Institutional ${signal.direction} position established for ${signal.asset} via ${signal.strategy} node.`,
-      read: false,
-      critical: false,
-      createdAt: new Date().toISOString(),
-    };
-
-    addDocumentNonBlocking(positionsRef, newPosition);
-    addDocumentNonBlocking(notificationsRef, newNotification);
+    // Mock mode: Firebase writes disabled — log action only
+    // When upgrading to Blaze: restore addDocumentNonBlocking calls for positions and notifications
+    console.info('[Mock] Executing signal:', signal.id, signal.asset, signal.direction);
 
     setTimeout(() => {
       setIsExecuting(false);

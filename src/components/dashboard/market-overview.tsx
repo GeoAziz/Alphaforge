@@ -1,23 +1,28 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { SpotlightCard } from '@/components/shared/spotlight-card';
 import { PriceTicker } from '@/components/shared/price-ticker';
 import { DataQualityIndicator } from '@/components/shared/data-quality-indicator';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, limit } from 'firebase/firestore';
+// Firebase hooks removed in MVP mock mode:
+// import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+// import { collection, query, limit } from 'firebase/firestore';
+import { api } from '@/lib/api';
 import { MarketTicker } from '@/lib/types';
 import { Activity, ArrowUpRight, ArrowDownRight, Database } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export function MarketOverview() {
-  const db = useFirestore();
-  const tickersQuery = useMemoFirebase(() => {
-    if (!db) return null;
-    return query(collection(db, 'marketTickers'), limit(3));
-  }, [db]);
+  const [tickers, setTickers] = useState<MarketTicker[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const { data: tickers, isLoading } = useCollection<MarketTicker>(tickersQuery);
+  useEffect(() => {
+    api.market.getTickers().then(data => {
+      setTickers(data.slice(0, 3));
+      setIsLoading(false);
+    });
+  }, []);
 
   return (
     <SpotlightCard className="p-8 h-full flex flex-col justify-between">
