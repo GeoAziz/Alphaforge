@@ -142,6 +142,10 @@ export interface PaperTradeResult {
   signalCount: number;
   roi: number;
   maxDrawdown: number;
+  sharpeRatio: number;
+  vsBacktestDelta: number;
+  passed: boolean;
+  completedAt: string;
 }
 
 export interface PerformancePoint {
@@ -215,6 +219,7 @@ export interface MarketplaceStrategy {
   isVerified: boolean;
   reputationScore: number;
   verificationStage: number; // 1-5
+  sharpeRatio: number;
   performanceBadge?: 'New' | 'Trending' | 'Best in Category';
   paperTradeDelta?: number; // e.g., +0.5% (difference between paper and backtest)
   pricingModel: 'Subscription' | 'Profit Share';
@@ -235,7 +240,7 @@ export interface Signal {
   createdAt: string;
   closedAt?: string;
   pnlPercent?: number;
-  drivers: string[];
+  drivers: SignalDriver[];
 }
 
 export interface SignalDriver {

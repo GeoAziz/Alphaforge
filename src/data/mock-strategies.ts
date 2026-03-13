@@ -44,6 +44,7 @@ export const mockMarketplaceStrategies: MarketplaceStrategy[] = [
     isVerified: true,
     reputationScore: 4.9,
     verificationStage: 5,
+    sharpeRatio: 4.82,
     performanceBadge: 'Best in Category',
     paperTradeDelta: +0.42,
     pricingModel: 'Subscription'
@@ -62,6 +63,7 @@ export const mockMarketplaceStrategies: MarketplaceStrategy[] = [
     isVerified: true,
     reputationScore: 4.7,
     verificationStage: 5,
+    sharpeRatio: 3.24,
     performanceBadge: 'Trending',
     paperTradeDelta: -1.2,
     pricingModel: 'Profit Share'
@@ -80,6 +82,7 @@ export const mockMarketplaceStrategies: MarketplaceStrategy[] = [
     isVerified: true,
     reputationScore: 4.5,
     verificationStage: 4,
+    sharpeRatio: 2.95,
     performanceBadge: 'Trending',
     paperTradeDelta: +0.15,
     pricingModel: 'Subscription'
@@ -98,6 +101,7 @@ export const mockMarketplaceStrategies: MarketplaceStrategy[] = [
     isVerified: false,
     reputationScore: 3.8,
     verificationStage: 2,
+    sharpeRatio: 4.12,
     performanceBadge: 'New',
     paperTradeDelta: -0.05,
     pricingModel: 'Profit Share'

@@ -7,9 +7,10 @@ import { SpotlightCard } from '@/components/shared/spotlight-card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ShieldCheck, Fingerprint, Database, ExternalLink, Activity, Target, Zap, Clock, Share2, ArrowLeft } from 'lucide-react';
+import { ShieldCheck, Fingerprint, Database, ExternalLink, Activity, Target, Zap, Clock, Share2, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { Progress } from '@/components/ui/progress';
 
 export default function ProofDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -105,11 +106,17 @@ export default function ProofDetailPage({ params }: { params: Promise<{ id: stri
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-border-subtle">
               <div className="space-y-4">
                 <h4 className="text-[10px] font-black uppercase text-primary tracking-widest">Alpha Drivers</h4>
-                <div className="space-y-2">
-                  {signal.drivers.map((d, i) => (
-                    <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-elevated/20 border border-border-subtle">
-                      <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                      <span className="text-[11px] font-bold text-text-secondary uppercase">{d}</span>
+                <div className="space-y-3">
+                  {signal.drivers.map((driver, i) => (
+                    <div key={i} className="space-y-2 p-4 rounded-xl bg-elevated/20 border border-border-subtle">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          {driver.active ? <CheckCircle2 size={12} className="text-green" /> : <div className="w-1.5 h-1.5 rounded-full bg-border-subtle" />}
+                          <span className="text-[11px] font-bold text-text-secondary uppercase">{driver.label}</span>
+                        </div>
+                        <span className="text-[9px] font-black text-primary uppercase">{Math.round(driver.weight * 100)}%</span>
+                      </div>
+                      <Progress value={driver.weight * 100} className="h-1 bg-border-subtle" />
                     </div>
                   ))}
                 </div>

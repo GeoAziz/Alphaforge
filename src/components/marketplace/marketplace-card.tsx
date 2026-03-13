@@ -8,7 +8,7 @@ import { PaperTradeGate } from './paper-trade-gate';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Zap, ShoppingBag, Loader2, ArrowRight } from 'lucide-react';
+import { Zap, ShoppingBag, Loader2 } from 'lucide-react';
 
 interface MarketplaceCardProps {
   strategy: MarketplaceStrategy;
@@ -56,7 +56,7 @@ export function MarketplaceCard({ strategy, onSubscribe, isSubscribing }: Market
             { l: 'Efficiency', v: `${strategy.winRate}%`, c: 'text-green' },
             { l: 'Drawdown', v: `${strategy.maxDrawdown}%`, c: 'text-red' },
             { l: 'Nodes', v: strategy.subscribers.toLocaleString(), c: 'text-text-primary' },
-            { l: 'Sharpe', v: strategy.sharpeRatio.toFixed(2), c: 'text-primary' }
+            { l: 'Sharpe', v: strategy.sharpeRatio?.toFixed(2) || '—', c: 'text-primary' }
           ].map(m => (
             <div key={m.l} className="p-2.5 rounded-xl bg-surface border border-border-subtle space-y-1">
               <div className="text-[8px] font-black text-text-muted uppercase">{m.l}</div>
@@ -96,7 +96,8 @@ export function MarketplaceCard({ strategy, onSubscribe, isSubscribing }: Market
         <Button 
           onClick={() => onSubscribe(strategy)}
           disabled={isSubscribing}
-          className="w-full sm:w-[180px] bg-primary text-primary-foreground font-black uppercase text-[10px] h-12 gap-2 rounded-xl group-hover:scale-[1.02] transition-transform"
+          variant="default"
+          className="w-full sm:w-[180px] font-black uppercase text-[10px] h-12 gap-2 rounded-xl group-hover:scale-[1.02] transition-transform"
         >
           {isSubscribing ? <Loader2 className="animate-spin" size={16} /> : <ShoppingBag size={16} />}
           Establish Sync

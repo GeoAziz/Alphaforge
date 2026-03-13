@@ -4,7 +4,7 @@ import { SpotlightCard } from '@/components/shared/spotlight-card';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Slider } from '@/components/ui/slider';
-import { AlertTriangle, ShieldAlert, Zap, TrendingUp, Info } from 'lucide-react';
+import { AlertTriangle, ShieldAlert, Zap, TrendingUp, Info, ShieldCheck } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
 import { RiskScore } from '@/lib/types';

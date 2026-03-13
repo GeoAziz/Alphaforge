@@ -4,6 +4,7 @@ import { SpotlightCard } from '@/components/shared/spotlight-card';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
 import { Bell, Send, MessageSquare, Mail, Smartphone, Info, ShieldCheck, QrCode, Terminal } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';

@@ -20,7 +20,8 @@ import {
   Fingerprint,
   TrendingUp,
   Microscope,
-  Info
+  Info,
+  CheckCircle2
 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { 
@@ -29,6 +30,7 @@ import {
   TooltipProvider, 
   TooltipTrigger 
 } from "@/components/ui/tooltip";
+import { Progress } from "@/components/ui/progress";
 
 interface SignalDetailPanelProps {
   signal: Signal | null;
@@ -124,9 +126,15 @@ export function SignalDetailPanel({
           </h3>
           <div className="space-y-3">
             {signal.drivers.map((driver, index) => (
-              <div key={index} className="flex items-center gap-3 p-4 rounded-xl bg-elevated/20 border border-border-subtle hover:bg-elevated/40 transition-all cursor-default group">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary group-hover:scale-150 transition-transform" />
-                <span className="text-[11px] font-bold text-text-secondary uppercase leading-relaxed">{driver}</span>
+              <div key={index} className="space-y-2 p-4 rounded-xl bg-elevated/20 border border-border-subtle hover:bg-elevated/40 transition-all cursor-default group">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {driver.active ? <CheckCircle2 size={12} className="text-green" /> : <div className="w-1.5 h-1.5 rounded-full bg-border-subtle" />}
+                    <span className="text-[11px] font-bold text-text-secondary uppercase leading-relaxed">{driver.label}</span>
+                  </div>
+                  <span className="text-[9px] font-black text-primary uppercase">{Math.round(driver.weight * 100)}%</span>
+                </div>
+                <Progress value={driver.weight * 100} className="h-1 bg-border-subtle" />
               </div>
             ))}
           </div>
@@ -143,7 +151,7 @@ export function SignalDetailPanel({
           </div>
         </div>
 
-        {/* Model Integrity Footer - NEW Institutional Section */}
+        {/* Model Integrity Footer */}
         <div className="pt-4 space-y-6">
           <Separator className="bg-border-subtle" />
           <div className="space-y-4">
