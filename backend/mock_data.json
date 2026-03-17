@@ -1,0 +1,5133 @@
+{
+  "users": [
+    {
+      "email": "test_1773753994@alphaforge.demo",
+      "display_name": "Test Trader",
+      "institution_name": "AlphaForge Test Lab",
+      "plan": "free",
+      "risk_tolerance": "moderate",
+      "created_at": "2026-03-17T09:26:34.739539",
+      "id": "01325ff5-5403-4cbc-8612-5c752efbe7cf"
+    },
+    {
+      "email": "test_1773739645.469849@alphaforge.io",
+      "display_name": "Test User",
+      "institution_name": "Test Org",
+      "plan": "free",
+      "risk_tolerance": "moderate",
+      "created_at": "2026-03-17T09:27:25.471009",
+      "id": "d93dbb6b-a488-44ed-b892-c2692d16d9dd"
+    },
+    {
+      "email": "test@alphaforge.io",
+      "display_name": "Test User",
+      "institution_name": "Test Institution",
+      "plan": "free",
+      "risk_tolerance": "moderate",
+      "created_at": "2026-03-17T09:30:50.411439",
+      "id": "26b471ad-a1fd-4f72-b50b-bcd7ab738d69"
+    },
+    {
+      "email": "test@alphaforge.io",
+      "display_name": "Test User",
+      "institution_name": "Test Institution",
+      "plan": "free",
+      "risk_tolerance": "moderate",
+      "created_at": "2026-03-17T09:31:05.946768",
+      "id": "e25d8b3d-f29e-429b-8bc7-c6b669d0358e"
+    },
+    {
+      "email": "test@alphaforge.io",
+      "display_name": "Updated Test User",
+      "institution_name": "Test Institution",
+      "plan": "free",
+      "risk_tolerance": "aggressive",
+      "created_at": "2026-03-17T09:31:58.905016",
+      "id": "ee917cb7-b3f3-40fb-8552-0f1a4369c4c8",
+      "updated_at": "2026-03-17T09:31:58.914423"
+    },
+    {
+      "email": "test@alphaforge.io",
+      "display_name": "Test User",
+      "institution_name": "Test Institution",
+      "plan": "free",
+      "risk_tolerance": "moderate",
+      "created_at": "2026-03-17T09:32:09.073130",
+      "id": "9a9e58c7-ff09-4322-8fd6-34869c5a5c5c"
+    },
+    {
+      "email": "test@alphaforge.io",
+      "display_name": "Updated Test User",
+      "institution_name": "Test Institution",
+      "plan": "free",
+      "risk_tolerance": "aggressive",
+      "created_at": "2026-03-17T09:34:19.645117",
+      "id": "5e98e89b-6167-4d47-9c40-7150028da902",
+      "updated_at": "2026-03-17T09:34:19.654902"
+    },
+    {
+      "email": "test@alphaforge.io",
+      "display_name": "Updated Test User",
+      "institution_name": "Test Institution",
+      "plan": "free",
+      "risk_tolerance": "aggressive",
+      "created_at": "2026-03-17T09:36:28.935898",
+      "id": "ea28ed19-1536-4a7a-9359-7681a7092e1a",
+      "kyc_status": "NOT_STARTED",
+      "verification_stage": "stage_1_intro",
+      "onboarding_complete": false,
+      "updated_at": "2026-03-17T09:36:28.942798"
+    },
+    {
+      "email": "test_1773740231.345758@alphaforge.io",
+      "display_name": "Test User",
+      "institution_name": "Test Org",
+      "plan": "free",
+      "risk_tolerance": "moderate",
+      "created_at": "2026-03-17T09:37:11.352813",
+      "id": "eb10fbf4-ee10-4e08-8c71-e7430257b262"
+    },
+    {
+      "email": "test_1773740310.473934@alphaforge.io",
+      "display_name": "Updated Test User",
+      "institution_name": "Test Org",
+      "plan": "free",
+      "risk_tolerance": "aggressive",
+      "created_at": "2026-03-17T09:38:30.482286",
+      "id": "786a7a7b-a879-47af-8465-b25f94f9b978",
+      "kyc_status": "NOT_STARTED",
+      "verification_stage": "stage_1_intro",
+      "onboarding_complete": false,
+      "updated_at": "2026-03-17T09:38:30.487219"
+    },
+    {
+      "email": "test_1773754778@alphaforge.demo",
+      "display_name": "Test Trader",
+      "institution_name": "AlphaForge Test Lab",
+      "plan": "free",
+      "risk_tolerance": "moderate",
+      "created_at": "2026-03-17T09:39:38.200895",
+      "id": "b6fa03c5-5aae-4d66-9e86-008dbea0380c"
+    },
+    {
+      "email": "test_1773754908@alphaforge.demo",
+      "display_name": "Test Trader",
+      "institution_name": "AlphaForge Test Lab",
+      "plan": "free",
+      "risk_tolerance": "moderate",
+      "created_at": "2026-03-17T09:41:48.807882",
+      "id": "d43cd0f4-3556-489c-9cab-bc7e17074063"
+    },
+    {
+      "email": "test_1773755043@alphaforge.demo",
+      "display_name": "Test Trader",
+      "institution_name": "AlphaForge Test Lab",
+      "plan": "free",
+      "risk_tolerance": "moderate",
+      "created_at": "2026-03-17T09:44:03.971322",
+      "id": "2dae25db-176b-4ff5-ac7c-2e6ad9652773"
+    },
+    {
+      "email": "test@alphaforge.io",
+      "display_name": "Updated Test User",
+      "institution_name": "Test Institution",
+      "plan": "free",
+      "risk_tolerance": "aggressive",
+      "created_at": "2026-03-17T09:44:35.363324",
+      "id": "8e0df588-9895-4192-9dae-008fc989f37c",
+      "kyc_status": "NOT_STARTED",
+      "verification_stage": "stage_1_intro",
+      "onboarding_complete": false,
+      "updated_at": "2026-03-17T09:44:35.368646"
+    },
+    {
+      "email": "test_1773740699.328371@alphaforge.io",
+      "display_name": "Updated Test User",
+      "institution_name": "Test Org",
+      "plan": "free",
+      "risk_tolerance": "aggressive",
+      "created_at": "2026-03-17T09:44:59.329339",
+      "id": "1fde434f-589a-4254-86fa-50b7983a5c49",
+      "kyc_status": "NOT_STARTED",
+      "verification_stage": "stage_1_intro",
+      "onboarding_complete": false,
+      "updated_at": "2026-03-17T09:44:59.334534"
+    },
+    {
+      "email": "e2e_0088cb5369@alphaforge-qa.com",
+      "display_name": "E2E Updated User",
+      "institution_name": "AlphaForge QA",
+      "plan": "free",
+      "risk_tolerance": "aggressive",
+      "created_at": "2026-03-17T14:39:52.076885",
+      "id": "f4c70060-b3ac-4e8a-b684-a52b58af5f69",
+      "kyc_status": "NOT_STARTED",
+      "verification_stage": "stage_1_intro",
+      "onboarding_complete": false,
+      "updated_at": "2026-03-17T14:39:52.085774"
+    },
+    {
+      "email": "e2e_0bf31d37d7@alphaforge-qa.com",
+      "display_name": "E2E Updated User",
+      "institution_name": "AlphaForge QA",
+      "plan": "free",
+      "risk_tolerance": "aggressive",
+      "created_at": "2026-03-17T14:43:50.533194",
+      "id": "a928e596-73f9-4836-88a7-0ec5d2c611d4",
+      "kyc_status": "NOT_STARTED",
+      "verification_stage": "stage_1_intro",
+      "onboarding_complete": false,
+      "updated_at": "2026-03-17T14:43:50.538995"
+    },
+    {
+      "email": "e2e_a432b9defb@alphaforge-qa.com",
+      "display_name": "E2E Updated User",
+      "institution_name": "AlphaForge QA",
+      "plan": "free",
+      "risk_tolerance": "aggressive",
+      "created_at": "2026-03-17T14:44:07.721171",
+      "id": "ed1e14b2-a2ce-452c-9380-57e70d0cf3b5",
+      "kyc_status": "NOT_STARTED",
+      "verification_stage": "stage_1_intro",
+      "onboarding_complete": false,
+      "updated_at": "2026-03-17T14:44:07.727025"
+    },
+    {
+      "email": "e2e_f31326b71c@alphaforge-qa.com",
+      "display_name": "E2E Updated User",
+      "institution_name": "AlphaForge QA",
+      "plan": "free",
+      "risk_tolerance": "aggressive",
+      "created_at": "2026-03-17T14:50:06.048173",
+      "id": "b9d98a2a-a3e4-4730-8d25-601a58b984ad",
+      "kyc_status": "NOT_STARTED",
+      "verification_stage": "stage_1_intro",
+      "onboarding_complete": false,
+      "updated_at": "2026-03-17T14:50:06.053862"
+    },
+    {
+      "email": "e2e_2accaa68bb@alphaforge-qa.com",
+      "display_name": "E2E Updated User",
+      "institution_name": "AlphaForge QA",
+      "plan": "free",
+      "risk_tolerance": "aggressive",
+      "created_at": "2026-03-17T14:54:33.185733",
+      "id": "c714e42f-3a0f-4684-8b44-327a9003fc4d",
+      "kyc_status": "NOT_STARTED",
+      "verification_stage": "stage_2_paper_trading",
+      "onboarding_complete": false,
+      "updated_at": "2026-03-17T14:54:39.607196"
+    },
+    {
+      "email": "e2e_ba6d616373@alphaforge-qa.com",
+      "display_name": "E2E Updated User",
+      "institution_name": "AlphaForge QA",
+      "plan": "free",
+      "risk_tolerance": "aggressive",
+      "created_at": "2026-03-17T14:55:58.032432",
+      "id": "02c83d99-b79b-44a2-8efd-4a5ac97c0602",
+      "kyc_status": "SUBMITTED",
+      "verification_stage": "stage_2_paper_trading",
+      "onboarding_complete": false,
+      "updated_at": "2026-03-17T14:56:03.831753"
+    },
+    {
+      "email": "e2e_4db9fc66bd@alphaforge-qa.com",
+      "display_name": "E2E Updated User",
+      "institution_name": "AlphaForge QA",
+      "plan": "free",
+      "risk_tolerance": "aggressive",
+      "created_at": "2026-03-17T14:58:58.791715",
+      "id": "664a2c47-2034-43d2-be31-e5be894ceb92",
+      "kyc_status": "SUBMITTED",
+      "verification_stage": "stage_2_paper_trading",
+      "onboarding_complete": false,
+      "updated_at": "2026-03-17T14:59:04.788758"
+    },
+    {
+      "email": "e2e_bbeb5199bc@alphaforge-qa.com",
+      "display_name": "E2E Updated User",
+      "institution_name": "AlphaForge QA",
+      "plan": "free",
+      "risk_tolerance": "aggressive",
+      "created_at": "2026-03-17T15:02:04.278057",
+      "id": "0e7a1fa7-e5f3-4e9d-b38f-22f4d49b24e1",
+      "kyc_status": "SUBMITTED",
+      "verification_stage": "stage_2_paper_trading",
+      "onboarding_complete": false,
+      "updated_at": "2026-03-17T15:02:10.604728"
+    },
+    {
+      "email": "e2e_d94e9024b7@alphaforge-qa.com",
+      "display_name": "E2E Updated User",
+      "institution_name": "AlphaForge QA",
+      "plan": "free",
+      "risk_tolerance": "aggressive",
+      "created_at": "2026-03-17T15:04:31.514820",
+      "id": "1376801a-37bd-4dd6-87cc-f157cdb0fb4f",
+      "kyc_status": "SUBMITTED",
+      "verification_stage": "stage_2_paper_trading",
+      "onboarding_complete": false,
+      "updated_at": "2026-03-17T15:04:37.451633"
+    },
+    {
+      "email": "e2e_62c5ede3bc@alphaforge-qa.com",
+      "display_name": "E2E Updated User",
+      "institution_name": "AlphaForge QA",
+      "plan": "free",
+      "risk_tolerance": "aggressive",
+      "created_at": "2026-03-17T15:04:49.278833",
+      "id": "daceaba4-f919-4b24-b710-885ca1df5ba5",
+      "kyc_status": "SUBMITTED",
+      "verification_stage": "stage_2_paper_trading",
+      "onboarding_complete": false,
+      "updated_at": "2026-03-17T15:04:54.214313"
+    },
+    {
+      "email": "e2e_16acd1909c@alphaforge-qa.com",
+      "display_name": "E2E Updated User",
+      "institution_name": "AlphaForge QA",
+      "plan": "free",
+      "risk_tolerance": "aggressive",
+      "created_at": "2026-03-17T15:06:39.634449",
+      "id": "dbd237c5-6e55-46c6-9590-054c17d796ad",
+      "kyc_status": "SUBMITTED",
+      "verification_stage": "stage_2_paper_trading",
+      "onboarding_complete": false,
+      "updated_at": "2026-03-17T15:06:45.555577"
+    },
+    {
+      "email": "e2e_b8b7aefba3@alphaforge-qa.com",
+      "display_name": "E2E Updated User",
+      "institution_name": "AlphaForge QA",
+      "plan": "free",
+      "risk_tolerance": "aggressive",
+      "created_at": "2026-03-17T15:27:49.144755",
+      "id": "35a143b5-9478-485f-8feb-5bc858ab9941",
+      "kyc_status": "SUBMITTED",
+      "verification_stage": "stage_2_paper_trading",
+      "onboarding_complete": false,
+      "updated_at": "2026-03-17T15:27:54.954703"
+    },
+    {
+      "email": "e2e_c8944b52eb@alphaforge-qa.com",
+      "display_name": "E2E Updated User",
+      "institution_name": "AlphaForge QA",
+      "plan": "free",
+      "risk_tolerance": "aggressive",
+      "created_at": "2026-03-17T15:34:55.993823",
+      "id": "f3ffc6b3-2f1d-430d-bc81-d1f49d0d3af6",
+      "kyc_status": "SUBMITTED",
+      "verification_stage": "stage_2_paper_trading",
+      "onboarding_complete": false,
+      "updated_at": "2026-03-17T15:35:02.056362"
+    },
+    {
+      "email": "e2e_3ed6422d1f@alphaforge-qa.com",
+      "display_name": "E2E Updated User",
+      "institution_name": "AlphaForge QA",
+      "plan": "free",
+      "risk_tolerance": "aggressive",
+      "created_at": "2026-03-17T15:37:52.849487",
+      "id": "fdbf3e62-4f09-495e-8bd9-f7085b3125f5",
+      "kyc_status": "SUBMITTED",
+      "verification_stage": "stage_2_paper_trading",
+      "onboarding_complete": false,
+      "updated_at": "2026-03-17T15:37:58.905512"
+    },
+    {
+      "email": "e2e_6931ef9a96@alphaforge-qa.com",
+      "display_name": "E2E Updated User",
+      "institution_name": "AlphaForge QA",
+      "plan": "free",
+      "risk_tolerance": "aggressive",
+      "created_at": "2026-03-17T15:45:14.205144",
+      "id": "2fc66a58-1428-453c-a27f-5cdd14a066e9",
+      "kyc_status": "SUBMITTED",
+      "verification_stage": "stage_2_paper_trading",
+      "onboarding_complete": false,
+      "updated_at": "2026-03-17T15:45:20.301730"
+    }
+  ],
+  "signals": [
+    {
+      "ticker": "BTC",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "c497ef14-197d-4e66-916e-32d88d516421",
+      "created_at": "2026-03-17T14:43:56.635514"
+    },
+    {
+      "ticker": "ETH",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "c825575f-ce4e-431f-b615-ed94f3504977",
+      "created_at": "2026-03-17T14:43:56.636318"
+    },
+    {
+      "ticker": "BNB",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "236de274-08c4-4811-8441-dd411ccdc63e",
+      "created_at": "2026-03-17T14:43:56.637956"
+    },
+    {
+      "ticker": "SOL",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "9676f46b-8f54-487a-a7e5-8f1bcae02f16",
+      "created_at": "2026-03-17T14:43:56.639001"
+    },
+    {
+      "ticker": "BTC",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "1e247620-6cb1-407f-92ba-55b6f5f72941",
+      "created_at": "2026-03-17T14:44:12.980684"
+    },
+    {
+      "ticker": "ETH",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "21cf6eca-27cc-43d2-a1ab-28f5e45ce699",
+      "created_at": "2026-03-17T14:44:12.984485"
+    },
+    {
+      "ticker": "BNB",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "c7771272-4ce4-45d3-af09-d18a22a514d8",
+      "created_at": "2026-03-17T14:44:12.988151"
+    },
+    {
+      "ticker": "SOL",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "a2aa9c60-c32f-4c5e-b673-65eedae0f20b",
+      "created_at": "2026-03-17T14:44:12.990367"
+    },
+    {
+      "ticker": "BTC",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "0bc67a15-4318-473c-b3b1-159ee41fe0d8",
+      "created_at": "2026-03-17T14:50:12.538537"
+    },
+    {
+      "ticker": "ETH",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "40f4bcdc-0da4-4312-b130-550e84269cf0",
+      "created_at": "2026-03-17T14:50:12.539584"
+    },
+    {
+      "ticker": "BNB",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "eee5669a-fef7-4590-adf4-1fb9326a7388",
+      "created_at": "2026-03-17T14:50:12.543529"
+    },
+    {
+      "ticker": "SOL",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "29efc6a2-1829-4d43-8475-50cefe1abd32",
+      "created_at": "2026-03-17T14:50:12.545057"
+    },
+    {
+      "ticker": "BTC",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "a63df14c-c044-4060-a9ad-f9374f395add",
+      "created_by": "system",
+      "created_at": "2026-03-17T14:54:39.498814"
+    },
+    {
+      "ticker": "ETH",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "3e1c9009-7001-4af5-b66d-0e6f4becff0b",
+      "created_by": "system",
+      "created_at": "2026-03-17T14:54:39.501008"
+    },
+    {
+      "ticker": "BNB",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "e2ae5e3a-cf95-4744-91a0-d8e1014934e7",
+      "created_by": "system",
+      "created_at": "2026-03-17T14:54:39.509772"
+    },
+    {
+      "ticker": "SOL",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "e10bd998-7068-4131-9b8b-4fa54ebd6fa7",
+      "created_by": "system",
+      "created_at": "2026-03-17T14:54:39.517118"
+    },
+    {
+      "ticker": "BTC",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "96dd42aa-3adb-421e-9a52-3ff68815e0fb",
+      "created_by": "system",
+      "created_at": "2026-03-17T14:56:03.752560"
+    },
+    {
+      "ticker": "ETH",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "e2daf379-8eeb-4943-b89f-0d75071f9b2a",
+      "created_by": "system",
+      "created_at": "2026-03-17T14:56:03.754736"
+    },
+    {
+      "ticker": "BNB",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "41ad60f3-215f-4c5d-9ee8-9c27e6a4855b",
+      "created_by": "system",
+      "created_at": "2026-03-17T14:56:03.758418"
+    },
+    {
+      "ticker": "SOL",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "5b22c400-7856-405c-8bd7-b5de8c6cd090",
+      "created_by": "system",
+      "created_at": "2026-03-17T14:56:03.759333"
+    },
+    {
+      "ticker": "BTC",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "566078bf-ec7d-408e-b392-5a2caea183a5",
+      "created_by": "system",
+      "created_at": "2026-03-17T14:59:04.715639"
+    },
+    {
+      "ticker": "ETH",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "2adf77a0-0ae7-4670-a03c-6b225265ab89",
+      "created_by": "system",
+      "created_at": "2026-03-17T14:59:04.717488"
+    },
+    {
+      "ticker": "BNB",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "bdc1ecf2-d154-4fb3-b67e-267c724efa86",
+      "created_by": "system",
+      "created_at": "2026-03-17T14:59:04.718824"
+    },
+    {
+      "ticker": "SOL",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "db7a2fac-c839-459e-8e70-61df1aac7c2c",
+      "created_by": "system",
+      "created_at": "2026-03-17T14:59:04.720240"
+    },
+    {
+      "ticker": "BTC",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "643b6de9-fd2d-41d3-aa15-f0a4d7c3613c",
+      "created_by": "system",
+      "created_at": "2026-03-17T15:02:10.521779"
+    },
+    {
+      "ticker": "ETH",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "94c7d000-d40f-40e5-b260-96e7b4a463ef",
+      "created_by": "system",
+      "created_at": "2026-03-17T15:02:10.525996"
+    },
+    {
+      "ticker": "BNB",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "33c5a07e-4656-413b-b09f-915dbfe4789b",
+      "created_by": "system",
+      "created_at": "2026-03-17T15:02:10.527924"
+    },
+    {
+      "ticker": "SOL",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "36398282-c495-4c6a-a40e-719de925353e",
+      "created_by": "system",
+      "created_at": "2026-03-17T15:02:10.529487"
+    },
+    {
+      "ticker": "BTC",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "bf10fe38-8baf-4368-a0ef-ca3aac6cdbc1",
+      "created_by": "system",
+      "created_at": "2026-03-17T15:04:37.247956"
+    },
+    {
+      "ticker": "ETH",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "e7a1ed11-3ea5-4bf1-83f9-c4cfc5890dfb",
+      "created_by": "system",
+      "created_at": "2026-03-17T15:04:37.259132"
+    },
+    {
+      "ticker": "BNB",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "2a0d12a8-fd5d-415e-a026-f8c1041b0ab8",
+      "created_by": "system",
+      "created_at": "2026-03-17T15:04:37.269552"
+    },
+    {
+      "ticker": "SOL",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "fba93b45-b6f7-449d-9cc1-9e837c44234a",
+      "created_by": "system",
+      "created_at": "2026-03-17T15:04:37.278157"
+    },
+    {
+      "ticker": "BTC",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "bfbc3687-20b0-4c7c-a726-f4e469dae55f",
+      "created_by": "system",
+      "created_at": "2026-03-17T15:04:54.038074"
+    },
+    {
+      "ticker": "ETH",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "6fabb8c3-b721-4ac9-8d1f-9770fca6a0ca",
+      "created_by": "system",
+      "created_at": "2026-03-17T15:04:54.052480"
+    },
+    {
+      "ticker": "BNB",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "58741966-68d3-47cf-98fc-15e8bf066ee5",
+      "created_by": "system",
+      "created_at": "2026-03-17T15:04:54.063821"
+    },
+    {
+      "ticker": "SOL",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "9d69cf20-ed1a-4b37-9a03-205dbb8f6692",
+      "created_by": "system",
+      "created_at": "2026-03-17T15:04:54.071753"
+    },
+    {
+      "ticker": "BTC",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "9cbd8f81-a827-4fcb-852c-f2012aef5bcd",
+      "created_by": "system",
+      "created_at": "2026-03-17T15:06:45.408274"
+    },
+    {
+      "ticker": "ETH",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "81c6bf31-0208-4049-ad69-d799e513d685",
+      "created_by": "system",
+      "created_at": "2026-03-17T15:06:45.428907"
+    },
+    {
+      "ticker": "BNB",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "c7a61a88-dcab-4ed8-b84a-1de2a17e6900",
+      "created_by": "system",
+      "created_at": "2026-03-17T15:06:45.438451"
+    },
+    {
+      "ticker": "SOL",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "56db991c-3665-4ba9-a812-50d9b3d66332",
+      "created_by": "system",
+      "created_at": "2026-03-17T15:06:45.451629"
+    },
+    {
+      "ticker": "BTC",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "420c758c-87bb-4ad0-8f2e-c9f6bde025cc",
+      "created_by": "system",
+      "created_at": "2026-03-17T15:27:54.780700"
+    },
+    {
+      "ticker": "ETH",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "63a514e0-2388-40f9-af8e-79edc5e01bee",
+      "created_by": "system",
+      "created_at": "2026-03-17T15:27:54.799959"
+    },
+    {
+      "ticker": "BNB",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "bab67389-cfd8-4d50-91fb-a1d7172448be",
+      "created_by": "system",
+      "created_at": "2026-03-17T15:27:54.810280"
+    },
+    {
+      "ticker": "SOL",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "8500daed-cb59-49ba-a67e-2a6ff58666ae",
+      "created_by": "system",
+      "created_at": "2026-03-17T15:27:54.820277"
+    },
+    {
+      "ticker": "BTC",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "5c35f6cf-2ad8-4daa-b7fd-22c8888a3ff5",
+      "created_by": "system",
+      "created_at": "2026-03-17T15:35:01.913761"
+    },
+    {
+      "ticker": "ETH",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "8219441e-95d1-4c45-9992-7e7341cabd9d",
+      "created_by": "system",
+      "created_at": "2026-03-17T15:35:01.934825"
+    },
+    {
+      "ticker": "BNB",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "d1d43f08-caec-4b0b-b014-8a527979405c",
+      "created_by": "system",
+      "created_at": "2026-03-17T15:35:01.947697"
+    },
+    {
+      "ticker": "SOL",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "5e36b9cc-b593-4536-8034-81b37f8d60e0",
+      "created_by": "system",
+      "created_at": "2026-03-17T15:35:01.956426"
+    },
+    {
+      "ticker": "BTC",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "7d26b995-0a4e-43d2-a483-c7b4b27568b6",
+      "created_by": "system",
+      "created_at": "2026-03-17T15:37:58.706832"
+    },
+    {
+      "ticker": "ETH",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "98c5a6fc-5411-4371-93b1-158b3977c9f6",
+      "created_by": "system",
+      "created_at": "2026-03-17T15:37:58.733567"
+    },
+    {
+      "ticker": "BNB",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "7099eb6a-9f1e-4994-a219-a702843d5cfe",
+      "created_by": "system",
+      "created_at": "2026-03-17T15:37:58.749399"
+    },
+    {
+      "ticker": "SOL",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "57d9cd34-90e1-4803-9378-d276f5b3ae4e",
+      "created_by": "system",
+      "created_at": "2026-03-17T15:37:58.763463"
+    },
+    {
+      "ticker": "BTC",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "92c65387-9379-4c8c-87b7-75b9fe5ea90b",
+      "created_by": "system",
+      "created_at": "2026-03-17T15:45:20.131960"
+    },
+    {
+      "ticker": "ETH",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "22e2692a-1ef9-4018-8b5a-762b8ae7e7f6",
+      "created_by": "system",
+      "created_at": "2026-03-17T15:45:20.161506"
+    },
+    {
+      "ticker": "BNB",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "3d85fbc6-1e14-4c5a-956d-107710f4f46d",
+      "created_by": "system",
+      "created_at": "2026-03-17T15:45:20.173685"
+    },
+    {
+      "ticker": "SOL",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "source": "internal_fallback",
+      "strength_score": 1.0725000000000002,
+      "id": "2bf1f9f4-2ff5-4c5b-a405-e98b8a9cc0f7",
+      "created_by": "system",
+      "created_at": "2026-03-17T15:45:20.181498"
+    }
+  ],
+  "paper_trades": [
+    {
+      "user_id": "c714e42f-3a0f-4684-8b44-327a9003fc4d",
+      "signal_id": "a63df14c-c044-4060-a9ad-f9374f395add",
+      "asset": "BTC",
+      "direction": "LONG",
+      "entry_price": 45045.0,
+      "quantity": 0.25,
+      "stop_loss": 44000.0,
+      "take_profit": 47000.0,
+      "status": "CLOSED",
+      "opened_at": "2026-03-17T14:54:39.543704",
+      "id": "803a55ce-4c94-4435-af4a-229e92dd4efb",
+      "created_at": "2026-03-17T14:54:39.543780",
+      "exit_price": 45454.5,
+      "pnl": 113.75,
+      "pnl_percent": 1.0101010101010102,
+      "closed_at": "2026-03-17T14:54:39.557186",
+      "updated_at": "2026-03-17T14:54:39.557216"
+    },
+    {
+      "user_id": "02c83d99-b79b-44a2-8efd-4a5ac97c0602",
+      "signal_id": "96dd42aa-3adb-421e-9a52-3ff68815e0fb",
+      "asset": "BTC",
+      "direction": "LONG",
+      "entry_price": 45045.0,
+      "quantity": 0.25,
+      "stop_loss": 44000.0,
+      "take_profit": 47000.0,
+      "status": "CLOSED",
+      "opened_at": "2026-03-17T14:56:03.773827",
+      "id": "514c242f-0e17-4a16-bbf2-86309f1c10a3",
+      "created_at": "2026-03-17T14:56:03.773860",
+      "exit_price": 45454.5,
+      "pnl": 113.75,
+      "pnl_percent": 1.0101010101010102,
+      "closed_at": "2026-03-17T14:56:03.781839",
+      "updated_at": "2026-03-17T14:56:03.781853"
+    },
+    {
+      "user_id": "664a2c47-2034-43d2-be31-e5be894ceb92",
+      "signal_id": "566078bf-ec7d-408e-b392-5a2caea183a5",
+      "asset": "BTC",
+      "direction": "LONG",
+      "entry_price": 45045.0,
+      "quantity": 0.25,
+      "stop_loss": 44000.0,
+      "take_profit": 47000.0,
+      "status": "CLOSED",
+      "opened_at": "2026-03-17T14:59:04.734675",
+      "id": "2c9121ef-2de7-40bc-88eb-a517d996e5a2",
+      "created_at": "2026-03-17T14:59:04.734706",
+      "exit_price": 45454.5,
+      "pnl": 113.75,
+      "pnl_percent": 1.0101010101010102,
+      "closed_at": "2026-03-17T14:59:04.740012",
+      "updated_at": "2026-03-17T14:59:04.740026"
+    },
+    {
+      "user_id": "0e7a1fa7-e5f3-4e9d-b38f-22f4d49b24e1",
+      "signal_id": "643b6de9-fd2d-41d3-aa15-f0a4d7c3613c",
+      "asset": "BTC",
+      "direction": "LONG",
+      "entry_price": 45045.0,
+      "quantity": 0.25,
+      "stop_loss": 44000.0,
+      "take_profit": 47000.0,
+      "status": "CLOSED",
+      "opened_at": "2026-03-17T15:02:10.547425",
+      "id": "50bce552-504c-4a7a-adeb-889bfc6a7123",
+      "created_at": "2026-03-17T15:02:10.547463",
+      "exit_price": 45454.5,
+      "pnl": 113.75,
+      "pnl_percent": 1.0101010101010102,
+      "closed_at": "2026-03-17T15:02:10.558500",
+      "updated_at": "2026-03-17T15:02:10.558514"
+    },
+    {
+      "user_id": "0e7a1fa7-e5f3-4e9d-b38f-22f4d49b24e1",
+      "signal_id": "643b6de9-fd2d-41d3-aa15-f0a4d7c3613c",
+      "asset": "BTC",
+      "direction": "SHORT",
+      "entry_price": null,
+      "stop_loss": null,
+      "take_profit": null,
+      "status": "OPEN",
+      "opened_at": "2026-03-17T15:02:10.706476",
+      "id": "35b3996c-12bc-4ea0-8a27-37a36d647a95",
+      "created_at": "2026-03-17T15:02:10.706561"
+    },
+    {
+      "user_id": "1376801a-37bd-4dd6-87cc-f157cdb0fb4f",
+      "signal_id": "bf10fe38-8baf-4368-a0ef-ca3aac6cdbc1",
+      "asset": "BTC",
+      "direction": "LONG",
+      "entry_price": 45045.0,
+      "quantity": 0.25,
+      "stop_loss": 44000.0,
+      "take_profit": 47000.0,
+      "status": "CLOSED",
+      "opened_at": "2026-03-17T15:04:37.316875",
+      "id": "d9785cae-5749-43af-99c8-3f9f601763d3",
+      "created_at": "2026-03-17T15:04:37.317035",
+      "exit_price": 45454.5,
+      "pnl": 113.75,
+      "pnl_percent": 1.0101010101010102,
+      "closed_at": "2026-03-17T15:04:37.336279",
+      "updated_at": "2026-03-17T15:04:37.336303"
+    },
+    {
+      "user_id": "1376801a-37bd-4dd6-87cc-f157cdb0fb4f",
+      "signal_id": "bf10fe38-8baf-4368-a0ef-ca3aac6cdbc1",
+      "asset": "BTC",
+      "direction": "SHORT",
+      "entry_price": null,
+      "stop_loss": null,
+      "take_profit": null,
+      "status": "OPEN",
+      "opened_at": "2026-03-17T15:04:37.654475",
+      "id": "1a95e06a-f7dc-4c06-9696-97882baf61f0",
+      "created_at": "2026-03-17T15:04:37.654607"
+    },
+    {
+      "user_id": "daceaba4-f919-4b24-b710-885ca1df5ba5",
+      "signal_id": "bfbc3687-20b0-4c7c-a726-f4e469dae55f",
+      "asset": "BTC",
+      "direction": "LONG",
+      "entry_price": 45045.0,
+      "quantity": 0.25,
+      "stop_loss": 44000.0,
+      "take_profit": 47000.0,
+      "status": "CLOSED",
+      "opened_at": "2026-03-17T15:04:54.109119",
+      "id": "7391f820-7dd2-4d8f-b298-5af4f56198e7",
+      "created_at": "2026-03-17T15:04:54.109155",
+      "exit_price": 45454.5,
+      "pnl": 113.75,
+      "pnl_percent": 1.0101010101010102,
+      "closed_at": "2026-03-17T15:04:54.126540",
+      "updated_at": "2026-03-17T15:04:54.126589"
+    },
+    {
+      "user_id": "daceaba4-f919-4b24-b710-885ca1df5ba5",
+      "signal_id": "bfbc3687-20b0-4c7c-a726-f4e469dae55f",
+      "asset": "BTC",
+      "direction": "SHORT",
+      "entry_price": null,
+      "stop_loss": null,
+      "take_profit": null,
+      "status": "OPEN",
+      "opened_at": "2026-03-17T15:04:54.364977",
+      "id": "869f48c5-f19d-400e-aab4-3d83a178a04a",
+      "created_at": "2026-03-17T15:04:54.365009"
+    },
+    {
+      "user_id": "dbd237c5-6e55-46c6-9590-054c17d796ad",
+      "signal_id": "9cbd8f81-a827-4fcb-852c-f2012aef5bcd",
+      "asset": "BTC",
+      "direction": "LONG",
+      "entry_price": 45045.0,
+      "quantity": 0.25,
+      "stop_loss": 44000.0,
+      "take_profit": 47000.0,
+      "status": "CLOSED",
+      "opened_at": "2026-03-17T15:06:45.486629",
+      "id": "76f89f9a-72ec-4351-8624-7a2a0e996b18",
+      "created_at": "2026-03-17T15:06:45.486681",
+      "exit_price": 45454.5,
+      "pnl": 113.75,
+      "pnl_percent": 1.0101010101010102,
+      "closed_at": "2026-03-17T15:06:45.499614",
+      "updated_at": "2026-03-17T15:06:45.499625"
+    },
+    {
+      "user_id": "dbd237c5-6e55-46c6-9590-054c17d796ad",
+      "signal_id": "9cbd8f81-a827-4fcb-852c-f2012aef5bcd",
+      "asset": "BTC",
+      "direction": "SHORT",
+      "entry_price": null,
+      "stop_loss": null,
+      "take_profit": null,
+      "status": "OPEN",
+      "opened_at": "2026-03-17T15:06:45.694482",
+      "id": "c85d6925-b25b-4c70-802e-084199345932",
+      "created_at": "2026-03-17T15:06:45.694508"
+    },
+    {
+      "user_id": "35a143b5-9478-485f-8feb-5bc858ab9941",
+      "signal_id": "420c758c-87bb-4ad0-8f2e-c9f6bde025cc",
+      "asset": "BTC",
+      "direction": "LONG",
+      "entry_price": 45045.0,
+      "quantity": 0.25,
+      "stop_loss": 44000.0,
+      "take_profit": 47000.0,
+      "status": "CLOSED",
+      "opened_at": "2026-03-17T15:27:54.856007",
+      "id": "792f2789-142e-4495-ac63-cb83f675a6ca",
+      "created_at": "2026-03-17T15:27:54.856038",
+      "exit_price": 45454.5,
+      "pnl": 113.75,
+      "pnl_percent": 1.0101010101010102,
+      "closed_at": "2026-03-17T15:27:54.869700",
+      "updated_at": "2026-03-17T15:27:54.869713"
+    },
+    {
+      "user_id": "35a143b5-9478-485f-8feb-5bc858ab9941",
+      "signal_id": "420c758c-87bb-4ad0-8f2e-c9f6bde025cc",
+      "asset": "BTC",
+      "direction": "SHORT",
+      "entry_price": null,
+      "stop_loss": null,
+      "take_profit": null,
+      "status": "OPEN",
+      "opened_at": "2026-03-17T15:27:55.142801",
+      "id": "3200d0b1-3e48-4935-8104-f11bfcee21e1",
+      "created_at": "2026-03-17T15:27:55.142871"
+    },
+    {
+      "user_id": "f3ffc6b3-2f1d-430d-bc81-d1f49d0d3af6",
+      "signal_id": "5c35f6cf-2ad8-4daa-b7fd-22c8888a3ff5",
+      "asset": "BTC",
+      "direction": "LONG",
+      "entry_price": 45045.0,
+      "quantity": 0.25,
+      "stop_loss": 44000.0,
+      "take_profit": 47000.0,
+      "status": "CLOSED",
+      "opened_at": "2026-03-17T15:35:01.979518",
+      "id": "54497ceb-2d24-4b48-bcf4-1537f0fa4d1b",
+      "created_at": "2026-03-17T15:35:01.979542",
+      "exit_price": 45454.5,
+      "pnl": 113.75,
+      "pnl_percent": 1.0101010101010102,
+      "closed_at": "2026-03-17T15:35:01.990707",
+      "updated_at": "2026-03-17T15:35:01.990720"
+    },
+    {
+      "user_id": "f3ffc6b3-2f1d-430d-bc81-d1f49d0d3af6",
+      "signal_id": "5c35f6cf-2ad8-4daa-b7fd-22c8888a3ff5",
+      "asset": "BTC",
+      "direction": "SHORT",
+      "entry_price": null,
+      "stop_loss": null,
+      "take_profit": null,
+      "status": "OPEN",
+      "opened_at": "2026-03-17T15:35:02.220451",
+      "id": "a8fda4ae-a517-4a67-aae2-feeb904d7fd7",
+      "created_at": "2026-03-17T15:35:02.220475"
+    },
+    {
+      "user_id": "fdbf3e62-4f09-495e-8bd9-f7085b3125f5",
+      "signal_id": "7d26b995-0a4e-43d2-a483-c7b4b27568b6",
+      "asset": "BTC",
+      "direction": "LONG",
+      "entry_price": 45045.0,
+      "quantity": 0.25,
+      "stop_loss": 44000.0,
+      "take_profit": 47000.0,
+      "status": "CLOSED",
+      "opened_at": "2026-03-17T15:37:58.800659",
+      "id": "062307b2-9516-4b2d-bede-5fcd3d38891f",
+      "created_at": "2026-03-17T15:37:58.800685",
+      "exit_price": 45454.5,
+      "pnl": 113.75,
+      "pnl_percent": 1.0101010101010102,
+      "closed_at": "2026-03-17T15:37:58.819445",
+      "updated_at": "2026-03-17T15:37:58.819456"
+    },
+    {
+      "user_id": "fdbf3e62-4f09-495e-8bd9-f7085b3125f5",
+      "signal_id": "7d26b995-0a4e-43d2-a483-c7b4b27568b6",
+      "asset": "BTC",
+      "direction": "SHORT",
+      "entry_price": null,
+      "stop_loss": null,
+      "take_profit": null,
+      "status": "OPEN",
+      "opened_at": "2026-03-17T15:37:59.061601",
+      "id": "bdc7356d-ba8f-40c6-8af0-1a211fa09474",
+      "created_at": "2026-03-17T15:37:59.061633"
+    },
+    {
+      "user_id": "2fc66a58-1428-453c-a27f-5cdd14a066e9",
+      "signal_id": "92c65387-9379-4c8c-87b7-75b9fe5ea90b",
+      "asset": "BTC",
+      "direction": "LONG",
+      "entry_price": 45045.0,
+      "quantity": 0.25,
+      "stop_loss": 44000.0,
+      "take_profit": 47000.0,
+      "status": "CLOSED",
+      "opened_at": "2026-03-17T15:45:20.209833",
+      "id": "c830d480-d889-445f-9401-11c94ccc1e2c",
+      "created_at": "2026-03-17T15:45:20.209865",
+      "exit_price": 45454.5,
+      "pnl": 113.75,
+      "pnl_percent": 1.0101010101010102,
+      "closed_at": "2026-03-17T15:45:20.223673",
+      "updated_at": "2026-03-17T15:45:20.223684"
+    },
+    {
+      "user_id": "2fc66a58-1428-453c-a27f-5cdd14a066e9",
+      "signal_id": "92c65387-9379-4c8c-87b7-75b9fe5ea90b",
+      "asset": "BTC",
+      "direction": "SHORT",
+      "entry_price": null,
+      "stop_loss": null,
+      "take_profit": null,
+      "status": "OPEN",
+      "opened_at": "2026-03-17T15:45:20.482440",
+      "id": "9d779114-4f2b-4d1b-900d-4929f689eaf1",
+      "created_at": "2026-03-17T15:45:20.482489"
+    }
+  ],
+  "positions": [],
+  "portfolios": [
+    {
+      "user_id": "test_user_001",
+      "starting_balance": 100000,
+      "current_balance": 100000,
+      "total_pnl": 0,
+      "id": "ab7b51d5-5859-4810-b55c-2bd38eee2242",
+      "created_at": "2026-03-17T09:27:57.315312"
+    },
+    {
+      "user_id": "ee917cb7-b3f3-40fb-8552-0f1a4369c4c8",
+      "starting_balance": 100000,
+      "current_balance": 100000,
+      "total_pnl": 0,
+      "id": "f019497d-9ee4-4612-abf1-53a6680e1bb6",
+      "created_at": "2026-03-17T09:32:03.743260"
+    },
+    {
+      "user_id": "9a9e58c7-ff09-4322-8fd6-34869c5a5c5c",
+      "starting_balance": 100000,
+      "current_balance": 100000,
+      "total_pnl": 0,
+      "id": "34cdcd18-b151-431c-883b-db8e88d1b9ed",
+      "created_at": "2026-03-17T09:32:13.992216"
+    },
+    {
+      "user_id": "5e98e89b-6167-4d47-9c40-7150028da902",
+      "starting_balance": 100000,
+      "current_balance": 100000,
+      "total_pnl": 0,
+      "id": "731c965a-6f6c-4483-843f-2f7e7733ca0b",
+      "created_at": "2026-03-17T09:34:25.637595"
+    },
+    {
+      "user_id": "ea28ed19-1536-4a7a-9359-7681a7092e1a",
+      "starting_balance": 100000,
+      "current_balance": 100000,
+      "total_pnl": 0,
+      "id": "c6ed30f2-9b19-47da-83f1-d77ab3fdffb2",
+      "created_at": "2026-03-17T09:36:36.002634"
+    },
+    {
+      "user_id": "786a7a7b-a879-47af-8465-b25f94f9b978",
+      "starting_balance": 100000,
+      "current_balance": 100000,
+      "total_pnl": 0,
+      "id": "523e3123-7602-4e34-b154-eeed06c54d58",
+      "created_at": "2026-03-17T09:38:36.160636"
+    },
+    {
+      "user_id": "8e0df588-9895-4192-9dae-008fc989f37c",
+      "starting_balance": 100000,
+      "current_balance": 100000,
+      "total_pnl": 0,
+      "id": "c8245f91-82a2-40d1-ad41-c5ebb2ea6ea0",
+      "created_at": "2026-03-17T09:44:40.438899"
+    },
+    {
+      "user_id": "1fde434f-589a-4254-86fa-50b7983a5c49",
+      "starting_balance": 100000,
+      "current_balance": 100000,
+      "total_pnl": 0,
+      "id": "3dc6be14-1f99-49f8-9a72-eaa1e281c252",
+      "created_at": "2026-03-17T09:45:02.927158"
+    },
+    {
+      "user_id": "c714e42f-3a0f-4684-8b44-327a9003fc4d",
+      "starting_balance": 100000,
+      "current_balance": 100000,
+      "total_pnl": 0,
+      "id": "0491412f-6f4b-4a52-b4c4-56e3728b98a0",
+      "created_at": "2026-03-17T14:54:39.533731"
+    },
+    {
+      "user_id": "02c83d99-b79b-44a2-8efd-4a5ac97c0602",
+      "starting_balance": 100000,
+      "current_balance": 100000,
+      "total_pnl": 0,
+      "id": "f90e619c-f812-41eb-bc98-8eb3fad8cde3",
+      "created_at": "2026-03-17T14:56:03.770123"
+    },
+    {
+      "user_id": "664a2c47-2034-43d2-be31-e5be894ceb92",
+      "starting_balance": 100000,
+      "current_balance": 100000,
+      "total_pnl": 0,
+      "id": "138936b5-a624-4b5f-b3c6-f7328adcb7a1",
+      "created_at": "2026-03-17T14:59:04.730805"
+    },
+    {
+      "user_id": "0e7a1fa7-e5f3-4e9d-b38f-22f4d49b24e1",
+      "starting_balance": 100000,
+      "current_balance": 100000,
+      "total_pnl": 0,
+      "id": "f43d9995-b9ed-4be7-aba5-d0cd4df21302",
+      "created_at": "2026-03-17T15:02:10.543437"
+    },
+    {
+      "user_id": "1376801a-37bd-4dd6-87cc-f157cdb0fb4f",
+      "starting_balance": 100000,
+      "current_balance": 100000,
+      "total_pnl": 0,
+      "id": "fc517766-2baa-496e-b934-57d366c1a7ab",
+      "created_at": "2026-03-17T15:04:37.301543"
+    },
+    {
+      "user_id": "daceaba4-f919-4b24-b710-885ca1df5ba5",
+      "starting_balance": 100000,
+      "current_balance": 100000,
+      "total_pnl": 0,
+      "id": "822afa72-402c-4209-8a77-ce871465b108",
+      "created_at": "2026-03-17T15:04:54.095110"
+    },
+    {
+      "user_id": "dbd237c5-6e55-46c6-9590-054c17d796ad",
+      "starting_balance": 100000,
+      "current_balance": 100000,
+      "total_pnl": 0,
+      "id": "3f15e724-d1f9-4e03-8885-ac01696bc4f0",
+      "created_at": "2026-03-17T15:06:45.472466"
+    },
+    {
+      "user_id": "35a143b5-9478-485f-8feb-5bc858ab9941",
+      "starting_balance": 100000,
+      "current_balance": 100000,
+      "total_pnl": 0,
+      "id": "51d70b63-d2eb-4e7d-b8c7-28066e4fd641",
+      "created_at": "2026-03-17T15:27:54.845720"
+    },
+    {
+      "user_id": "f3ffc6b3-2f1d-430d-bc81-d1f49d0d3af6",
+      "starting_balance": 100000,
+      "current_balance": 100000,
+      "total_pnl": 0,
+      "id": "58c2b9e5-3372-4359-9784-b9e2410d6407",
+      "created_at": "2026-03-17T15:35:01.970402"
+    },
+    {
+      "user_id": "fdbf3e62-4f09-495e-8bd9-f7085b3125f5",
+      "starting_balance": 100000,
+      "current_balance": 100000,
+      "total_pnl": 0,
+      "id": "3194b74f-8f2c-46ee-a1db-6524f54773be",
+      "created_at": "2026-03-17T15:37:58.784895"
+    },
+    {
+      "user_id": "2fc66a58-1428-453c-a27f-5cdd14a066e9",
+      "starting_balance": 100000,
+      "current_balance": 100000,
+      "total_pnl": 0,
+      "id": "f59af13b-939c-4e08-8243-58141c06d9a8",
+      "created_at": "2026-03-17T15:45:20.196339"
+    }
+  ],
+  "external_signals": [
+    {
+      "ticker": "BTC",
+      "signal_type": "BUY",
+      "price": 45000.0,
+      "source": "tradingview",
+      "metadata": {
+        "ticker": "BTC",
+        "action": "BUY",
+        "price": 45000.0
+      },
+      "created_at": "2026-03-17T15:04:38.584948",
+      "id": "1bf594d0-3cf7-4018-99c5-e670108eadd1"
+    },
+    {
+      "ticker": "BTC",
+      "signal_type": "BUY",
+      "price": 45000.0,
+      "source": "tradingview",
+      "metadata": {
+        "ticker": "BTC",
+        "action": "BUY",
+        "price": 45000.0
+      },
+      "created_at": "2026-03-17T15:04:55.271779",
+      "id": "3fc339cc-f854-4349-832f-8d0182cb2ff4"
+    },
+    {
+      "ticker": "BTC",
+      "signal_type": "BUY",
+      "price": 45000.0,
+      "source": "tradingview",
+      "metadata": {
+        "ticker": "BTC",
+        "action": "BUY",
+        "price": 45000.0
+      },
+      "created_at": "2026-03-17T15:06:46.571732",
+      "id": "c84f34e1-a122-4742-801c-d31f0beab13f"
+    },
+    {
+      "ticker": "BTC",
+      "signal_type": "BUY",
+      "price": 45000.0,
+      "source": "tradingview",
+      "metadata": {
+        "ticker": "BTC",
+        "action": "BUY",
+        "price": 45000.0
+      },
+      "created_at": "2026-03-17T15:27:56.026885",
+      "id": "9cdfabb3-db68-4d8c-b7ee-ce0d0df03066"
+    },
+    {
+      "ticker": "BTC",
+      "signal_type": "BUY",
+      "price": 45000.0,
+      "source": "tradingview",
+      "metadata": {
+        "ticker": "BTC",
+        "action": "BUY",
+        "price": 45000.0
+      },
+      "created_at": "2026-03-17T15:35:03.119684",
+      "id": "048cbac6-22d3-4f43-8a18-78dff299ffb2"
+    },
+    {
+      "ticker": "BTC",
+      "signal_type": "BUY",
+      "price": 45000.0,
+      "source": "tradingview",
+      "metadata": {
+        "ticker": "BTC",
+        "action": "BUY",
+        "price": 45000.0
+      },
+      "created_at": "2026-03-17T15:37:59.978646",
+      "id": "9d6c71c1-ee4d-4d7e-af4b-52d9c47708dd"
+    },
+    {
+      "ticker": "BTC",
+      "signal_type": "BUY",
+      "price": 45000.0,
+      "source": "tradingview",
+      "metadata": {
+        "ticker": "BTC",
+        "action": "BUY",
+        "price": 45000.0
+      },
+      "created_at": "2026-03-17T15:45:21.397428",
+      "id": "17ef9754-b309-4856-bb1e-8e89a355f618"
+    }
+  ],
+  "chat_messages": [
+    {
+      "user_id": "c714e42f-3a0f-4684-8b44-327a9003fc4d",
+      "message": "Summarize my current risk.",
+      "role": "user",
+      "created_at": "2026-03-17T14:54:39.581243",
+      "id": "58a2fe82-41e8-421c-bbf5-ac79c79fb3d7"
+    },
+    {
+      "user_id": "c714e42f-3a0f-4684-8b44-327a9003fc4d",
+      "message": "Your current risk profile shows a maximum drawdown of 0.00%. I recommend maintaining current position sizes and considering hedging strategies if volatility increases further.",
+      "role": "assistant",
+      "created_at": "2026-03-17T14:54:39.582776",
+      "id": "b8d362d7-f07f-49f9-8180-d51b7d42dcb1"
+    },
+    {
+      "user_id": "02c83d99-b79b-44a2-8efd-4a5ac97c0602",
+      "message": "Summarize my current risk.",
+      "role": "user",
+      "created_at": "2026-03-17T14:56:03.797524",
+      "id": "47dbc982-38ad-4833-abb1-8a1c1a4e69d7"
+    },
+    {
+      "user_id": "02c83d99-b79b-44a2-8efd-4a5ac97c0602",
+      "message": "Your current risk profile shows a maximum drawdown of 0.00%. I recommend maintaining current position sizes and considering hedging strategies if volatility increases further.",
+      "role": "assistant",
+      "created_at": "2026-03-17T14:56:03.801669",
+      "id": "98991717-ce67-480d-b78b-87589808d84c"
+    },
+    {
+      "user_id": "664a2c47-2034-43d2-be31-e5be894ceb92",
+      "message": "Summarize my current risk.",
+      "role": "user",
+      "created_at": "2026-03-17T14:59:04.749276",
+      "id": "12f82809-bba4-49b9-95b0-43d2776c1f23"
+    },
+    {
+      "user_id": "664a2c47-2034-43d2-be31-e5be894ceb92",
+      "message": "Your current risk profile shows a maximum drawdown of 0.00%. I recommend maintaining current position sizes and considering hedging strategies if volatility increases further.",
+      "role": "assistant",
+      "created_at": "2026-03-17T14:59:04.751627",
+      "id": "f840280b-7f5f-44f6-8f78-266536c58d23"
+    },
+    {
+      "user_id": "0e7a1fa7-e5f3-4e9d-b38f-22f4d49b24e1",
+      "message": "Summarize my current risk.",
+      "role": "user",
+      "created_at": "2026-03-17T15:02:10.576283",
+      "id": "76b470f4-83ba-4979-a625-df9b5751e10e"
+    },
+    {
+      "user_id": "0e7a1fa7-e5f3-4e9d-b38f-22f4d49b24e1",
+      "message": "Your current risk profile shows a maximum drawdown of 0.00%. I recommend maintaining current position sizes and considering hedging strategies if volatility increases further.",
+      "role": "assistant",
+      "created_at": "2026-03-17T15:02:10.578205",
+      "id": "0371885a-522e-43fc-b744-fb639faa2046"
+    },
+    {
+      "user_id": "1376801a-37bd-4dd6-87cc-f157cdb0fb4f",
+      "message": "Summarize my current risk.",
+      "role": "user",
+      "created_at": "2026-03-17T15:04:37.367828",
+      "id": "641bd240-399a-4fd5-aa1c-2d7d06d40878"
+    },
+    {
+      "user_id": "1376801a-37bd-4dd6-87cc-f157cdb0fb4f",
+      "message": "Your current risk profile shows a maximum drawdown of 0.00%. I recommend maintaining current position sizes and considering hedging strategies if volatility increases further.",
+      "role": "assistant",
+      "created_at": "2026-03-17T15:04:37.377448",
+      "id": "4a41ad8b-70dc-49ca-abc1-c7c561ea4c42"
+    },
+    {
+      "user_id": "daceaba4-f919-4b24-b710-885ca1df5ba5",
+      "message": "Summarize my current risk.",
+      "role": "user",
+      "created_at": "2026-03-17T15:04:54.147715",
+      "id": "11080aea-00c1-45e8-a253-079d513fad46"
+    },
+    {
+      "user_id": "daceaba4-f919-4b24-b710-885ca1df5ba5",
+      "message": "Your current risk profile shows a maximum drawdown of 0.00%. I recommend maintaining current position sizes and considering hedging strategies if volatility increases further.",
+      "role": "assistant",
+      "created_at": "2026-03-17T15:04:54.154764",
+      "id": "067054b9-26ce-4294-a3ef-201edfac0101"
+    },
+    {
+      "user_id": "dbd237c5-6e55-46c6-9590-054c17d796ad",
+      "message": "Summarize my current risk.",
+      "role": "user",
+      "created_at": "2026-03-17T15:06:45.514115",
+      "id": "9d335dbd-84ed-46f8-a8c9-b4f17333cff0"
+    },
+    {
+      "user_id": "dbd237c5-6e55-46c6-9590-054c17d796ad",
+      "message": "Your current risk profile shows a maximum drawdown of 0.00%. I recommend maintaining current position sizes and considering hedging strategies if volatility increases further.",
+      "role": "assistant",
+      "created_at": "2026-03-17T15:06:45.523481",
+      "id": "cb1b5d8c-0def-454d-adf3-08e44f9b545d"
+    },
+    {
+      "user_id": "35a143b5-9478-485f-8feb-5bc858ab9941",
+      "message": "Summarize my current risk.",
+      "role": "user",
+      "created_at": "2026-03-17T15:27:54.888916",
+      "id": "c5a89bda-1ce7-4c26-b896-c70f85dcef9d"
+    },
+    {
+      "user_id": "35a143b5-9478-485f-8feb-5bc858ab9941",
+      "message": "Your current risk profile shows a maximum drawdown of 0.00%. I recommend maintaining current position sizes and considering hedging strategies if volatility increases further.",
+      "role": "assistant",
+      "created_at": "2026-03-17T15:27:54.900626",
+      "id": "0c035beb-1927-438e-a5a4-e9256b1564ef"
+    },
+    {
+      "user_id": "f3ffc6b3-2f1d-430d-bc81-d1f49d0d3af6",
+      "message": "Summarize my current risk.",
+      "role": "user",
+      "created_at": "2026-03-17T15:35:02.009697",
+      "id": "a1b8f1d2-2c1b-4034-b2c1-6c3034eda0a2"
+    },
+    {
+      "user_id": "f3ffc6b3-2f1d-430d-bc81-d1f49d0d3af6",
+      "message": "Your current risk profile shows a maximum drawdown of 0.00%. I recommend maintaining current position sizes and considering hedging strategies if volatility increases further.",
+      "role": "assistant",
+      "created_at": "2026-03-17T15:35:02.015963",
+      "id": "8780294d-71b5-4c21-9905-f477081223c3"
+    },
+    {
+      "user_id": "fdbf3e62-4f09-495e-8bd9-f7085b3125f5",
+      "message": "Summarize my current risk.",
+      "role": "user",
+      "created_at": "2026-03-17T15:37:58.840018",
+      "id": "184b88cc-0c9d-444a-8fe5-1c1674233573"
+    },
+    {
+      "user_id": "fdbf3e62-4f09-495e-8bd9-f7085b3125f5",
+      "message": "Your current risk profile shows a maximum drawdown of 0.00%. I recommend maintaining current position sizes and considering hedging strategies if volatility increases further.",
+      "role": "assistant",
+      "created_at": "2026-03-17T15:37:58.851968",
+      "id": "f5402e6a-fbe6-4dc4-a552-f269b9fd54e1"
+    },
+    {
+      "user_id": "2fc66a58-1428-453c-a27f-5cdd14a066e9",
+      "message": "Summarize my current risk.",
+      "role": "user",
+      "created_at": "2026-03-17T15:45:20.238232",
+      "id": "2c295601-4c94-40a3-aa18-7484903006ee"
+    },
+    {
+      "user_id": "2fc66a58-1428-453c-a27f-5cdd14a066e9",
+      "message": "Your current risk profile shows a maximum drawdown of 0.00%. I recommend maintaining current position sizes and considering hedging strategies if volatility increases further.",
+      "role": "assistant",
+      "created_at": "2026-03-17T15:45:20.248250",
+      "id": "c4b3bf0c-d27f-4a25-87b6-550919be2baa"
+    }
+  ],
+  "creator_profiles": [],
+  "creator_strategies": [
+    {
+      "user_id": "c714e42f-3a0f-4684-8b44-327a9003fc4d",
+      "name": "Test Strategy",
+      "description": "A test trading strategy",
+      "parameters": {},
+      "backtest_results": {},
+      "status": "PENDING_REVIEW",
+      "submitted_at": "2026-03-17T14:54:39.605186",
+      "id": "ee533720-8036-4ef0-bf17-3001347aac7c",
+      "created_at": "2026-03-17T14:54:39.605237"
+    },
+    {
+      "user_id": "02c83d99-b79b-44a2-8efd-4a5ac97c0602",
+      "name": "Test Strategy",
+      "description": "A test trading strategy",
+      "parameters": {},
+      "backtest_results": {},
+      "status": "PENDING_REVIEW",
+      "submitted_at": "2026-03-17T14:56:03.815016",
+      "id": "2643cb6c-5f4d-4ae0-b737-8e5dda46a3a5",
+      "created_at": "2026-03-17T14:56:03.815099"
+    },
+    {
+      "user_id": "664a2c47-2034-43d2-be31-e5be894ceb92",
+      "name": "Test Strategy",
+      "description": "A test trading strategy",
+      "parameters": {},
+      "backtest_results": {},
+      "status": "PENDING_REVIEW",
+      "submitted_at": "2026-03-17T14:59:04.767664",
+      "id": "8a8a7b08-e2ab-4969-8991-f4ef4cf25321",
+      "created_at": "2026-03-17T14:59:04.767695"
+    },
+    {
+      "user_id": "0e7a1fa7-e5f3-4e9d-b38f-22f4d49b24e1",
+      "name": "Test Strategy",
+      "description": "A test trading strategy",
+      "parameters": {},
+      "backtest_results": {},
+      "status": "PENDING_REVIEW",
+      "submitted_at": "2026-03-17T15:02:10.590442",
+      "id": "e57a2a0b-8f70-4d0c-b72e-5211b65f3d55",
+      "created_at": "2026-03-17T15:02:10.590546"
+    },
+    {
+      "user_id": "1376801a-37bd-4dd6-87cc-f157cdb0fb4f",
+      "name": "Test Strategy",
+      "description": "A test trading strategy",
+      "parameters": {},
+      "backtest_results": {},
+      "status": "PENDING_REVIEW",
+      "submitted_at": "2026-03-17T15:04:37.407797",
+      "id": "36b6db67-5281-410e-8c6d-e9aa79ffdcfc",
+      "created_at": "2026-03-17T15:04:37.407952"
+    },
+    {
+      "user_id": "daceaba4-f919-4b24-b710-885ca1df5ba5",
+      "name": "Test Strategy",
+      "description": "A test trading strategy",
+      "parameters": {},
+      "backtest_results": {},
+      "status": "PENDING_REVIEW",
+      "submitted_at": "2026-03-17T15:04:54.176653",
+      "id": "c2177bac-2871-4f75-9da9-52621bfa1e2a",
+      "created_at": "2026-03-17T15:04:54.176695"
+    },
+    {
+      "user_id": "dbd237c5-6e55-46c6-9590-054c17d796ad",
+      "name": "Test Strategy",
+      "description": "A test trading strategy",
+      "parameters": {},
+      "backtest_results": {},
+      "status": "PENDING_REVIEW",
+      "submitted_at": "2026-03-17T15:06:45.537358",
+      "id": "e846156a-2b93-4ba9-95ee-4e91e174d550",
+      "created_at": "2026-03-17T15:06:45.537388"
+    },
+    {
+      "user_id": "35a143b5-9478-485f-8feb-5bc858ab9941",
+      "name": "Test Strategy",
+      "description": "A test trading strategy",
+      "parameters": {},
+      "backtest_results": {},
+      "status": "PENDING_REVIEW",
+      "submitted_at": "2026-03-17T15:27:54.920204",
+      "id": "b2eb1c51-8ae3-4f7d-896d-0d55b0851a83",
+      "created_at": "2026-03-17T15:27:54.920237"
+    },
+    {
+      "user_id": "f3ffc6b3-2f1d-430d-bc81-d1f49d0d3af6",
+      "name": "Test Strategy",
+      "description": "A test trading strategy",
+      "parameters": {},
+      "backtest_results": {},
+      "status": "PENDING_REVIEW",
+      "submitted_at": "2026-03-17T15:35:02.030673",
+      "id": "f5b7cc8c-0b61-4e58-8236-2ac02c58ab55",
+      "created_at": "2026-03-17T15:35:02.030699"
+    },
+    {
+      "user_id": "fdbf3e62-4f09-495e-8bd9-f7085b3125f5",
+      "name": "Test Strategy",
+      "description": "A test trading strategy",
+      "parameters": {},
+      "backtest_results": {},
+      "status": "PENDING_REVIEW",
+      "submitted_at": "2026-03-17T15:37:58.870828",
+      "id": "d4ecf157-08f9-43f4-8c2b-2adc8eb3135d",
+      "created_at": "2026-03-17T15:37:58.870867"
+    },
+    {
+      "user_id": "2fc66a58-1428-453c-a27f-5cdd14a066e9",
+      "name": "Test Strategy",
+      "description": "A test trading strategy",
+      "parameters": {},
+      "backtest_results": {},
+      "status": "PENDING_REVIEW",
+      "submitted_at": "2026-03-17T15:45:20.268146",
+      "id": "75b6c98c-326e-4ef4-a96c-95811c0a278c",
+      "created_at": "2026-03-17T15:45:20.268172"
+    }
+  ],
+  "kyc_verifications": [
+    {
+      "user_id": "02c83d99-b79b-44a2-8efd-4a5ac97c0602",
+      "status": "SUBMITTED",
+      "submitted_data": {
+        "documents": [],
+        "submitted_by_user": true
+      },
+      "documents": [],
+      "created_at": "2026-03-17T14:56:03.828580",
+      "id": "7f77a23d-65e6-4b5d-b387-0997744b577c"
+    },
+    {
+      "user_id": "664a2c47-2034-43d2-be31-e5be894ceb92",
+      "status": "SUBMITTED",
+      "submitted_data": {
+        "documents": [],
+        "submitted_by_user": true
+      },
+      "documents": [],
+      "created_at": "2026-03-17T14:59:04.787003",
+      "id": "b29fdb61-42ef-4c3e-ba61-600792b02d8f"
+    },
+    {
+      "user_id": "0e7a1fa7-e5f3-4e9d-b38f-22f4d49b24e1",
+      "status": "SUBMITTED",
+      "submitted_data": {
+        "documents": [],
+        "submitted_by_user": true
+      },
+      "documents": [],
+      "created_at": "2026-03-17T15:02:10.602626",
+      "id": "1e44e3a8-003d-4ba2-9db5-0dbd44b59b6b"
+    },
+    {
+      "user_id": "1376801a-37bd-4dd6-87cc-f157cdb0fb4f",
+      "status": "SUBMITTED",
+      "submitted_data": {
+        "documents": [],
+        "submitted_by_user": true
+      },
+      "documents": [],
+      "created_at": "2026-03-17T15:04:37.444253",
+      "id": "29d82557-c1b5-467f-a5c1-bde822fb8de2"
+    },
+    {
+      "user_id": "daceaba4-f919-4b24-b710-885ca1df5ba5",
+      "status": "SUBMITTED",
+      "submitted_data": {
+        "documents": [],
+        "submitted_by_user": true
+      },
+      "documents": [],
+      "created_at": "2026-03-17T15:04:54.205861",
+      "id": "4f206ee3-8d47-4ddd-acb3-8ac34dbe7c7a"
+    },
+    {
+      "user_id": "dbd237c5-6e55-46c6-9590-054c17d796ad",
+      "status": "SUBMITTED",
+      "submitted_data": {
+        "documents": [],
+        "submitted_by_user": true
+      },
+      "documents": [],
+      "created_at": "2026-03-17T15:06:45.551795",
+      "id": "34b8900b-342a-49a7-89fa-1a3e92500b84"
+    },
+    {
+      "user_id": "35a143b5-9478-485f-8feb-5bc858ab9941",
+      "status": "SUBMITTED",
+      "submitted_data": {
+        "documents": [],
+        "submitted_by_user": true
+      },
+      "documents": [],
+      "created_at": "2026-03-17T15:27:54.945532",
+      "id": "ddaa3f71-00a6-4cb2-be85-9f788d853327"
+    },
+    {
+      "user_id": "f3ffc6b3-2f1d-430d-bc81-d1f49d0d3af6",
+      "status": "SUBMITTED",
+      "submitted_data": {
+        "documents": [],
+        "submitted_by_user": true
+      },
+      "documents": [],
+      "created_at": "2026-03-17T15:35:02.048885",
+      "id": "d8922f02-91e5-4b19-ac6b-fecc947698e3"
+    },
+    {
+      "user_id": "fdbf3e62-4f09-495e-8bd9-f7085b3125f5",
+      "status": "SUBMITTED",
+      "submitted_data": {
+        "documents": [],
+        "submitted_by_user": true
+      },
+      "documents": [],
+      "created_at": "2026-03-17T15:37:58.899281",
+      "id": "581f77c9-3e99-433b-a3c8-d0dc5aa4ef34"
+    },
+    {
+      "user_id": "2fc66a58-1428-453c-a27f-5cdd14a066e9",
+      "status": "SUBMITTED",
+      "submitted_data": {
+        "documents": [],
+        "submitted_by_user": true
+      },
+      "documents": [],
+      "created_at": "2026-03-17T15:45:20.292578",
+      "id": "57fee9b0-2e73-4d3a-bf6d-0a43e838335c"
+    }
+  ],
+  "audit_logs": [
+    {
+      "user_id": "02c83d99-b79b-44a2-8efd-4a5ac97c0602",
+      "action": "API_CALL",
+      "resource_type": "endpoint",
+      "resource_id": "test",
+      "changes": {},
+      "ip_address": null,
+      "user_agent": null,
+      "entry_hash": "dd729b53bcb51871",
+      "timestamp": "2026-03-17T14:56:03.837402",
+      "id": "e93e0bcc-3586-4ef1-8c38-2f4c72c2f9f9",
+      "created_at": "2026-03-17T14:56:03.837431"
+    },
+    {
+      "user_id": "664a2c47-2034-43d2-be31-e5be894ceb92",
+      "action": "API_CALL",
+      "resource_type": "endpoint",
+      "resource_id": "test",
+      "changes": {},
+      "ip_address": null,
+      "user_agent": null,
+      "entry_hash": "d6f9715dadee813a",
+      "timestamp": "2026-03-17T14:59:04.798115",
+      "id": "8e8777bb-20cb-486f-9431-4380d6fd3872",
+      "created_at": "2026-03-17T14:59:04.798148"
+    },
+    {
+      "user_id": "664a2c47-2034-43d2-be31-e5be894ceb92",
+      "action": "UPDATE",
+      "resource_type": "risk_settings",
+      "resource_id": "664a2c47-2034-43d2-be31-e5be894ceb92",
+      "changes": {
+        "max_position_size_pct": 2.0,
+        "max_portfolio_exposure_pct": 20.0,
+        "max_leverage": 5.0,
+        "user_id": "664a2c47-2034-43d2-be31-e5be894ceb92",
+        "updated_at": "2026-03-17T14:59:04.809810"
+      },
+      "ip_address": null,
+      "user_agent": null,
+      "entry_hash": "d223a76f4d7ea972",
+      "timestamp": "2026-03-17T14:59:04.815211",
+      "id": "de162687-cadc-4135-a484-2bf894adcde3",
+      "created_at": "2026-03-17T14:59:04.815243"
+    },
+    {
+      "user_id": "664a2c47-2034-43d2-be31-e5be894ceb92",
+      "action": "CONNECT_EXCHANGE",
+      "resource_type": "exchange_api_key",
+      "resource_id": "binance",
+      "changes": {
+        "exchange": "binance"
+      },
+      "ip_address": null,
+      "user_agent": null,
+      "entry_hash": "27d225f1072268c5",
+      "timestamp": "2026-03-17T14:59:04.823944",
+      "id": "2995085f-c9c6-413f-b9f2-5a36b2fdf3f0",
+      "created_at": "2026-03-17T14:59:04.824093"
+    },
+    {
+      "user_id": "664a2c47-2034-43d2-be31-e5be894ceb92",
+      "action": "DISCONNECT_EXCHANGE",
+      "resource_type": "exchange_api_key",
+      "resource_id": "binance",
+      "changes": {},
+      "ip_address": null,
+      "user_agent": null,
+      "entry_hash": "7b0b5b79fe0111aa",
+      "timestamp": "2026-03-17T14:59:04.837382",
+      "id": "6a9114a0-5a93-4bbe-8f67-49251d0418e6",
+      "created_at": "2026-03-17T14:59:04.837411"
+    },
+    {
+      "user_id": "0e7a1fa7-e5f3-4e9d-b38f-22f4d49b24e1",
+      "action": "API_CALL",
+      "resource_type": "endpoint",
+      "resource_id": "test",
+      "changes": {},
+      "ip_address": null,
+      "user_agent": null,
+      "entry_hash": "de3abf1aef72d2a5",
+      "timestamp": "2026-03-17T15:02:10.610161",
+      "id": "173455d6-837a-433e-9891-f7aa8f79ccd6",
+      "created_at": "2026-03-17T15:02:10.610218"
+    },
+    {
+      "user_id": "0e7a1fa7-e5f3-4e9d-b38f-22f4d49b24e1",
+      "action": "UPDATE",
+      "resource_type": "risk_settings",
+      "resource_id": "0e7a1fa7-e5f3-4e9d-b38f-22f4d49b24e1",
+      "changes": {
+        "max_position_size_pct": 2.0,
+        "max_portfolio_exposure_pct": 20.0,
+        "max_leverage": 5.0,
+        "user_id": "0e7a1fa7-e5f3-4e9d-b38f-22f4d49b24e1",
+        "updated_at": "2026-03-17T15:02:10.623778"
+      },
+      "ip_address": null,
+      "user_agent": null,
+      "entry_hash": "df4591fd23cd927f",
+      "timestamp": "2026-03-17T15:02:10.627240",
+      "id": "9be4d54f-52e6-4570-90aa-607b9b6714a6",
+      "created_at": "2026-03-17T15:02:10.627270"
+    },
+    {
+      "user_id": "0e7a1fa7-e5f3-4e9d-b38f-22f4d49b24e1",
+      "action": "CONNECT_EXCHANGE",
+      "resource_type": "exchange_api_key",
+      "resource_id": "binance",
+      "changes": {
+        "exchange": "binance"
+      },
+      "ip_address": null,
+      "user_agent": null,
+      "entry_hash": "aafdf2425a4a74e5",
+      "timestamp": "2026-03-17T15:02:10.635024",
+      "id": "f17a6928-782e-4130-ad03-2dbcd0c0747b",
+      "created_at": "2026-03-17T15:02:10.635046"
+    },
+    {
+      "user_id": "0e7a1fa7-e5f3-4e9d-b38f-22f4d49b24e1",
+      "action": "DISCONNECT_EXCHANGE",
+      "resource_type": "exchange_api_key",
+      "resource_id": "binance",
+      "changes": {},
+      "ip_address": null,
+      "user_agent": null,
+      "entry_hash": "da75eb66877aa41f",
+      "timestamp": "2026-03-17T15:02:10.648644",
+      "id": "eebe7928-d844-479b-8147-e8374e122bd0",
+      "created_at": "2026-03-17T15:02:10.648672"
+    },
+    {
+      "user_id": "1376801a-37bd-4dd6-87cc-f157cdb0fb4f",
+      "action": "API_CALL",
+      "resource_type": "endpoint",
+      "resource_id": "test",
+      "changes": {},
+      "ip_address": null,
+      "user_agent": null,
+      "entry_hash": "dcd98f8d4b5304e6",
+      "timestamp": "2026-03-17T15:04:37.466896",
+      "id": "92198a6c-d782-4cb1-bdee-7c8765e43b47",
+      "created_at": "2026-03-17T15:04:37.466938"
+    },
+    {
+      "user_id": "1376801a-37bd-4dd6-87cc-f157cdb0fb4f",
+      "action": "UPDATE",
+      "resource_type": "risk_settings",
+      "resource_id": "1376801a-37bd-4dd6-87cc-f157cdb0fb4f",
+      "changes": {
+        "max_position_size_pct": 2.0,
+        "max_portfolio_exposure_pct": 20.0,
+        "max_leverage": 5.0,
+        "user_id": "1376801a-37bd-4dd6-87cc-f157cdb0fb4f",
+        "updated_at": "2026-03-17T15:04:37.487282"
+      },
+      "ip_address": null,
+      "user_agent": null,
+      "entry_hash": "c9e84a1ca35a71b6",
+      "timestamp": "2026-03-17T15:04:37.494835",
+      "id": "de1657d5-6278-4069-9105-def6e03e0cb5",
+      "created_at": "2026-03-17T15:04:37.494878"
+    },
+    {
+      "user_id": "1376801a-37bd-4dd6-87cc-f157cdb0fb4f",
+      "action": "CONNECT_EXCHANGE",
+      "resource_type": "exchange_api_key",
+      "resource_id": "binance",
+      "changes": {
+        "exchange": "binance"
+      },
+      "ip_address": null,
+      "user_agent": null,
+      "entry_hash": "50beb8b6566f0e63",
+      "timestamp": "2026-03-17T15:04:37.507344",
+      "id": "a0d953b7-4719-48cf-9598-7ef1c7b9ac13",
+      "created_at": "2026-03-17T15:04:37.507461"
+    },
+    {
+      "user_id": "1376801a-37bd-4dd6-87cc-f157cdb0fb4f",
+      "action": "DISCONNECT_EXCHANGE",
+      "resource_type": "exchange_api_key",
+      "resource_id": "binance",
+      "changes": {},
+      "ip_address": null,
+      "user_agent": null,
+      "entry_hash": "0ea61a4ff5602737",
+      "timestamp": "2026-03-17T15:04:37.525516",
+      "id": "235c2997-620f-4ccd-a8fc-5bbfd0baae61",
+      "created_at": "2026-03-17T15:04:37.525677"
+    },
+    {
+      "user_id": "daceaba4-f919-4b24-b710-885ca1df5ba5",
+      "action": "API_CALL",
+      "resource_type": "endpoint",
+      "resource_id": "test",
+      "changes": {},
+      "ip_address": null,
+      "user_agent": null,
+      "entry_hash": "a1bf5995425de7ce",
+      "timestamp": "2026-03-17T15:04:54.226337",
+      "id": "a6c3f0e1-35a6-4066-8a4b-c8f938e0bc1e",
+      "created_at": "2026-03-17T15:04:54.226370"
+    },
+    {
+      "user_id": "daceaba4-f919-4b24-b710-885ca1df5ba5",
+      "action": "UPDATE",
+      "resource_type": "risk_settings",
+      "resource_id": "daceaba4-f919-4b24-b710-885ca1df5ba5",
+      "changes": {
+        "max_position_size_pct": 2.0,
+        "max_portfolio_exposure_pct": 20.0,
+        "max_leverage": 5.0,
+        "user_id": "daceaba4-f919-4b24-b710-885ca1df5ba5",
+        "updated_at": "2026-03-17T15:04:54.241656"
+      },
+      "ip_address": null,
+      "user_agent": null,
+      "entry_hash": "e73c433d0bda7dd8",
+      "timestamp": "2026-03-17T15:04:54.246011",
+      "id": "61a7b885-a2ff-4287-a282-7fce0d8a9008",
+      "created_at": "2026-03-17T15:04:54.246035"
+    },
+    {
+      "user_id": "daceaba4-f919-4b24-b710-885ca1df5ba5",
+      "action": "CONNECT_EXCHANGE",
+      "resource_type": "exchange_api_key",
+      "resource_id": "binance",
+      "changes": {
+        "exchange": "binance"
+      },
+      "ip_address": null,
+      "user_agent": null,
+      "entry_hash": "4a9628d2eaa06212",
+      "timestamp": "2026-03-17T15:04:54.264148",
+      "id": "072da91c-d4fb-421e-b8c4-f93b93d13186",
+      "created_at": "2026-03-17T15:04:54.264192"
+    },
+    {
+      "user_id": "daceaba4-f919-4b24-b710-885ca1df5ba5",
+      "action": "DISCONNECT_EXCHANGE",
+      "resource_type": "exchange_api_key",
+      "resource_id": "binance",
+      "changes": {},
+      "ip_address": null,
+      "user_agent": null,
+      "entry_hash": "2f69eb4588a023df",
+      "timestamp": "2026-03-17T15:04:54.287551",
+      "id": "335430a3-a6d2-4af4-a755-6486f51b9d61",
+      "created_at": "2026-03-17T15:04:54.287597"
+    },
+    {
+      "user_id": "dbd237c5-6e55-46c6-9590-054c17d796ad",
+      "action": "API_CALL",
+      "resource_type": "endpoint",
+      "resource_id": "test",
+      "changes": {},
+      "ip_address": null,
+      "user_agent": null,
+      "entry_hash": "b679d3f0d663397b",
+      "timestamp": "2026-03-17T15:06:45.561337",
+      "id": "a441bf0c-668d-461a-a5da-d444cdacbebe",
+      "created_at": "2026-03-17T15:06:45.561364"
+    },
+    {
+      "user_id": "dbd237c5-6e55-46c6-9590-054c17d796ad",
+      "action": "UPDATE",
+      "resource_type": "risk_settings",
+      "resource_id": "dbd237c5-6e55-46c6-9590-054c17d796ad",
+      "changes": {
+        "max_position_size_pct": 2.0,
+        "max_portfolio_exposure_pct": 20.0,
+        "max_leverage": 5.0,
+        "user_id": "dbd237c5-6e55-46c6-9590-054c17d796ad",
+        "updated_at": "2026-03-17T15:06:45.572897"
+      },
+      "ip_address": null,
+      "user_agent": null,
+      "entry_hash": "301e832700c704c2",
+      "timestamp": "2026-03-17T15:06:45.576933",
+      "id": "7d7added-1fe7-4178-a832-c22143414cde",
+      "created_at": "2026-03-17T15:06:45.576962"
+    },
+    {
+      "user_id": "dbd237c5-6e55-46c6-9590-054c17d796ad",
+      "action": "CONNECT_EXCHANGE",
+      "resource_type": "exchange_api_key",
+      "resource_id": "binance",
+      "changes": {
+        "exchange": "binance"
+      },
+      "ip_address": null,
+      "user_agent": null,
+      "entry_hash": "b6c8c5330ea12c25",
+      "timestamp": "2026-03-17T15:06:45.585993",
+      "id": "78841c40-851c-479d-bdde-55a8ed8251cc",
+      "created_at": "2026-03-17T15:06:45.586014"
+    },
+    {
+      "user_id": "dbd237c5-6e55-46c6-9590-054c17d796ad",
+      "action": "DISCONNECT_EXCHANGE",
+      "resource_type": "exchange_api_key",
+      "resource_id": "binance",
+      "changes": {},
+      "ip_address": null,
+      "user_agent": null,
+      "entry_hash": "757559e1c41003e6",
+      "timestamp": "2026-03-17T15:06:45.600630",
+      "id": "c8c38c13-65f9-49a0-84c5-e7880a21190f",
+      "created_at": "2026-03-17T15:06:45.600666"
+    },
+    {
+      "user_id": "35a143b5-9478-485f-8feb-5bc858ab9941",
+      "action": "API_CALL",
+      "resource_type": "endpoint",
+      "resource_id": "test",
+      "changes": {},
+      "ip_address": null,
+      "user_agent": null,
+      "entry_hash": "5fc728897e3edb97",
+      "timestamp": "2026-03-17T15:27:54.980337",
+      "id": "8fabd9a6-5aca-4926-915f-16583ad801a1",
+      "created_at": "2026-03-17T15:27:54.980382"
+    },
+    {
+      "user_id": "35a143b5-9478-485f-8feb-5bc858ab9941",
+      "action": "UPDATE",
+      "resource_type": "risk_settings",
+      "resource_id": "35a143b5-9478-485f-8feb-5bc858ab9941",
+      "changes": {
+        "max_position_size_pct": 2.0,
+        "max_portfolio_exposure_pct": 20.0,
+        "max_leverage": 5.0,
+        "user_id": "35a143b5-9478-485f-8feb-5bc858ab9941",
+        "updated_at": "2026-03-17T15:27:54.993308"
+      },
+      "ip_address": null,
+      "user_agent": null,
+      "entry_hash": "392c143ed226701a",
+      "timestamp": "2026-03-17T15:27:55.004944",
+      "id": "8a500c51-5b88-464d-95d0-0963f89512a0",
+      "created_at": "2026-03-17T15:27:55.004990"
+    },
+    {
+      "user_id": "35a143b5-9478-485f-8feb-5bc858ab9941",
+      "action": "CONNECT_EXCHANGE",
+      "resource_type": "exchange_api_key",
+      "resource_id": "binance",
+      "changes": {
+        "exchange": "binance"
+      },
+      "ip_address": null,
+      "user_agent": null,
+      "entry_hash": "9b36960ea380ad6b",
+      "timestamp": "2026-03-17T15:27:55.029364",
+      "id": "850f7536-b57d-48ee-bff1-488911ff086a",
+      "created_at": "2026-03-17T15:27:55.029395"
+    },
+    {
+      "user_id": "35a143b5-9478-485f-8feb-5bc858ab9941",
+      "action": "DISCONNECT_EXCHANGE",
+      "resource_type": "exchange_api_key",
+      "resource_id": "binance",
+      "changes": {},
+      "ip_address": null,
+      "user_agent": null,
+      "entry_hash": "98b7f9d54617eea4",
+      "timestamp": "2026-03-17T15:27:55.052501",
+      "id": "8c78f4fb-7376-4acb-a70d-64c844892deb",
+      "created_at": "2026-03-17T15:27:55.052538"
+    },
+    {
+      "user_id": "f3ffc6b3-2f1d-430d-bc81-d1f49d0d3af6",
+      "action": "API_CALL",
+      "resource_type": "endpoint",
+      "resource_id": "test",
+      "changes": {},
+      "ip_address": null,
+      "user_agent": null,
+      "entry_hash": "88711e258563ab6f",
+      "timestamp": "2026-03-17T15:35:02.068793",
+      "id": "dc535123-5fa6-4d9d-a1e2-49177aa3a063",
+      "created_at": "2026-03-17T15:35:02.068819"
+    },
+    {
+      "user_id": "f3ffc6b3-2f1d-430d-bc81-d1f49d0d3af6",
+      "action": "UPDATE",
+      "resource_type": "risk_settings",
+      "resource_id": "f3ffc6b3-2f1d-430d-bc81-d1f49d0d3af6",
+      "changes": {
+        "max_position_size_pct": 2.0,
+        "max_portfolio_exposure_pct": 20.0,
+        "max_leverage": 5.0,
+        "user_id": "f3ffc6b3-2f1d-430d-bc81-d1f49d0d3af6",
+        "updated_at": "2026-03-17T15:35:02.085946"
+      },
+      "ip_address": null,
+      "user_agent": null,
+      "entry_hash": "05c727746697a7f5",
+      "timestamp": "2026-03-17T15:35:02.094930",
+      "id": "23574259-e28c-499b-9e62-3044d848c976",
+      "created_at": "2026-03-17T15:35:02.094984"
+    },
+    {
+      "user_id": "f3ffc6b3-2f1d-430d-bc81-d1f49d0d3af6",
+      "action": "CONNECT_EXCHANGE",
+      "resource_type": "exchange_api_key",
+      "resource_id": "binance",
+      "changes": {
+        "exchange": "binance"
+      },
+      "ip_address": null,
+      "user_agent": null,
+      "entry_hash": "b4e5abc5df4caa12",
+      "timestamp": "2026-03-17T15:35:02.114717",
+      "id": "4be58833-4f85-4cd1-ab4d-ab5c4c963ae6",
+      "created_at": "2026-03-17T15:35:02.114762"
+    },
+    {
+      "user_id": "f3ffc6b3-2f1d-430d-bc81-d1f49d0d3af6",
+      "action": "DISCONNECT_EXCHANGE",
+      "resource_type": "exchange_api_key",
+      "resource_id": "binance",
+      "changes": {},
+      "ip_address": null,
+      "user_agent": null,
+      "entry_hash": "fafdc1d5522e825c",
+      "timestamp": "2026-03-17T15:35:02.135002",
+      "id": "da7dd355-9388-4fc2-b972-782912afd4ed",
+      "created_at": "2026-03-17T15:35:02.135028"
+    },
+    {
+      "user_id": "fdbf3e62-4f09-495e-8bd9-f7085b3125f5",
+      "action": "API_CALL",
+      "resource_type": "endpoint",
+      "resource_id": "test",
+      "changes": {},
+      "ip_address": null,
+      "user_agent": null,
+      "entry_hash": "c43821141cc35f51",
+      "timestamp": "2026-03-17T15:37:58.920062",
+      "id": "096904a1-38b4-4cb0-a797-793cf9d00762",
+      "created_at": "2026-03-17T15:37:58.920089"
+    },
+    {
+      "user_id": "fdbf3e62-4f09-495e-8bd9-f7085b3125f5",
+      "action": "UPDATE",
+      "resource_type": "risk_settings",
+      "resource_id": "fdbf3e62-4f09-495e-8bd9-f7085b3125f5",
+      "changes": {
+        "max_position_size_pct": 2.0,
+        "max_portfolio_exposure_pct": 20.0,
+        "max_leverage": 5.0,
+        "user_id": "fdbf3e62-4f09-495e-8bd9-f7085b3125f5",
+        "updated_at": "2026-03-17T15:37:58.938175"
+      },
+      "ip_address": null,
+      "user_agent": null,
+      "entry_hash": "07c9e848dbe89e71",
+      "timestamp": "2026-03-17T15:37:58.947257",
+      "id": "1097afce-c514-45fb-b51a-ab2d494daafc",
+      "created_at": "2026-03-17T15:37:58.947289"
+    },
+    {
+      "user_id": "fdbf3e62-4f09-495e-8bd9-f7085b3125f5",
+      "action": "CONNECT_EXCHANGE",
+      "resource_type": "exchange_api_key",
+      "resource_id": "binance",
+      "changes": {
+        "exchange": "binance"
+      },
+      "ip_address": null,
+      "user_agent": null,
+      "entry_hash": "ed803ef6b8541acb",
+      "timestamp": "2026-03-17T15:37:58.963326",
+      "id": "11b485b7-6f42-4786-a196-e1d9790d5508",
+      "created_at": "2026-03-17T15:37:58.963353"
+    },
+    {
+      "user_id": "fdbf3e62-4f09-495e-8bd9-f7085b3125f5",
+      "action": "DISCONNECT_EXCHANGE",
+      "resource_type": "exchange_api_key",
+      "resource_id": "binance",
+      "changes": {},
+      "ip_address": null,
+      "user_agent": null,
+      "entry_hash": "d7f8531c827d1a4b",
+      "timestamp": "2026-03-17T15:37:58.981413",
+      "id": "14c8afe2-84da-4636-8356-d405897c65ad",
+      "created_at": "2026-03-17T15:37:58.981445"
+    },
+    {
+      "user_id": "2fc66a58-1428-453c-a27f-5cdd14a066e9",
+      "action": "API_CALL",
+      "resource_type": "endpoint",
+      "resource_id": "test",
+      "changes": {},
+      "ip_address": null,
+      "user_agent": null,
+      "entry_hash": "9d730afa31003c22",
+      "timestamp": "2026-03-17T15:45:20.314457",
+      "id": "03cab522-9420-4510-9a00-32992ddd2c9e",
+      "created_at": "2026-03-17T15:45:20.314480"
+    },
+    {
+      "user_id": "2fc66a58-1428-453c-a27f-5cdd14a066e9",
+      "action": "UPDATE",
+      "resource_type": "risk_settings",
+      "resource_id": "2fc66a58-1428-453c-a27f-5cdd14a066e9",
+      "changes": {
+        "max_position_size_pct": 2.0,
+        "max_portfolio_exposure_pct": 20.0,
+        "max_leverage": 5.0,
+        "user_id": "2fc66a58-1428-453c-a27f-5cdd14a066e9",
+        "updated_at": "2026-03-17T15:45:20.330616"
+      },
+      "ip_address": null,
+      "user_agent": null,
+      "entry_hash": "ae14d992f4e113f9",
+      "timestamp": "2026-03-17T15:45:20.340897",
+      "id": "3a5b42cd-03cb-45ea-909c-50b4d8b70f03",
+      "created_at": "2026-03-17T15:45:20.340924"
+    },
+    {
+      "user_id": "2fc66a58-1428-453c-a27f-5cdd14a066e9",
+      "action": "CONNECT_EXCHANGE",
+      "resource_type": "exchange_api_key",
+      "resource_id": "binance",
+      "changes": {
+        "exchange": "binance"
+      },
+      "ip_address": null,
+      "user_agent": null,
+      "entry_hash": "41537c0c7e04bb1e",
+      "timestamp": "2026-03-17T15:45:20.362934",
+      "id": "1d1aa563-853e-4340-8219-dce50450ba5d",
+      "created_at": "2026-03-17T15:45:20.362963"
+    },
+    {
+      "user_id": "2fc66a58-1428-453c-a27f-5cdd14a066e9",
+      "action": "DISCONNECT_EXCHANGE",
+      "resource_type": "exchange_api_key",
+      "resource_id": "binance",
+      "changes": {},
+      "ip_address": null,
+      "user_agent": null,
+      "entry_hash": "a0bd3f62559fac94",
+      "timestamp": "2026-03-17T15:45:20.388131",
+      "id": "f0971dd6-e3b3-43f2-adf2-33ce19791c48",
+      "created_at": "2026-03-17T15:45:20.388155"
+    }
+  ],
+  "user_risk_settings": [
+    {
+      "max_position_size_pct": 2.0,
+      "max_portfolio_exposure_pct": 20.0,
+      "max_leverage": 5.0,
+      "user_id": "664a2c47-2034-43d2-be31-e5be894ceb92",
+      "updated_at": "2026-03-17T14:59:04.809810",
+      "id": "3a13675d-f8a6-4ac8-880e-6fd2090a7a2c",
+      "created_at": "2026-03-17T14:59:04.810061"
+    },
+    {
+      "max_position_size_pct": 2.0,
+      "max_portfolio_exposure_pct": 20.0,
+      "max_leverage": 5.0,
+      "user_id": "0e7a1fa7-e5f3-4e9d-b38f-22f4d49b24e1",
+      "updated_at": "2026-03-17T15:02:10.623778",
+      "id": "20b18ef5-3141-4ff4-8188-c560ad0a118a",
+      "created_at": "2026-03-17T15:02:10.623882"
+    },
+    {
+      "max_position_size_pct": 2.0,
+      "max_portfolio_exposure_pct": 20.0,
+      "max_leverage": 5.0,
+      "user_id": "1376801a-37bd-4dd6-87cc-f157cdb0fb4f",
+      "updated_at": "2026-03-17T15:04:37.487282",
+      "id": "28712381-c283-47a3-9e9e-39712d3aedd5",
+      "created_at": "2026-03-17T15:04:37.487391"
+    },
+    {
+      "max_position_size_pct": 2.0,
+      "max_portfolio_exposure_pct": 20.0,
+      "max_leverage": 5.0,
+      "user_id": "daceaba4-f919-4b24-b710-885ca1df5ba5",
+      "updated_at": "2026-03-17T15:04:54.241656",
+      "id": "0de41269-8c00-4db3-8b1e-b52b21a6492a",
+      "created_at": "2026-03-17T15:04:54.241715"
+    },
+    {
+      "max_position_size_pct": 2.0,
+      "max_portfolio_exposure_pct": 20.0,
+      "max_leverage": 5.0,
+      "user_id": "dbd237c5-6e55-46c6-9590-054c17d796ad",
+      "updated_at": "2026-03-17T15:06:45.572897",
+      "id": "d82bb9f6-da59-4e65-aa6e-5a29af565d88",
+      "created_at": "2026-03-17T15:06:45.572940"
+    },
+    {
+      "max_position_size_pct": 2.0,
+      "max_portfolio_exposure_pct": 20.0,
+      "max_leverage": 5.0,
+      "user_id": "35a143b5-9478-485f-8feb-5bc858ab9941",
+      "updated_at": "2026-03-17T15:27:54.993308",
+      "id": "e121b83d-07b7-4b31-a430-c00ea782f26d",
+      "created_at": "2026-03-17T15:27:54.993520"
+    },
+    {
+      "max_position_size_pct": 2.0,
+      "max_portfolio_exposure_pct": 20.0,
+      "max_leverage": 5.0,
+      "user_id": "f3ffc6b3-2f1d-430d-bc81-d1f49d0d3af6",
+      "updated_at": "2026-03-17T15:35:02.085946",
+      "id": "340ad476-dfa8-4875-86f8-a3d7aa096ef7",
+      "created_at": "2026-03-17T15:35:02.085986"
+    },
+    {
+      "max_position_size_pct": 2.0,
+      "max_portfolio_exposure_pct": 20.0,
+      "max_leverage": 5.0,
+      "user_id": "fdbf3e62-4f09-495e-8bd9-f7085b3125f5",
+      "updated_at": "2026-03-17T15:37:58.938175",
+      "id": "3a59c707-0657-406f-a29e-4868864b2810",
+      "created_at": "2026-03-17T15:37:58.938216"
+    },
+    {
+      "max_position_size_pct": 2.0,
+      "max_portfolio_exposure_pct": 20.0,
+      "max_leverage": 5.0,
+      "user_id": "2fc66a58-1428-453c-a27f-5cdd14a066e9",
+      "updated_at": "2026-03-17T15:45:20.330616",
+      "id": "750090f0-3556-4c88-b5ca-1f1e34a2611c",
+      "created_at": "2026-03-17T15:45:20.330649"
+    }
+  ],
+  "api_keys": [],
+  "external_signal_rules": [
+    {
+      "user_id": "664a2c47-2034-43d2-be31-e5be894ceb92",
+      "rules": {
+        "min_confidence": 0.7,
+        "enabled_sources": [
+          "tradingview"
+        ],
+        "excluded_symbols": []
+      },
+      "updated_at": "2026-03-17T14:59:04.846748",
+      "id": "095ea1fb-6209-46ea-bdec-5376e7320f94",
+      "created_at": "2026-03-17T14:59:04.846789"
+    },
+    {
+      "user_id": "0e7a1fa7-e5f3-4e9d-b38f-22f4d49b24e1",
+      "rules": {
+        "min_confidence": 0.7,
+        "enabled_sources": [
+          "tradingview"
+        ],
+        "excluded_symbols": []
+      },
+      "updated_at": "2026-03-17T15:02:10.660361",
+      "id": "74493912-6d24-4788-827a-d8953571a5d7",
+      "created_at": "2026-03-17T15:02:10.660407"
+    },
+    {
+      "user_id": "1376801a-37bd-4dd6-87cc-f157cdb0fb4f",
+      "rules": {
+        "min_confidence": 0.7,
+        "enabled_sources": [
+          "tradingview"
+        ],
+        "excluded_symbols": []
+      },
+      "updated_at": "2026-03-17T15:04:37.547173",
+      "id": "04c2ee78-e2b8-4ca6-9bd8-5f9ec0f1f507",
+      "created_at": "2026-03-17T15:04:37.547380"
+    },
+    {
+      "user_id": "daceaba4-f919-4b24-b710-885ca1df5ba5",
+      "rules": {
+        "min_confidence": 0.7,
+        "enabled_sources": [
+          "tradingview"
+        ],
+        "excluded_symbols": []
+      },
+      "updated_at": "2026-03-17T15:04:54.297450",
+      "id": "557bfb13-0024-4f06-b359-d5adf6064e2e",
+      "created_at": "2026-03-17T15:04:54.297502"
+    },
+    {
+      "user_id": "dbd237c5-6e55-46c6-9590-054c17d796ad",
+      "rules": {
+        "min_confidence": 0.7,
+        "enabled_sources": [
+          "tradingview"
+        ],
+        "excluded_symbols": []
+      },
+      "updated_at": "2026-03-17T15:06:45.616857",
+      "id": "05f42f93-edae-4de3-a70f-51e9f9594e80",
+      "created_at": "2026-03-17T15:06:45.616922"
+    },
+    {
+      "user_id": "35a143b5-9478-485f-8feb-5bc858ab9941",
+      "rules": {
+        "min_confidence": 0.7,
+        "enabled_sources": [
+          "tradingview"
+        ],
+        "excluded_symbols": []
+      },
+      "updated_at": "2026-03-17T15:27:55.067826",
+      "id": "efe758b3-6f6b-402d-ab21-faa7b6876584",
+      "created_at": "2026-03-17T15:27:55.067894"
+    },
+    {
+      "user_id": "f3ffc6b3-2f1d-430d-bc81-d1f49d0d3af6",
+      "rules": {
+        "min_confidence": 0.7,
+        "enabled_sources": [
+          "tradingview"
+        ],
+        "excluded_symbols": []
+      },
+      "updated_at": "2026-03-17T15:35:02.148533",
+      "id": "37fdc4a4-5ea9-4ee4-bd02-53796f3aba23",
+      "created_at": "2026-03-17T15:35:02.148577"
+    },
+    {
+      "user_id": "fdbf3e62-4f09-495e-8bd9-f7085b3125f5",
+      "rules": {
+        "min_confidence": 0.7,
+        "enabled_sources": [
+          "tradingview"
+        ],
+        "excluded_symbols": []
+      },
+      "updated_at": "2026-03-17T15:37:58.993874",
+      "id": "b903cdba-541f-4f9d-9a9f-41a76de7ed61",
+      "created_at": "2026-03-17T15:37:58.993911"
+    },
+    {
+      "user_id": "2fc66a58-1428-453c-a27f-5cdd14a066e9",
+      "rules": {
+        "min_confidence": 0.7,
+        "enabled_sources": [
+          "tradingview"
+        ],
+        "excluded_symbols": []
+      },
+      "updated_at": "2026-03-17T15:45:20.401924",
+      "id": "9ee0a880-00d7-478a-8450-953a4364856e",
+      "created_at": "2026-03-17T15:45:20.401957"
+    }
+  ],
+  "strategy_subscriptions": [
+    {
+      "user_id": "0e7a1fa7-e5f3-4e9d-b38f-22f4d49b24e1",
+      "strategy_id": "e57a2a0b-8f70-4d0c-b72e-5211b65f3d55",
+      "allocation_pct": 10.0,
+      "status": "ACTIVE",
+      "subscribed_at": "2026-03-17T15:02:10.675914",
+      "id": "058d69e7-c9c4-42e8-8822-2a993c97918d",
+      "created_at": "2026-03-17T15:02:10.675945"
+    },
+    {
+      "user_id": "1376801a-37bd-4dd6-87cc-f157cdb0fb4f",
+      "strategy_id": "36b6db67-5281-410e-8c6d-e9aa79ffdcfc",
+      "allocation_pct": 10.0,
+      "status": "ACTIVE",
+      "subscribed_at": "2026-03-17T15:04:37.579613",
+      "id": "2bfa9a43-866a-4780-8b38-d702b1eb3e05",
+      "created_at": "2026-03-17T15:04:37.579733"
+    },
+    {
+      "user_id": "daceaba4-f919-4b24-b710-885ca1df5ba5",
+      "strategy_id": "c2177bac-2871-4f75-9da9-52621bfa1e2a",
+      "allocation_pct": 10.0,
+      "status": "ACTIVE",
+      "subscribed_at": "2026-03-17T15:04:54.315228",
+      "id": "ae75181a-1bdf-4d25-af6b-e3a35c739697",
+      "created_at": "2026-03-17T15:04:54.315282"
+    },
+    {
+      "user_id": "dbd237c5-6e55-46c6-9590-054c17d796ad",
+      "strategy_id": "e846156a-2b93-4ba9-95ee-4e91e174d550",
+      "allocation_pct": 10.0,
+      "status": "ACTIVE",
+      "subscribed_at": "2026-03-17T15:06:45.632949",
+      "id": "63d5d342-46bd-41ee-862f-c706a67d201f",
+      "created_at": "2026-03-17T15:06:45.632978"
+    },
+    {
+      "user_id": "35a143b5-9478-485f-8feb-5bc858ab9941",
+      "strategy_id": "b2eb1c51-8ae3-4f7d-896d-0d55b0851a83",
+      "allocation_pct": 10.0,
+      "status": "ACTIVE",
+      "subscribed_at": "2026-03-17T15:27:55.089501",
+      "id": "2259fff4-a9fb-4dd8-9b11-53a23bc21f09",
+      "created_at": "2026-03-17T15:27:55.089529"
+    },
+    {
+      "user_id": "f3ffc6b3-2f1d-430d-bc81-d1f49d0d3af6",
+      "strategy_id": "f5b7cc8c-0b61-4e58-8236-2ac02c58ab55",
+      "allocation_pct": 10.0,
+      "status": "ACTIVE",
+      "subscribed_at": "2026-03-17T15:35:02.168673",
+      "id": "29d4421b-4fe7-4206-856d-bd34f78068aa",
+      "created_at": "2026-03-17T15:35:02.168700"
+    },
+    {
+      "user_id": "fdbf3e62-4f09-495e-8bd9-f7085b3125f5",
+      "strategy_id": "d4ecf157-08f9-43f4-8c2b-2adc8eb3135d",
+      "allocation_pct": 10.0,
+      "status": "ACTIVE",
+      "subscribed_at": "2026-03-17T15:37:59.015139",
+      "id": "8c59794d-681e-4ef1-aa65-4b19abc6940e",
+      "created_at": "2026-03-17T15:37:59.015166"
+    },
+    {
+      "user_id": "2fc66a58-1428-453c-a27f-5cdd14a066e9",
+      "strategy_id": "75b6c98c-326e-4ef4-a96c-95811c0a278c",
+      "allocation_pct": 10.0,
+      "status": "ACTIVE",
+      "subscribed_at": "2026-03-17T15:45:20.422792",
+      "id": "85038ed2-32f7-480c-9090-f75b94d85704",
+      "created_at": "2026-03-17T15:45:20.422814"
+    }
+  ],
+  "strategy_paper_trades": [
+    {
+      "user_id": "0e7a1fa7-e5f3-4e9d-b38f-22f4d49b24e1",
+      "strategy_id": "e57a2a0b-8f70-4d0c-b72e-5211b65f3d55",
+      "initial_capital": 10000.0,
+      "current_capital": 10000.0,
+      "status": "RUNNING",
+      "started_at": "2026-03-17T15:02:10.682794",
+      "id": "f72c6973-46de-43e4-82ad-36ba7a335da2",
+      "created_at": "2026-03-17T15:02:10.682829"
+    },
+    {
+      "user_id": "1376801a-37bd-4dd6-87cc-f157cdb0fb4f",
+      "strategy_id": "36b6db67-5281-410e-8c6d-e9aa79ffdcfc",
+      "initial_capital": 10000.0,
+      "current_capital": 10000.0,
+      "status": "RUNNING",
+      "started_at": "2026-03-17T15:04:37.601611",
+      "id": "18c7a3ed-0e34-44a1-980e-07b5cb98c92a",
+      "created_at": "2026-03-17T15:04:37.601647"
+    },
+    {
+      "user_id": "daceaba4-f919-4b24-b710-885ca1df5ba5",
+      "strategy_id": "c2177bac-2871-4f75-9da9-52621bfa1e2a",
+      "initial_capital": 10000.0,
+      "current_capital": 10000.0,
+      "status": "RUNNING",
+      "started_at": "2026-03-17T15:04:54.329920",
+      "id": "174051f2-ffc6-4e05-b1ad-5df1dd73e223",
+      "created_at": "2026-03-17T15:04:54.329965"
+    },
+    {
+      "user_id": "dbd237c5-6e55-46c6-9590-054c17d796ad",
+      "strategy_id": "e846156a-2b93-4ba9-95ee-4e91e174d550",
+      "initial_capital": 10000.0,
+      "current_capital": 10000.0,
+      "status": "RUNNING",
+      "started_at": "2026-03-17T15:06:45.640339",
+      "id": "3e310473-e65b-4256-bbf2-dc2014e6b190",
+      "created_at": "2026-03-17T15:06:45.640364"
+    },
+    {
+      "user_id": "35a143b5-9478-485f-8feb-5bc858ab9941",
+      "strategy_id": "b2eb1c51-8ae3-4f7d-896d-0d55b0851a83",
+      "initial_capital": 10000.0,
+      "current_capital": 10000.0,
+      "status": "RUNNING",
+      "started_at": "2026-03-17T15:27:55.101527",
+      "id": "4d0f593b-6d95-4db6-86bd-067bab88cd2e",
+      "created_at": "2026-03-17T15:27:55.101559"
+    },
+    {
+      "user_id": "f3ffc6b3-2f1d-430d-bc81-d1f49d0d3af6",
+      "strategy_id": "f5b7cc8c-0b61-4e58-8236-2ac02c58ab55",
+      "initial_capital": 10000.0,
+      "current_capital": 10000.0,
+      "status": "RUNNING",
+      "started_at": "2026-03-17T15:35:02.183563",
+      "id": "a70fd06b-a3ce-49ee-b3ab-ef535315313e",
+      "created_at": "2026-03-17T15:35:02.183590"
+    },
+    {
+      "user_id": "fdbf3e62-4f09-495e-8bd9-f7085b3125f5",
+      "strategy_id": "d4ecf157-08f9-43f4-8c2b-2adc8eb3135d",
+      "initial_capital": 10000.0,
+      "current_capital": 10000.0,
+      "status": "RUNNING",
+      "started_at": "2026-03-17T15:37:59.026138",
+      "id": "b29aa8cc-4b87-448f-8b35-d6beb9992592",
+      "created_at": "2026-03-17T15:37:59.026164"
+    },
+    {
+      "user_id": "2fc66a58-1428-453c-a27f-5cdd14a066e9",
+      "strategy_id": "75b6c98c-326e-4ef4-a96c-95811c0a278c",
+      "initial_capital": 10000.0,
+      "current_capital": 10000.0,
+      "status": "RUNNING",
+      "started_at": "2026-03-17T15:45:20.433816",
+      "id": "b29dda5e-b821-4e78-aba0-45aa1ad32fa0",
+      "created_at": "2026-03-17T15:45:20.433840"
+    }
+  ],
+  "backtests": [
+    {
+      "user_id": "0e7a1fa7-e5f3-4e9d-b38f-22f4d49b24e1",
+      "strategy_name": "Test Strategy",
+      "strategy_params": {},
+      "symbols": [
+        "BTC",
+        "ETH"
+      ],
+      "start_date": null,
+      "end_date": null,
+      "initial_capital": 100000.0,
+      "status": "COMPLETED",
+      "created_at": "2026-03-17T15:02:10.687362",
+      "id": "f8139534-a683-4f98-9746-0b11033c5e9b",
+      "results": {
+        "equity_curve": [
+          {
+            "day": 222,
+            "equity": 1550808.68,
+            "date": "2026-02-15T15:02:10.690108"
+          },
+          {
+            "day": 223,
+            "equity": 1560113.54,
+            "date": "2026-02-16T15:02:10.690110"
+          },
+          {
+            "day": 224,
+            "equity": 1571034.33,
+            "date": "2026-02-17T15:02:10.690113"
+          },
+          {
+            "day": 225,
+            "equity": 1583602.6,
+            "date": "2026-02-18T15:02:10.690115"
+          },
+          {
+            "day": 226,
+            "equity": 1597855.03,
+            "date": "2026-02-19T15:02:10.690120"
+          },
+          {
+            "day": 227,
+            "equity": 1613833.58,
+            "date": "2026-02-20T15:02:10.690125"
+          },
+          {
+            "day": 228,
+            "equity": 1631585.75,
+            "date": "2026-02-21T15:02:10.690128"
+          },
+          {
+            "day": 229,
+            "equity": 1651164.78,
+            "date": "2026-02-22T15:02:10.690130"
+          },
+          {
+            "day": 230,
+            "equity": 1672629.92,
+            "date": "2026-02-23T15:02:10.690133"
+          },
+          {
+            "day": 231,
+            "equity": 1696046.74,
+            "date": "2026-02-24T15:02:10.690136"
+          },
+          {
+            "day": 232,
+            "equity": 1721487.44,
+            "date": "2026-02-25T15:02:10.690138"
+          },
+          {
+            "day": 233,
+            "equity": 1749031.24,
+            "date": "2026-02-26T15:02:10.690141"
+          },
+          {
+            "day": 234,
+            "equity": 1778764.77,
+            "date": "2026-02-27T15:02:10.690143"
+          },
+          {
+            "day": 235,
+            "equity": 1810782.53,
+            "date": "2026-02-28T15:02:10.690146"
+          },
+          {
+            "day": 236,
+            "equity": 1845187.4,
+            "date": "2026-03-01T15:02:10.690148"
+          },
+          {
+            "day": 237,
+            "equity": 1882091.15,
+            "date": "2026-03-02T15:02:10.690151"
+          },
+          {
+            "day": 238,
+            "equity": 1921615.06,
+            "date": "2026-03-03T15:02:10.690153"
+          },
+          {
+            "day": 239,
+            "equity": 1963890.6,
+            "date": "2026-03-04T15:02:10.690156"
+          },
+          {
+            "day": 240,
+            "equity": 1969782.27,
+            "date": "2026-03-05T15:02:10.690159"
+          },
+          {
+            "day": 241,
+            "equity": 1977661.4,
+            "date": "2026-03-06T15:02:10.690166"
+          },
+          {
+            "day": 242,
+            "equity": 1987549.7,
+            "date": "2026-03-07T15:02:10.690169"
+          },
+          {
+            "day": 243,
+            "equity": 1999475.0,
+            "date": "2026-03-08T15:02:10.690172"
+          },
+          {
+            "day": 244,
+            "equity": 2013471.33,
+            "date": "2026-03-09T15:02:10.690174"
+          },
+          {
+            "day": 245,
+            "equity": 2029579.1,
+            "date": "2026-03-10T15:02:10.690177"
+          },
+          {
+            "day": 246,
+            "equity": 2047845.31,
+            "date": "2026-03-11T15:02:10.690179"
+          },
+          {
+            "day": 247,
+            "equity": 2068323.76,
+            "date": "2026-03-12T15:02:10.690182"
+          },
+          {
+            "day": 248,
+            "equity": 2091075.32,
+            "date": "2026-03-13T15:02:10.690184"
+          },
+          {
+            "day": 249,
+            "equity": 2116168.23,
+            "date": "2026-03-14T15:02:10.690187"
+          },
+          {
+            "day": 250,
+            "equity": 2143678.42,
+            "date": "2026-03-15T15:02:10.690189"
+          },
+          {
+            "day": 251,
+            "equity": 2173689.91,
+            "date": "2026-03-16T15:02:10.690191"
+          }
+        ],
+        "metrics": {
+          "initial_capital": 100000.0,
+          "final_equity": 2173689.91,
+          "total_return": "2073.69%",
+          "total_trades": 16,
+          "winning_trades": 8,
+          "losing_trades": 8,
+          "win_rate": "50.0%",
+          "profit_factor": 2.44,
+          "avg_win": 14801.39,
+          "avg_loss": 6069.99,
+          "max_drawdown": "0.00%",
+          "sharpe_ratio": 34.25
+        },
+        "trades": [
+          {
+            "entry_day": 100,
+            "exit_day": 105,
+            "entry_price": 357344.88,
+            "exit_price": 353771.43,
+            "pnl": -3573.45,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 115,
+            "exit_day": 120,
+            "entry_price": 444487.53,
+            "exit_price": 453377.28,
+            "pnl": 8889.75,
+            "pnl_pct": 2.0
+          },
+          {
+            "entry_day": 130,
+            "exit_day": 135,
+            "entry_price": 523681.73,
+            "exit_price": 518444.92,
+            "pnl": -5236.82,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 145,
+            "exit_day": 150,
+            "entry_price": 619955.85,
+            "exit_price": 632354.97,
+            "pnl": 12399.12,
+            "pnl_pct": 2.0
+          },
+          {
+            "entry_day": 160,
+            "exit_day": 165,
+            "entry_price": 752258.12,
+            "exit_price": 744735.54,
+            "pnl": -7522.58,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 175,
+            "exit_day": 180,
+            "entry_price": 935704.89,
+            "exit_price": 954418.99,
+            "pnl": 18714.1,
+            "pnl_pct": 2.0
+          },
+          {
+            "entry_day": 190,
+            "exit_day": 195,
+            "entry_price": 1102419.15,
+            "exit_price": 1091394.96,
+            "pnl": -11024.19,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 205,
+            "exit_day": 210,
+            "entry_price": 1305088.87,
+            "exit_price": 1331190.65,
+            "pnl": 26101.78,
+            "pnl_pct": 2.0
+          },
+          {
+            "entry_day": 220,
+            "exit_day": 225,
+            "entry_price": 1583602.6,
+            "exit_price": 1567766.58,
+            "pnl": -15836.03,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 235,
+            "exit_day": 240,
+            "entry_price": 1969782.27,
+            "exit_price": 2009177.91,
+            "pnl": 39395.65,
+            "pnl_pct": 2.0
+          }
+        ]
+      },
+      "completed_at": "2026-03-17T15:02:10.690460",
+      "updated_at": "2026-03-17T15:02:10.690470"
+    },
+    {
+      "user_id": "1376801a-37bd-4dd6-87cc-f157cdb0fb4f",
+      "strategy_name": "Test Strategy",
+      "strategy_params": {},
+      "symbols": [
+        "BTC",
+        "ETH"
+      ],
+      "start_date": null,
+      "end_date": null,
+      "initial_capital": 100000.0,
+      "status": "COMPLETED",
+      "created_at": "2026-03-17T15:04:37.615384",
+      "id": "c47e12da-ef47-4822-b9ac-7c8dad85e1aa",
+      "results": {
+        "equity_curve": [
+          {
+            "day": 222,
+            "equity": 1550808.68,
+            "date": "2026-02-15T15:04:37.625316"
+          },
+          {
+            "day": 223,
+            "equity": 1560113.54,
+            "date": "2026-02-16T15:04:37.625324"
+          },
+          {
+            "day": 224,
+            "equity": 1571034.33,
+            "date": "2026-02-17T15:04:37.625331"
+          },
+          {
+            "day": 225,
+            "equity": 1583602.6,
+            "date": "2026-02-18T15:04:37.625339"
+          },
+          {
+            "day": 226,
+            "equity": 1597855.03,
+            "date": "2026-02-19T15:04:37.625372"
+          },
+          {
+            "day": 227,
+            "equity": 1613833.58,
+            "date": "2026-02-20T15:04:37.625384"
+          },
+          {
+            "day": 228,
+            "equity": 1631585.75,
+            "date": "2026-02-21T15:04:37.625393"
+          },
+          {
+            "day": 229,
+            "equity": 1651164.78,
+            "date": "2026-02-22T15:04:37.625403"
+          },
+          {
+            "day": 230,
+            "equity": 1672629.92,
+            "date": "2026-02-23T15:04:37.625415"
+          },
+          {
+            "day": 231,
+            "equity": 1696046.74,
+            "date": "2026-02-24T15:04:37.625422"
+          },
+          {
+            "day": 232,
+            "equity": 1721487.44,
+            "date": "2026-02-25T15:04:37.625425"
+          },
+          {
+            "day": 233,
+            "equity": 1749031.24,
+            "date": "2026-02-26T15:04:37.625432"
+          },
+          {
+            "day": 234,
+            "equity": 1778764.77,
+            "date": "2026-02-27T15:04:37.625435"
+          },
+          {
+            "day": 235,
+            "equity": 1810782.53,
+            "date": "2026-02-28T15:04:37.625438"
+          },
+          {
+            "day": 236,
+            "equity": 1845187.4,
+            "date": "2026-03-01T15:04:37.625442"
+          },
+          {
+            "day": 237,
+            "equity": 1882091.15,
+            "date": "2026-03-02T15:04:37.625446"
+          },
+          {
+            "day": 238,
+            "equity": 1921615.06,
+            "date": "2026-03-03T15:04:37.625451"
+          },
+          {
+            "day": 239,
+            "equity": 1963890.6,
+            "date": "2026-03-04T15:04:37.625491"
+          },
+          {
+            "day": 240,
+            "equity": 1969782.27,
+            "date": "2026-03-05T15:04:37.625495"
+          },
+          {
+            "day": 241,
+            "equity": 1977661.4,
+            "date": "2026-03-06T15:04:37.625504"
+          },
+          {
+            "day": 242,
+            "equity": 1987549.7,
+            "date": "2026-03-07T15:04:37.625507"
+          },
+          {
+            "day": 243,
+            "equity": 1999475.0,
+            "date": "2026-03-08T15:04:37.625510"
+          },
+          {
+            "day": 244,
+            "equity": 2013471.33,
+            "date": "2026-03-09T15:04:37.625513"
+          },
+          {
+            "day": 245,
+            "equity": 2029579.1,
+            "date": "2026-03-10T15:04:37.625515"
+          },
+          {
+            "day": 246,
+            "equity": 2047845.31,
+            "date": "2026-03-11T15:04:37.625518"
+          },
+          {
+            "day": 247,
+            "equity": 2068323.76,
+            "date": "2026-03-12T15:04:37.625522"
+          },
+          {
+            "day": 248,
+            "equity": 2091075.32,
+            "date": "2026-03-13T15:04:37.625525"
+          },
+          {
+            "day": 249,
+            "equity": 2116168.23,
+            "date": "2026-03-14T15:04:37.625527"
+          },
+          {
+            "day": 250,
+            "equity": 2143678.42,
+            "date": "2026-03-15T15:04:37.625530"
+          },
+          {
+            "day": 251,
+            "equity": 2173689.91,
+            "date": "2026-03-16T15:04:37.625533"
+          }
+        ],
+        "metrics": {
+          "initial_capital": 100000.0,
+          "final_equity": 2173689.91,
+          "total_return": "2073.69%",
+          "total_trades": 16,
+          "winning_trades": 8,
+          "losing_trades": 8,
+          "win_rate": "50.0%",
+          "profit_factor": 2.44,
+          "avg_win": 14801.39,
+          "avg_loss": 6069.99,
+          "max_drawdown": "0.00%",
+          "sharpe_ratio": 34.25
+        },
+        "trades": [
+          {
+            "entry_day": 100,
+            "exit_day": 105,
+            "entry_price": 357344.88,
+            "exit_price": 353771.43,
+            "pnl": -3573.45,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 115,
+            "exit_day": 120,
+            "entry_price": 444487.53,
+            "exit_price": 453377.28,
+            "pnl": 8889.75,
+            "pnl_pct": 2.0
+          },
+          {
+            "entry_day": 130,
+            "exit_day": 135,
+            "entry_price": 523681.73,
+            "exit_price": 518444.92,
+            "pnl": -5236.82,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 145,
+            "exit_day": 150,
+            "entry_price": 619955.85,
+            "exit_price": 632354.97,
+            "pnl": 12399.12,
+            "pnl_pct": 2.0
+          },
+          {
+            "entry_day": 160,
+            "exit_day": 165,
+            "entry_price": 752258.12,
+            "exit_price": 744735.54,
+            "pnl": -7522.58,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 175,
+            "exit_day": 180,
+            "entry_price": 935704.89,
+            "exit_price": 954418.99,
+            "pnl": 18714.1,
+            "pnl_pct": 2.0
+          },
+          {
+            "entry_day": 190,
+            "exit_day": 195,
+            "entry_price": 1102419.15,
+            "exit_price": 1091394.96,
+            "pnl": -11024.19,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 205,
+            "exit_day": 210,
+            "entry_price": 1305088.87,
+            "exit_price": 1331190.65,
+            "pnl": 26101.78,
+            "pnl_pct": 2.0
+          },
+          {
+            "entry_day": 220,
+            "exit_day": 225,
+            "entry_price": 1583602.6,
+            "exit_price": 1567766.58,
+            "pnl": -15836.03,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 235,
+            "exit_day": 240,
+            "entry_price": 1969782.27,
+            "exit_price": 2009177.91,
+            "pnl": 39395.65,
+            "pnl_pct": 2.0
+          }
+        ]
+      },
+      "completed_at": "2026-03-17T15:04:37.626255",
+      "updated_at": "2026-03-17T15:04:37.626304"
+    },
+    {
+      "user_id": "daceaba4-f919-4b24-b710-885ca1df5ba5",
+      "strategy_name": "Test Strategy",
+      "strategy_params": {},
+      "symbols": [
+        "BTC",
+        "ETH"
+      ],
+      "start_date": null,
+      "end_date": null,
+      "initial_capital": 100000.0,
+      "status": "COMPLETED",
+      "created_at": "2026-03-17T15:04:54.340307",
+      "id": "c796f37a-3877-485f-84f8-4682a38b1470",
+      "results": {
+        "equity_curve": [
+          {
+            "day": 222,
+            "equity": 1550808.68,
+            "date": "2026-02-15T15:04:54.344676"
+          },
+          {
+            "day": 223,
+            "equity": 1560113.54,
+            "date": "2026-02-16T15:04:54.344678"
+          },
+          {
+            "day": 224,
+            "equity": 1571034.33,
+            "date": "2026-02-17T15:04:54.344681"
+          },
+          {
+            "day": 225,
+            "equity": 1583602.6,
+            "date": "2026-02-18T15:04:54.344684"
+          },
+          {
+            "day": 226,
+            "equity": 1597855.03,
+            "date": "2026-02-19T15:04:54.344689"
+          },
+          {
+            "day": 227,
+            "equity": 1613833.58,
+            "date": "2026-02-20T15:04:54.344691"
+          },
+          {
+            "day": 228,
+            "equity": 1631585.75,
+            "date": "2026-02-21T15:04:54.344694"
+          },
+          {
+            "day": 229,
+            "equity": 1651164.78,
+            "date": "2026-02-22T15:04:54.344696"
+          },
+          {
+            "day": 230,
+            "equity": 1672629.92,
+            "date": "2026-02-23T15:04:54.344699"
+          },
+          {
+            "day": 231,
+            "equity": 1696046.74,
+            "date": "2026-02-24T15:04:54.344710"
+          },
+          {
+            "day": 232,
+            "equity": 1721487.44,
+            "date": "2026-02-25T15:04:54.344713"
+          },
+          {
+            "day": 233,
+            "equity": 1749031.24,
+            "date": "2026-02-26T15:04:54.344716"
+          },
+          {
+            "day": 234,
+            "equity": 1778764.77,
+            "date": "2026-02-27T15:04:54.344718"
+          },
+          {
+            "day": 235,
+            "equity": 1810782.53,
+            "date": "2026-02-28T15:04:54.344721"
+          },
+          {
+            "day": 236,
+            "equity": 1845187.4,
+            "date": "2026-03-01T15:04:54.344723"
+          },
+          {
+            "day": 237,
+            "equity": 1882091.15,
+            "date": "2026-03-02T15:04:54.344726"
+          },
+          {
+            "day": 238,
+            "equity": 1921615.06,
+            "date": "2026-03-03T15:04:54.344728"
+          },
+          {
+            "day": 239,
+            "equity": 1963890.6,
+            "date": "2026-03-04T15:04:54.344731"
+          },
+          {
+            "day": 240,
+            "equity": 1969782.27,
+            "date": "2026-03-05T15:04:54.344734"
+          },
+          {
+            "day": 241,
+            "equity": 1977661.4,
+            "date": "2026-03-06T15:04:54.344738"
+          },
+          {
+            "day": 242,
+            "equity": 1987549.7,
+            "date": "2026-03-07T15:04:54.344741"
+          },
+          {
+            "day": 243,
+            "equity": 1999475.0,
+            "date": "2026-03-08T15:04:54.344743"
+          },
+          {
+            "day": 244,
+            "equity": 2013471.33,
+            "date": "2026-03-09T15:04:54.344746"
+          },
+          {
+            "day": 245,
+            "equity": 2029579.1,
+            "date": "2026-03-10T15:04:54.344748"
+          },
+          {
+            "day": 246,
+            "equity": 2047845.31,
+            "date": "2026-03-11T15:04:54.344751"
+          },
+          {
+            "day": 247,
+            "equity": 2068323.76,
+            "date": "2026-03-12T15:04:54.344753"
+          },
+          {
+            "day": 248,
+            "equity": 2091075.32,
+            "date": "2026-03-13T15:04:54.344756"
+          },
+          {
+            "day": 249,
+            "equity": 2116168.23,
+            "date": "2026-03-14T15:04:54.344758"
+          },
+          {
+            "day": 250,
+            "equity": 2143678.42,
+            "date": "2026-03-15T15:04:54.344761"
+          },
+          {
+            "day": 251,
+            "equity": 2173689.91,
+            "date": "2026-03-16T15:04:54.344763"
+          }
+        ],
+        "metrics": {
+          "initial_capital": 100000.0,
+          "final_equity": 2173689.91,
+          "total_return": "2073.69%",
+          "total_trades": 16,
+          "winning_trades": 8,
+          "losing_trades": 8,
+          "win_rate": "50.0%",
+          "profit_factor": 2.44,
+          "avg_win": 14801.39,
+          "avg_loss": 6069.99,
+          "max_drawdown": "0.00%",
+          "sharpe_ratio": 34.25
+        },
+        "trades": [
+          {
+            "entry_day": 100,
+            "exit_day": 105,
+            "entry_price": 357344.88,
+            "exit_price": 353771.43,
+            "pnl": -3573.45,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 115,
+            "exit_day": 120,
+            "entry_price": 444487.53,
+            "exit_price": 453377.28,
+            "pnl": 8889.75,
+            "pnl_pct": 2.0
+          },
+          {
+            "entry_day": 130,
+            "exit_day": 135,
+            "entry_price": 523681.73,
+            "exit_price": 518444.92,
+            "pnl": -5236.82,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 145,
+            "exit_day": 150,
+            "entry_price": 619955.85,
+            "exit_price": 632354.97,
+            "pnl": 12399.12,
+            "pnl_pct": 2.0
+          },
+          {
+            "entry_day": 160,
+            "exit_day": 165,
+            "entry_price": 752258.12,
+            "exit_price": 744735.54,
+            "pnl": -7522.58,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 175,
+            "exit_day": 180,
+            "entry_price": 935704.89,
+            "exit_price": 954418.99,
+            "pnl": 18714.1,
+            "pnl_pct": 2.0
+          },
+          {
+            "entry_day": 190,
+            "exit_day": 195,
+            "entry_price": 1102419.15,
+            "exit_price": 1091394.96,
+            "pnl": -11024.19,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 205,
+            "exit_day": 210,
+            "entry_price": 1305088.87,
+            "exit_price": 1331190.65,
+            "pnl": 26101.78,
+            "pnl_pct": 2.0
+          },
+          {
+            "entry_day": 220,
+            "exit_day": 225,
+            "entry_price": 1583602.6,
+            "exit_price": 1567766.58,
+            "pnl": -15836.03,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 235,
+            "exit_day": 240,
+            "entry_price": 1969782.27,
+            "exit_price": 2009177.91,
+            "pnl": 39395.65,
+            "pnl_pct": 2.0
+          }
+        ]
+      },
+      "completed_at": "2026-03-17T15:04:54.345023",
+      "updated_at": "2026-03-17T15:04:54.345029"
+    },
+    {
+      "user_id": "dbd237c5-6e55-46c6-9590-054c17d796ad",
+      "strategy_name": "Test Strategy",
+      "strategy_params": {},
+      "symbols": [
+        "BTC",
+        "ETH"
+      ],
+      "start_date": null,
+      "end_date": null,
+      "initial_capital": 100000.0,
+      "status": "COMPLETED",
+      "created_at": "2026-03-17T15:06:45.656743",
+      "id": "16dd4ecf-51d1-45bf-9357-4bbaf3c3eb9d",
+      "results": {
+        "equity_curve": [
+          {
+            "day": 222,
+            "equity": 1550808.68,
+            "date": "2026-02-15T15:06:45.668967"
+          },
+          {
+            "day": 223,
+            "equity": 1560113.54,
+            "date": "2026-02-16T15:06:45.668972"
+          },
+          {
+            "day": 224,
+            "equity": 1571034.33,
+            "date": "2026-02-17T15:06:45.668977"
+          },
+          {
+            "day": 225,
+            "equity": 1583602.6,
+            "date": "2026-02-18T15:06:45.668983"
+          },
+          {
+            "day": 226,
+            "equity": 1597855.03,
+            "date": "2026-02-19T15:06:45.668993"
+          },
+          {
+            "day": 227,
+            "equity": 1613833.58,
+            "date": "2026-02-20T15:06:45.668998"
+          },
+          {
+            "day": 228,
+            "equity": 1631585.75,
+            "date": "2026-02-21T15:06:45.669004"
+          },
+          {
+            "day": 229,
+            "equity": 1651164.78,
+            "date": "2026-02-22T15:06:45.669009"
+          },
+          {
+            "day": 230,
+            "equity": 1672629.92,
+            "date": "2026-02-23T15:06:45.669014"
+          },
+          {
+            "day": 231,
+            "equity": 1696046.74,
+            "date": "2026-02-24T15:06:45.669019"
+          },
+          {
+            "day": 232,
+            "equity": 1721487.44,
+            "date": "2026-02-25T15:06:45.669024"
+          },
+          {
+            "day": 233,
+            "equity": 1749031.24,
+            "date": "2026-02-26T15:06:45.669029"
+          },
+          {
+            "day": 234,
+            "equity": 1778764.77,
+            "date": "2026-02-27T15:06:45.669034"
+          },
+          {
+            "day": 235,
+            "equity": 1810782.53,
+            "date": "2026-02-28T15:06:45.669039"
+          },
+          {
+            "day": 236,
+            "equity": 1845187.4,
+            "date": "2026-03-01T15:06:45.669045"
+          },
+          {
+            "day": 237,
+            "equity": 1882091.15,
+            "date": "2026-03-02T15:06:45.669050"
+          },
+          {
+            "day": 238,
+            "equity": 1921615.06,
+            "date": "2026-03-03T15:06:45.669055"
+          },
+          {
+            "day": 239,
+            "equity": 1963890.6,
+            "date": "2026-03-04T15:06:45.669060"
+          },
+          {
+            "day": 240,
+            "equity": 1969782.27,
+            "date": "2026-03-05T15:06:45.669065"
+          },
+          {
+            "day": 241,
+            "equity": 1977661.4,
+            "date": "2026-03-06T15:06:45.669075"
+          },
+          {
+            "day": 242,
+            "equity": 1987549.7,
+            "date": "2026-03-07T15:06:45.669080"
+          },
+          {
+            "day": 243,
+            "equity": 1999475.0,
+            "date": "2026-03-08T15:06:45.669085"
+          },
+          {
+            "day": 244,
+            "equity": 2013471.33,
+            "date": "2026-03-09T15:06:45.669091"
+          },
+          {
+            "day": 245,
+            "equity": 2029579.1,
+            "date": "2026-03-10T15:06:45.669096"
+          },
+          {
+            "day": 246,
+            "equity": 2047845.31,
+            "date": "2026-03-11T15:06:45.669101"
+          },
+          {
+            "day": 247,
+            "equity": 2068323.76,
+            "date": "2026-03-12T15:06:45.669106"
+          },
+          {
+            "day": 248,
+            "equity": 2091075.32,
+            "date": "2026-03-13T15:06:45.669111"
+          },
+          {
+            "day": 249,
+            "equity": 2116168.23,
+            "date": "2026-03-14T15:06:45.669116"
+          },
+          {
+            "day": 250,
+            "equity": 2143678.42,
+            "date": "2026-03-15T15:06:45.669121"
+          },
+          {
+            "day": 251,
+            "equity": 2173689.91,
+            "date": "2026-03-16T15:06:45.669126"
+          }
+        ],
+        "metrics": {
+          "initial_capital": 100000.0,
+          "final_equity": 2173689.91,
+          "total_return": "2073.69%",
+          "total_trades": 16,
+          "winning_trades": 8,
+          "losing_trades": 8,
+          "win_rate": "50.0%",
+          "profit_factor": 2.44,
+          "avg_win": 14801.39,
+          "avg_loss": 6069.99,
+          "max_drawdown": "0.00%",
+          "sharpe_ratio": 34.25
+        },
+        "trades": [
+          {
+            "entry_day": 100,
+            "exit_day": 105,
+            "entry_price": 357344.88,
+            "exit_price": 353771.43,
+            "pnl": -3573.45,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 115,
+            "exit_day": 120,
+            "entry_price": 444487.53,
+            "exit_price": 453377.28,
+            "pnl": 8889.75,
+            "pnl_pct": 2.0
+          },
+          {
+            "entry_day": 130,
+            "exit_day": 135,
+            "entry_price": 523681.73,
+            "exit_price": 518444.92,
+            "pnl": -5236.82,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 145,
+            "exit_day": 150,
+            "entry_price": 619955.85,
+            "exit_price": 632354.97,
+            "pnl": 12399.12,
+            "pnl_pct": 2.0
+          },
+          {
+            "entry_day": 160,
+            "exit_day": 165,
+            "entry_price": 752258.12,
+            "exit_price": 744735.54,
+            "pnl": -7522.58,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 175,
+            "exit_day": 180,
+            "entry_price": 935704.89,
+            "exit_price": 954418.99,
+            "pnl": 18714.1,
+            "pnl_pct": 2.0
+          },
+          {
+            "entry_day": 190,
+            "exit_day": 195,
+            "entry_price": 1102419.15,
+            "exit_price": 1091394.96,
+            "pnl": -11024.19,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 205,
+            "exit_day": 210,
+            "entry_price": 1305088.87,
+            "exit_price": 1331190.65,
+            "pnl": 26101.78,
+            "pnl_pct": 2.0
+          },
+          {
+            "entry_day": 220,
+            "exit_day": 225,
+            "entry_price": 1583602.6,
+            "exit_price": 1567766.58,
+            "pnl": -15836.03,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 235,
+            "exit_day": 240,
+            "entry_price": 1969782.27,
+            "exit_price": 2009177.91,
+            "pnl": 39395.65,
+            "pnl_pct": 2.0
+          }
+        ]
+      },
+      "completed_at": "2026-03-17T15:06:45.669652",
+      "updated_at": "2026-03-17T15:06:45.669668"
+    },
+    {
+      "user_id": "35a143b5-9478-485f-8feb-5bc858ab9941",
+      "strategy_name": "Test Strategy",
+      "strategy_params": {},
+      "symbols": [
+        "BTC",
+        "ETH"
+      ],
+      "start_date": null,
+      "end_date": null,
+      "initial_capital": 100000.0,
+      "status": "COMPLETED",
+      "created_at": "2026-03-17T15:27:55.113614",
+      "id": "6a5d6b1f-f290-40e4-939f-414e8e2212ee",
+      "results": {
+        "equity_curve": [
+          {
+            "day": 222,
+            "equity": 1550808.68,
+            "date": "2026-02-15T15:27:55.123423"
+          },
+          {
+            "day": 223,
+            "equity": 1560113.54,
+            "date": "2026-02-16T15:27:55.123426"
+          },
+          {
+            "day": 224,
+            "equity": 1571034.33,
+            "date": "2026-02-17T15:27:55.123429"
+          },
+          {
+            "day": 225,
+            "equity": 1583602.6,
+            "date": "2026-02-18T15:27:55.123432"
+          },
+          {
+            "day": 226,
+            "equity": 1597855.03,
+            "date": "2026-02-19T15:27:55.123438"
+          },
+          {
+            "day": 227,
+            "equity": 1613833.58,
+            "date": "2026-02-20T15:27:55.123441"
+          },
+          {
+            "day": 228,
+            "equity": 1631585.75,
+            "date": "2026-02-21T15:27:55.123445"
+          },
+          {
+            "day": 229,
+            "equity": 1651164.78,
+            "date": "2026-02-22T15:27:55.123448"
+          },
+          {
+            "day": 230,
+            "equity": 1672629.92,
+            "date": "2026-02-23T15:27:55.123451"
+          },
+          {
+            "day": 231,
+            "equity": 1696046.74,
+            "date": "2026-02-24T15:27:55.123454"
+          },
+          {
+            "day": 232,
+            "equity": 1721487.44,
+            "date": "2026-02-25T15:27:55.123457"
+          },
+          {
+            "day": 233,
+            "equity": 1749031.24,
+            "date": "2026-02-26T15:27:55.123460"
+          },
+          {
+            "day": 234,
+            "equity": 1778764.77,
+            "date": "2026-02-27T15:27:55.123463"
+          },
+          {
+            "day": 235,
+            "equity": 1810782.53,
+            "date": "2026-02-28T15:27:55.123466"
+          },
+          {
+            "day": 236,
+            "equity": 1845187.4,
+            "date": "2026-03-01T15:27:55.123469"
+          },
+          {
+            "day": 237,
+            "equity": 1882091.15,
+            "date": "2026-03-02T15:27:55.123472"
+          },
+          {
+            "day": 238,
+            "equity": 1921615.06,
+            "date": "2026-03-03T15:27:55.123476"
+          },
+          {
+            "day": 239,
+            "equity": 1963890.6,
+            "date": "2026-03-04T15:27:55.123479"
+          },
+          {
+            "day": 240,
+            "equity": 1969782.27,
+            "date": "2026-03-05T15:27:55.123482"
+          },
+          {
+            "day": 241,
+            "equity": 1977661.4,
+            "date": "2026-03-06T15:27:55.123488"
+          },
+          {
+            "day": 242,
+            "equity": 1987549.7,
+            "date": "2026-03-07T15:27:55.123491"
+          },
+          {
+            "day": 243,
+            "equity": 1999475.0,
+            "date": "2026-03-08T15:27:55.123494"
+          },
+          {
+            "day": 244,
+            "equity": 2013471.33,
+            "date": "2026-03-09T15:27:55.123497"
+          },
+          {
+            "day": 245,
+            "equity": 2029579.1,
+            "date": "2026-03-10T15:27:55.123500"
+          },
+          {
+            "day": 246,
+            "equity": 2047845.31,
+            "date": "2026-03-11T15:27:55.123503"
+          },
+          {
+            "day": 247,
+            "equity": 2068323.76,
+            "date": "2026-03-12T15:27:55.123507"
+          },
+          {
+            "day": 248,
+            "equity": 2091075.32,
+            "date": "2026-03-13T15:27:55.123510"
+          },
+          {
+            "day": 249,
+            "equity": 2116168.23,
+            "date": "2026-03-14T15:27:55.123513"
+          },
+          {
+            "day": 250,
+            "equity": 2143678.42,
+            "date": "2026-03-15T15:27:55.123516"
+          },
+          {
+            "day": 251,
+            "equity": 2173689.91,
+            "date": "2026-03-16T15:27:55.123519"
+          }
+        ],
+        "metrics": {
+          "initial_capital": 100000.0,
+          "final_equity": 2173689.91,
+          "total_return": "2073.69%",
+          "total_trades": 16,
+          "winning_trades": 8,
+          "losing_trades": 8,
+          "win_rate": "50.0%",
+          "profit_factor": 2.44,
+          "avg_win": 14801.39,
+          "avg_loss": 6069.99,
+          "max_drawdown": "0.00%",
+          "sharpe_ratio": 34.25
+        },
+        "trades": [
+          {
+            "entry_day": 100,
+            "exit_day": 105,
+            "entry_price": 357344.88,
+            "exit_price": 353771.43,
+            "pnl": -3573.45,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 115,
+            "exit_day": 120,
+            "entry_price": 444487.53,
+            "exit_price": 453377.28,
+            "pnl": 8889.75,
+            "pnl_pct": 2.0
+          },
+          {
+            "entry_day": 130,
+            "exit_day": 135,
+            "entry_price": 523681.73,
+            "exit_price": 518444.92,
+            "pnl": -5236.82,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 145,
+            "exit_day": 150,
+            "entry_price": 619955.85,
+            "exit_price": 632354.97,
+            "pnl": 12399.12,
+            "pnl_pct": 2.0
+          },
+          {
+            "entry_day": 160,
+            "exit_day": 165,
+            "entry_price": 752258.12,
+            "exit_price": 744735.54,
+            "pnl": -7522.58,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 175,
+            "exit_day": 180,
+            "entry_price": 935704.89,
+            "exit_price": 954418.99,
+            "pnl": 18714.1,
+            "pnl_pct": 2.0
+          },
+          {
+            "entry_day": 190,
+            "exit_day": 195,
+            "entry_price": 1102419.15,
+            "exit_price": 1091394.96,
+            "pnl": -11024.19,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 205,
+            "exit_day": 210,
+            "entry_price": 1305088.87,
+            "exit_price": 1331190.65,
+            "pnl": 26101.78,
+            "pnl_pct": 2.0
+          },
+          {
+            "entry_day": 220,
+            "exit_day": 225,
+            "entry_price": 1583602.6,
+            "exit_price": 1567766.58,
+            "pnl": -15836.03,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 235,
+            "exit_day": 240,
+            "entry_price": 1969782.27,
+            "exit_price": 2009177.91,
+            "pnl": 39395.65,
+            "pnl_pct": 2.0
+          }
+        ]
+      },
+      "completed_at": "2026-03-17T15:27:55.123853",
+      "updated_at": "2026-03-17T15:27:55.123863"
+    },
+    {
+      "user_id": "f3ffc6b3-2f1d-430d-bc81-d1f49d0d3af6",
+      "strategy_name": "Test Strategy",
+      "strategy_params": {},
+      "symbols": [
+        "BTC",
+        "ETH"
+      ],
+      "start_date": null,
+      "end_date": null,
+      "initial_capital": 100000.0,
+      "status": "COMPLETED",
+      "created_at": "2026-03-17T15:35:02.193996",
+      "id": "5a059cbf-58e4-4002-8ec8-67b0f45e85ac",
+      "results": {
+        "equity_curve": [
+          {
+            "day": 222,
+            "equity": 1550808.68,
+            "date": "2026-02-15T15:35:02.202439"
+          },
+          {
+            "day": 223,
+            "equity": 1560113.54,
+            "date": "2026-02-16T15:35:02.202441"
+          },
+          {
+            "day": 224,
+            "equity": 1571034.33,
+            "date": "2026-02-17T15:35:02.202443"
+          },
+          {
+            "day": 225,
+            "equity": 1583602.6,
+            "date": "2026-02-18T15:35:02.202446"
+          },
+          {
+            "day": 226,
+            "equity": 1597855.03,
+            "date": "2026-02-19T15:35:02.202450"
+          },
+          {
+            "day": 227,
+            "equity": 1613833.58,
+            "date": "2026-02-20T15:35:02.202453"
+          },
+          {
+            "day": 228,
+            "equity": 1631585.75,
+            "date": "2026-02-21T15:35:02.202458"
+          },
+          {
+            "day": 229,
+            "equity": 1651164.78,
+            "date": "2026-02-22T15:35:02.202460"
+          },
+          {
+            "day": 230,
+            "equity": 1672629.92,
+            "date": "2026-02-23T15:35:02.202462"
+          },
+          {
+            "day": 231,
+            "equity": 1696046.74,
+            "date": "2026-02-24T15:35:02.202465"
+          },
+          {
+            "day": 232,
+            "equity": 1721487.44,
+            "date": "2026-02-25T15:35:02.202467"
+          },
+          {
+            "day": 233,
+            "equity": 1749031.24,
+            "date": "2026-02-26T15:35:02.202469"
+          },
+          {
+            "day": 234,
+            "equity": 1778764.77,
+            "date": "2026-02-27T15:35:02.202472"
+          },
+          {
+            "day": 235,
+            "equity": 1810782.53,
+            "date": "2026-02-28T15:35:02.202474"
+          },
+          {
+            "day": 236,
+            "equity": 1845187.4,
+            "date": "2026-03-01T15:35:02.202476"
+          },
+          {
+            "day": 237,
+            "equity": 1882091.15,
+            "date": "2026-03-02T15:35:02.202479"
+          },
+          {
+            "day": 238,
+            "equity": 1921615.06,
+            "date": "2026-03-03T15:35:02.202481"
+          },
+          {
+            "day": 239,
+            "equity": 1963890.6,
+            "date": "2026-03-04T15:35:02.202483"
+          },
+          {
+            "day": 240,
+            "equity": 1969782.27,
+            "date": "2026-03-05T15:35:02.202486"
+          },
+          {
+            "day": 241,
+            "equity": 1977661.4,
+            "date": "2026-03-06T15:35:02.202490"
+          },
+          {
+            "day": 242,
+            "equity": 1987549.7,
+            "date": "2026-03-07T15:35:02.202492"
+          },
+          {
+            "day": 243,
+            "equity": 1999475.0,
+            "date": "2026-03-08T15:35:02.202495"
+          },
+          {
+            "day": 244,
+            "equity": 2013471.33,
+            "date": "2026-03-09T15:35:02.202497"
+          },
+          {
+            "day": 245,
+            "equity": 2029579.1,
+            "date": "2026-03-10T15:35:02.202499"
+          },
+          {
+            "day": 246,
+            "equity": 2047845.31,
+            "date": "2026-03-11T15:35:02.202502"
+          },
+          {
+            "day": 247,
+            "equity": 2068323.76,
+            "date": "2026-03-12T15:35:02.202504"
+          },
+          {
+            "day": 248,
+            "equity": 2091075.32,
+            "date": "2026-03-13T15:35:02.202506"
+          },
+          {
+            "day": 249,
+            "equity": 2116168.23,
+            "date": "2026-03-14T15:35:02.202508"
+          },
+          {
+            "day": 250,
+            "equity": 2143678.42,
+            "date": "2026-03-15T15:35:02.202514"
+          },
+          {
+            "day": 251,
+            "equity": 2173689.91,
+            "date": "2026-03-16T15:35:02.202516"
+          }
+        ],
+        "metrics": {
+          "initial_capital": 100000.0,
+          "final_equity": 2173689.91,
+          "total_return": "2073.69%",
+          "total_trades": 16,
+          "winning_trades": 8,
+          "losing_trades": 8,
+          "win_rate": "50.0%",
+          "profit_factor": 2.44,
+          "avg_win": 14801.39,
+          "avg_loss": 6069.99,
+          "max_drawdown": "0.00%",
+          "sharpe_ratio": 34.25
+        },
+        "trades": [
+          {
+            "entry_day": 100,
+            "exit_day": 105,
+            "entry_price": 357344.88,
+            "exit_price": 353771.43,
+            "pnl": -3573.45,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 115,
+            "exit_day": 120,
+            "entry_price": 444487.53,
+            "exit_price": 453377.28,
+            "pnl": 8889.75,
+            "pnl_pct": 2.0
+          },
+          {
+            "entry_day": 130,
+            "exit_day": 135,
+            "entry_price": 523681.73,
+            "exit_price": 518444.92,
+            "pnl": -5236.82,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 145,
+            "exit_day": 150,
+            "entry_price": 619955.85,
+            "exit_price": 632354.97,
+            "pnl": 12399.12,
+            "pnl_pct": 2.0
+          },
+          {
+            "entry_day": 160,
+            "exit_day": 165,
+            "entry_price": 752258.12,
+            "exit_price": 744735.54,
+            "pnl": -7522.58,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 175,
+            "exit_day": 180,
+            "entry_price": 935704.89,
+            "exit_price": 954418.99,
+            "pnl": 18714.1,
+            "pnl_pct": 2.0
+          },
+          {
+            "entry_day": 190,
+            "exit_day": 195,
+            "entry_price": 1102419.15,
+            "exit_price": 1091394.96,
+            "pnl": -11024.19,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 205,
+            "exit_day": 210,
+            "entry_price": 1305088.87,
+            "exit_price": 1331190.65,
+            "pnl": 26101.78,
+            "pnl_pct": 2.0
+          },
+          {
+            "entry_day": 220,
+            "exit_day": 225,
+            "entry_price": 1583602.6,
+            "exit_price": 1567766.58,
+            "pnl": -15836.03,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 235,
+            "exit_day": 240,
+            "entry_price": 1969782.27,
+            "exit_price": 2009177.91,
+            "pnl": 39395.65,
+            "pnl_pct": 2.0
+          }
+        ]
+      },
+      "completed_at": "2026-03-17T15:35:02.202746",
+      "updated_at": "2026-03-17T15:35:02.202753"
+    },
+    {
+      "user_id": "fdbf3e62-4f09-495e-8bd9-f7085b3125f5",
+      "strategy_name": "Test Strategy",
+      "strategy_params": {},
+      "symbols": [
+        "BTC",
+        "ETH"
+      ],
+      "start_date": null,
+      "end_date": null,
+      "initial_capital": 100000.0,
+      "status": "COMPLETED",
+      "created_at": "2026-03-17T15:37:59.035557",
+      "id": "1ac4a920-eebc-4c50-b926-9f3264e444bc",
+      "results": {
+        "equity_curve": [
+          {
+            "day": 222,
+            "equity": 1550808.68,
+            "date": "2026-02-15T15:37:59.043508"
+          },
+          {
+            "day": 223,
+            "equity": 1560113.54,
+            "date": "2026-02-16T15:37:59.043510"
+          },
+          {
+            "day": 224,
+            "equity": 1571034.33,
+            "date": "2026-02-17T15:37:59.043513"
+          },
+          {
+            "day": 225,
+            "equity": 1583602.6,
+            "date": "2026-02-18T15:37:59.043515"
+          },
+          {
+            "day": 226,
+            "equity": 1597855.03,
+            "date": "2026-02-19T15:37:59.043520"
+          },
+          {
+            "day": 227,
+            "equity": 1613833.58,
+            "date": "2026-02-20T15:37:59.043522"
+          },
+          {
+            "day": 228,
+            "equity": 1631585.75,
+            "date": "2026-02-21T15:37:59.043524"
+          },
+          {
+            "day": 229,
+            "equity": 1651164.78,
+            "date": "2026-02-22T15:37:59.043527"
+          },
+          {
+            "day": 230,
+            "equity": 1672629.92,
+            "date": "2026-02-23T15:37:59.043529"
+          },
+          {
+            "day": 231,
+            "equity": 1696046.74,
+            "date": "2026-02-24T15:37:59.043531"
+          },
+          {
+            "day": 232,
+            "equity": 1721487.44,
+            "date": "2026-02-25T15:37:59.043534"
+          },
+          {
+            "day": 233,
+            "equity": 1749031.24,
+            "date": "2026-02-26T15:37:59.043536"
+          },
+          {
+            "day": 234,
+            "equity": 1778764.77,
+            "date": "2026-02-27T15:37:59.043538"
+          },
+          {
+            "day": 235,
+            "equity": 1810782.53,
+            "date": "2026-02-28T15:37:59.043541"
+          },
+          {
+            "day": 236,
+            "equity": 1845187.4,
+            "date": "2026-03-01T15:37:59.043543"
+          },
+          {
+            "day": 237,
+            "equity": 1882091.15,
+            "date": "2026-03-02T15:37:59.043546"
+          },
+          {
+            "day": 238,
+            "equity": 1921615.06,
+            "date": "2026-03-03T15:37:59.043548"
+          },
+          {
+            "day": 239,
+            "equity": 1963890.6,
+            "date": "2026-03-04T15:37:59.043551"
+          },
+          {
+            "day": 240,
+            "equity": 1969782.27,
+            "date": "2026-03-05T15:37:59.043553"
+          },
+          {
+            "day": 241,
+            "equity": 1977661.4,
+            "date": "2026-03-06T15:37:59.043557"
+          },
+          {
+            "day": 242,
+            "equity": 1987549.7,
+            "date": "2026-03-07T15:37:59.043560"
+          },
+          {
+            "day": 243,
+            "equity": 1999475.0,
+            "date": "2026-03-08T15:37:59.043562"
+          },
+          {
+            "day": 244,
+            "equity": 2013471.33,
+            "date": "2026-03-09T15:37:59.043564"
+          },
+          {
+            "day": 245,
+            "equity": 2029579.1,
+            "date": "2026-03-10T15:37:59.043567"
+          },
+          {
+            "day": 246,
+            "equity": 2047845.31,
+            "date": "2026-03-11T15:37:59.043569"
+          },
+          {
+            "day": 247,
+            "equity": 2068323.76,
+            "date": "2026-03-12T15:37:59.043571"
+          },
+          {
+            "day": 248,
+            "equity": 2091075.32,
+            "date": "2026-03-13T15:37:59.043574"
+          },
+          {
+            "day": 249,
+            "equity": 2116168.23,
+            "date": "2026-03-14T15:37:59.043576"
+          },
+          {
+            "day": 250,
+            "equity": 2143678.42,
+            "date": "2026-03-15T15:37:59.043578"
+          },
+          {
+            "day": 251,
+            "equity": 2173689.91,
+            "date": "2026-03-16T15:37:59.043581"
+          }
+        ],
+        "metrics": {
+          "initial_capital": 100000.0,
+          "final_equity": 2173689.91,
+          "total_return": "2073.69%",
+          "total_trades": 16,
+          "winning_trades": 8,
+          "losing_trades": 8,
+          "win_rate": "50.0%",
+          "profit_factor": 2.44,
+          "avg_win": 14801.39,
+          "avg_loss": 6069.99,
+          "max_drawdown": "0.00%",
+          "sharpe_ratio": 34.25
+        },
+        "trades": [
+          {
+            "entry_day": 100,
+            "exit_day": 105,
+            "entry_price": 357344.88,
+            "exit_price": 353771.43,
+            "pnl": -3573.45,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 115,
+            "exit_day": 120,
+            "entry_price": 444487.53,
+            "exit_price": 453377.28,
+            "pnl": 8889.75,
+            "pnl_pct": 2.0
+          },
+          {
+            "entry_day": 130,
+            "exit_day": 135,
+            "entry_price": 523681.73,
+            "exit_price": 518444.92,
+            "pnl": -5236.82,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 145,
+            "exit_day": 150,
+            "entry_price": 619955.85,
+            "exit_price": 632354.97,
+            "pnl": 12399.12,
+            "pnl_pct": 2.0
+          },
+          {
+            "entry_day": 160,
+            "exit_day": 165,
+            "entry_price": 752258.12,
+            "exit_price": 744735.54,
+            "pnl": -7522.58,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 175,
+            "exit_day": 180,
+            "entry_price": 935704.89,
+            "exit_price": 954418.99,
+            "pnl": 18714.1,
+            "pnl_pct": 2.0
+          },
+          {
+            "entry_day": 190,
+            "exit_day": 195,
+            "entry_price": 1102419.15,
+            "exit_price": 1091394.96,
+            "pnl": -11024.19,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 205,
+            "exit_day": 210,
+            "entry_price": 1305088.87,
+            "exit_price": 1331190.65,
+            "pnl": 26101.78,
+            "pnl_pct": 2.0
+          },
+          {
+            "entry_day": 220,
+            "exit_day": 225,
+            "entry_price": 1583602.6,
+            "exit_price": 1567766.58,
+            "pnl": -15836.03,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 235,
+            "exit_day": 240,
+            "entry_price": 1969782.27,
+            "exit_price": 2009177.91,
+            "pnl": 39395.65,
+            "pnl_pct": 2.0
+          }
+        ]
+      },
+      "completed_at": "2026-03-17T15:37:59.043835",
+      "updated_at": "2026-03-17T15:37:59.043841"
+    },
+    {
+      "user_id": "2fc66a58-1428-453c-a27f-5cdd14a066e9",
+      "strategy_name": "Test Strategy",
+      "strategy_params": {},
+      "symbols": [
+        "BTC",
+        "ETH"
+      ],
+      "start_date": null,
+      "end_date": null,
+      "initial_capital": 100000.0,
+      "status": "COMPLETED",
+      "created_at": "2026-03-17T15:45:20.445177",
+      "id": "c726572e-2c43-4685-a115-2f466c1a2534",
+      "results": {
+        "equity_curve": [
+          {
+            "day": 222,
+            "equity": 1550808.68,
+            "date": "2026-02-15T15:45:20.456015"
+          },
+          {
+            "day": 223,
+            "equity": 1560113.54,
+            "date": "2026-02-16T15:45:20.456017"
+          },
+          {
+            "day": 224,
+            "equity": 1571034.33,
+            "date": "2026-02-17T15:45:20.456020"
+          },
+          {
+            "day": 225,
+            "equity": 1583602.6,
+            "date": "2026-02-18T15:45:20.456022"
+          },
+          {
+            "day": 226,
+            "equity": 1597855.03,
+            "date": "2026-02-19T15:45:20.456044"
+          },
+          {
+            "day": 227,
+            "equity": 1613833.58,
+            "date": "2026-02-20T15:45:20.456047"
+          },
+          {
+            "day": 228,
+            "equity": 1631585.75,
+            "date": "2026-02-21T15:45:20.456049"
+          },
+          {
+            "day": 229,
+            "equity": 1651164.78,
+            "date": "2026-02-22T15:45:20.456052"
+          },
+          {
+            "day": 230,
+            "equity": 1672629.92,
+            "date": "2026-02-23T15:45:20.456054"
+          },
+          {
+            "day": 231,
+            "equity": 1696046.74,
+            "date": "2026-02-24T15:45:20.456056"
+          },
+          {
+            "day": 232,
+            "equity": 1721487.44,
+            "date": "2026-02-25T15:45:20.456059"
+          },
+          {
+            "day": 233,
+            "equity": 1749031.24,
+            "date": "2026-02-26T15:45:20.456061"
+          },
+          {
+            "day": 234,
+            "equity": 1778764.77,
+            "date": "2026-02-27T15:45:20.456064"
+          },
+          {
+            "day": 235,
+            "equity": 1810782.53,
+            "date": "2026-02-28T15:45:20.456066"
+          },
+          {
+            "day": 236,
+            "equity": 1845187.4,
+            "date": "2026-03-01T15:45:20.456069"
+          },
+          {
+            "day": 237,
+            "equity": 1882091.15,
+            "date": "2026-03-02T15:45:20.456071"
+          },
+          {
+            "day": 238,
+            "equity": 1921615.06,
+            "date": "2026-03-03T15:45:20.456073"
+          },
+          {
+            "day": 239,
+            "equity": 1963890.6,
+            "date": "2026-03-04T15:45:20.456076"
+          },
+          {
+            "day": 240,
+            "equity": 1969782.27,
+            "date": "2026-03-05T15:45:20.456078"
+          },
+          {
+            "day": 241,
+            "equity": 1977661.4,
+            "date": "2026-03-06T15:45:20.456083"
+          },
+          {
+            "day": 242,
+            "equity": 1987549.7,
+            "date": "2026-03-07T15:45:20.456085"
+          },
+          {
+            "day": 243,
+            "equity": 1999475.0,
+            "date": "2026-03-08T15:45:20.456087"
+          },
+          {
+            "day": 244,
+            "equity": 2013471.33,
+            "date": "2026-03-09T15:45:20.456090"
+          },
+          {
+            "day": 245,
+            "equity": 2029579.1,
+            "date": "2026-03-10T15:45:20.456092"
+          },
+          {
+            "day": 246,
+            "equity": 2047845.31,
+            "date": "2026-03-11T15:45:20.456094"
+          },
+          {
+            "day": 247,
+            "equity": 2068323.76,
+            "date": "2026-03-12T15:45:20.456097"
+          },
+          {
+            "day": 248,
+            "equity": 2091075.32,
+            "date": "2026-03-13T15:45:20.456099"
+          },
+          {
+            "day": 249,
+            "equity": 2116168.23,
+            "date": "2026-03-14T15:45:20.456101"
+          },
+          {
+            "day": 250,
+            "equity": 2143678.42,
+            "date": "2026-03-15T15:45:20.456104"
+          },
+          {
+            "day": 251,
+            "equity": 2173689.91,
+            "date": "2026-03-16T15:45:20.456106"
+          }
+        ],
+        "metrics": {
+          "initial_capital": 100000.0,
+          "final_equity": 2173689.91,
+          "total_return": "2073.69%",
+          "total_trades": 16,
+          "winning_trades": 8,
+          "losing_trades": 8,
+          "win_rate": "50.0%",
+          "profit_factor": 2.44,
+          "avg_win": 14801.39,
+          "avg_loss": 6069.99,
+          "max_drawdown": "0.00%",
+          "sharpe_ratio": 34.25
+        },
+        "trades": [
+          {
+            "entry_day": 100,
+            "exit_day": 105,
+            "entry_price": 357344.88,
+            "exit_price": 353771.43,
+            "pnl": -3573.45,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 115,
+            "exit_day": 120,
+            "entry_price": 444487.53,
+            "exit_price": 453377.28,
+            "pnl": 8889.75,
+            "pnl_pct": 2.0
+          },
+          {
+            "entry_day": 130,
+            "exit_day": 135,
+            "entry_price": 523681.73,
+            "exit_price": 518444.92,
+            "pnl": -5236.82,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 145,
+            "exit_day": 150,
+            "entry_price": 619955.85,
+            "exit_price": 632354.97,
+            "pnl": 12399.12,
+            "pnl_pct": 2.0
+          },
+          {
+            "entry_day": 160,
+            "exit_day": 165,
+            "entry_price": 752258.12,
+            "exit_price": 744735.54,
+            "pnl": -7522.58,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 175,
+            "exit_day": 180,
+            "entry_price": 935704.89,
+            "exit_price": 954418.99,
+            "pnl": 18714.1,
+            "pnl_pct": 2.0
+          },
+          {
+            "entry_day": 190,
+            "exit_day": 195,
+            "entry_price": 1102419.15,
+            "exit_price": 1091394.96,
+            "pnl": -11024.19,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 205,
+            "exit_day": 210,
+            "entry_price": 1305088.87,
+            "exit_price": 1331190.65,
+            "pnl": 26101.78,
+            "pnl_pct": 2.0
+          },
+          {
+            "entry_day": 220,
+            "exit_day": 225,
+            "entry_price": 1583602.6,
+            "exit_price": 1567766.58,
+            "pnl": -15836.03,
+            "pnl_pct": -1.0
+          },
+          {
+            "entry_day": 235,
+            "exit_day": 240,
+            "entry_price": 1969782.27,
+            "exit_price": 2009177.91,
+            "pnl": 39395.65,
+            "pnl_pct": 2.0
+          }
+        ]
+      },
+      "completed_at": "2026-03-17T15:45:20.456480",
+      "updated_at": "2026-03-17T15:45:20.456490"
+    }
+  ]
+}

@@ -26,28 +26,47 @@ import {
   SignalIngestionRule
 } from './types';
 
-import { mockUserProfile } from '@/data/mock-user-profile';
-import { 
-  mockTickers, 
-  mockSentiment, 
-  mockFundingRates, 
-  mockOpenInterest, 
-  mockOnChainActivity, 
-  mockLiquidationClusters 
-} from '@/data/mock-market-data';
-import { mockPortfolioSummary } from '@/data/mock-portfolio-summary';
-import { mockPositions } from '@/data/mock-positions';
-import { mockTrades } from '@/data/mock-trades';
-import { mockUserStrategies, mockMarketplaceStrategies } from '@/data/mock-strategies';
-import { mockSignals } from '@/data/mock-signals';
-import { mockPerformancePoints, mockStrategyPerformances } from '@/data/mock-analytics';
-import { mockAuditLogs } from '@/data/mock-audit-log';
-import { mockKYCStatus } from '@/data/mock-kyc-status';
-import { mockRiskScore } from '@/data/mock-risk-score';
-import { mockModelPerformances } from '@/data/mock-model-performance';
-import { mockSignalProofs } from '@/data/mock-signal-proof';
-import { mockMarketDataQualities } from '@/data/mock-market-data-quality';
-import { mockExternalSignals, mockWebhookEvents, mockIngestionRule } from '@/data/mock-external-signals';
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/$/, '');
+
+class ApiError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...init,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(init?.headers || {}),
+    },
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    let message = `Request failed with status ${response.status}`;
+    try {
+      const data = await response.json();
+      if (typeof data?.detail === 'string') {
+        message = data.detail;
+      }
+    } catch {
+      message = response.statusText || message;
+    }
+    throw new ApiError(message, response.status);
+  }
+
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  return response.json() as Promise<T>;
+}
 
 /**
  * Institutional Data API
@@ -58,149 +77,130 @@ import { mockExternalSignals, mockWebhookEvents, mockIngestionRule } from '@/dat
 export const api = {
   user: {
     getProfile: async (userId: string): Promise<UserProfile> => {
-      return mockUserProfile;
+      return request<UserProfile>(`/api/frontend/user/${userId}/profile`);
     },
     getKYC: async (userId: string): Promise<KYCStatus> => {
-      return mockKYCStatus;
+      return request<KYCStatus>(`/api/frontend/user/${userId}/kyc`);
     },
     getRiskScore: async (userId: string): Promise<RiskScore> => {
-      return mockRiskScore;
+      return request<RiskScore>(`/api/frontend/user/${userId}/risk-score`);
     },
   },
   market: {
     getTickers: async (): Promise<MarketTicker[]> => {
-      return mockTickers;
+      return request<MarketTicker[]>('/api/frontend/market/tickers');
     },
     getSentiment: async (): Promise<MarketSentiment> => {
-      return mockSentiment;
+      return request<MarketSentiment>('/api/frontend/market/sentiment');
     },
     getFundingRates: async (): Promise<FundingRate[]> => {
-      return mockFundingRates;
+      return request<FundingRate[]>('/api/frontend/market/funding-rates');
     },
     getOpenInterest: async (): Promise<OpenInterest[]> => {
-      return mockOpenInterest;
+      return request<OpenInterest[]>('/api/frontend/market/open-interest');
     },
     getOnChainActivity: async (): Promise<OnChainActivity[]> => {
-      return mockOnChainActivity;
+      return request<OnChainActivity[]>('/api/frontend/market/on-chain-activity');
     },
     getLiquidationClusters: async (): Promise<LiquidationCluster[]> => {
-      return mockLiquidationClusters;
+      return request<LiquidationCluster[]>('/api/frontend/market/liquidation-clusters');
     },
     getDataQuality: async (): Promise<MarketDataQuality[]> => {
-      return mockMarketDataQualities;
+      return request<MarketDataQuality[]>('/api/frontend/market/data-quality');
     },
   },
   portfolio: {
     getSummary: async (userId: string): Promise<PortfolioSummary> => {
-      return mockPortfolioSummary;
+      return request<PortfolioSummary>(`/api/frontend/portfolio/${userId}/summary`);
     },
     getPositions: async (userId: string): Promise<Position[]> => {
-      return mockPositions;
+      return request<Position[]>(`/api/frontend/portfolio/${userId}/positions`);
     },
     getTrades: async (userId: string): Promise<Trade[]> => {
-      return mockTrades;
+      return request<Trade[]>(`/api/frontend/portfolio/${userId}/trades`);
     },
     getPerformancePoints: async (userId: string): Promise<PerformancePoint[]> => {
-      return mockPerformancePoints;
+      return request<PerformancePoint[]>(`/api/frontend/portfolio/${userId}/performance-points`);
     },
   },
   strategies: {
     getUserStrategies: async (userId: string): Promise<Strategy[]> => {
-      return mockUserStrategies;
+      return request<Strategy[]>(`/api/frontend/strategies/user/${userId}`);
     },
     getMarketplaceStrategies: async (): Promise<MarketplaceStrategy[]> => {
-      return mockMarketplaceStrategies;
+      return request<MarketplaceStrategy[]>('/api/frontend/strategies/marketplace');
     },
     getPerformance: async (id: string) => {
-      return mockStrategyPerformances.find(p => p.id === id) || null;
+      try {
+        return await request(`/api/frontend/strategies/${id}/performance`);
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 404) {
+          return null;
+        }
+        throw error;
+      }
     },
     getStrategyPaperTradeResult: async (id: string) => {
-      return null; // Mock implementation - returns null for now
+      try {
+        return await request(`/api/frontend/strategies/${id}/paper-trade-result`);
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 404) {
+          return null;
+        }
+        throw error;
+      }
     },
   },
   signals: {
     getLiveSignals: async (userId: string): Promise<Signal[]> => {
-      return mockSignals;
+      return request<Signal[]>(`/api/frontend/signals/live/${userId}`);
     },
     getSignalDetail: async (id: string): Promise<Signal | null> => {
-      return mockSignals.find(s => s.id === id) || null;
+      try {
+        return await request<Signal>(`/api/frontend/signals/${id}`);
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 404) {
+          return null;
+        }
+        throw error;
+      }
     },
     getSignalProof: async (id: string): Promise<SignalProof | null> => {
-      const proof = mockSignalProofs.find(p => p.signalId === id);
-      if (!proof) return null;
-      return {
-        ...proof,
-        txHash: '0x' + Math.random().toString(16).slice(2, 10) + '...',
-        hypothesis: 'The Momentum Breakout model detected an 84% volume spike on the 4H timeframe, corroborated by institutional buy walls on Coinbase.',
-        backtestResult: 'Historical win rate of 68.4% over 1,200 simulated trades since 2022.',
-        paperResults: 'Sub-10ms execution parity achieved over a 7-day verification period.',
-        liveResults: 'Signal resolved with a +4.2% ROI within 12 hours of issuance.'
-      };
+      try {
+        return await request<SignalProof>(`/api/frontend/signals/${id}/proof`);
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 404) {
+          return null;
+        }
+        throw error;
+      }
     },
   },
   external: {
     getSignals: async (userId: string): Promise<ExternalSignal[]> => {
-      return mockExternalSignals;
+      return request<ExternalSignal[]>(`/api/frontend/external/${userId}/signals`);
     },
     getWebhookEvents: async (userId: string): Promise<WebhookEvent[]> => {
-      return mockWebhookEvents;
+      return request<WebhookEvent[]>(`/api/frontend/external/${userId}/webhook-events`);
     },
     getIngestionRule: async (userId: string): Promise<SignalIngestionRule> => {
-      return mockIngestionRule;
+      return request<SignalIngestionRule>(`/api/frontend/external/${userId}/ingestion-rule`);
     }
   },
   creator: {
     getVerificationPipeline: async (userId: string): Promise<CreatorVerificationStatus[]> => {
-      return [
-        {
-          strategyId: 'ms-1',
-          strategyName: 'Black Swan Defender',
-          currentStage: 5,
-          overallStatus: 'Active',
-          steps: [
-            { id: '1', name: 'Identity Audit', status: 'Completed', description: 'Institutional KYC/AML passed.' },
-            { id: '2', name: 'Logic Review', status: 'Completed', description: 'Strategy code audit finalized.' },
-            { id: '3', name: 'Backtest Verification', status: 'Completed', description: 'Simulated performance verified.' },
-            { id: '4', name: 'Latency Handshake', status: 'Completed', description: 'Execution parity confirmed.' },
-            { id: '5', name: 'Public Listing', status: 'Completed', description: 'Node is active in marketplace.' }
-          ]
-        },
-        {
-          strategyId: 'ms-4',
-          strategyName: 'Funding Arbitrage',
-          currentStage: 2,
-          overallStatus: 'Review',
-          steps: [
-            { id: '1', name: 'Identity Audit', status: 'Completed', description: 'Institutional KYC passed.' },
-            { id: '2', name: 'Logic Review', status: 'In Progress', description: 'Audit pending for cross-exchange arbitrage logic.' },
-            { id: '3', name: 'Backtest Verification', status: 'Pending', description: 'Waiting for historical data sync.' },
-            { id: '4', name: 'Latency Handshake', status: 'Pending', description: 'Awaiting node synchronization.' },
-            { id: '5', name: 'Public Listing', status: 'Pending', description: 'Locked.' }
-          ]
-        }
-      ];
+      return request<CreatorVerificationStatus[]>(`/api/frontend/creator/${userId}/verification-pipeline`);
     }
   },
   system: {
     getAuditLogs: async (userId: string): Promise<AuditLogEntry[]> => {
-      return mockAuditLogs;
+      return request<AuditLogEntry[]>(`/api/frontend/system/${userId}/audit-logs`);
     },
     getModelPerformance: async (): Promise<ModelPerformance[]> => {
-      return mockModelPerformances;
+      return request<ModelPerformance[]>('/api/frontend/system/model-performance');
     },
     getNotifications: async (userId: string): Promise<Notification[]> => {
-      return [
-        {
-          id: 'n-1',
-          userId,
-          type: 'system',
-          title: 'Node Sync Initialized',
-          message: 'Institutional handshake established with AF-NODE-US-01.',
-          read: false,
-          critical: false,
-          createdAt: new Date().toISOString()
-        }
-      ];
+      return request<Notification[]>(`/api/frontend/system/${userId}/notifications`);
     },
   },
 };
