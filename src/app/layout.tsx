@@ -4,9 +4,8 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/layout/sidebar';
 import { Topbar } from '@/components/layout/topbar';
 import { Toaster } from '@/components/ui/toaster';
-// FirebaseClientProvider disabled in MVP mock mode — re-enable when upgrading to Blaze plan
-// import { FirebaseClientProvider } from '@/firebase/client-provider';
-import { MockClientProvider } from '@/firebase/mock-provider';
+import { FirebaseClientProvider } from '@/firebase/client-provider';
+// import { MockClientProvider } from '@/firebase/mock-provider';
 // OnboardingCheck disabled in mock mode — mock user is always onboarded
 // import { OnboardingCheck } from '@/components/onboarding/onboarding-check';
 import { LayoutShell } from '@/components/layout/layout-shell';
@@ -30,14 +29,14 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased noise-surface overflow-hidden">
-        {/* MVP Mock Mode with PostHog Analytics */}
+        {/* Production Firebase Authentication */}
         <PostHogProvider>
-          <MockClientProvider>
+          <FirebaseClientProvider>
             <LayoutShell>
               {children}
             </LayoutShell>
             <Toaster />
-          </MockClientProvider>
+          </FirebaseClientProvider>
         </PostHogProvider>
       </body>
     </html>

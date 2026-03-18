@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useUser } from '@/firebase';
-// Firebase hooks removed in MVP mock mode:
-// import { useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
-// import { collection, doc, query, limit } from 'firebase/firestore';
+import { useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
+import { collection, doc, query, limit } from 'firebase/firestore';
 import { api } from '@/lib/api';
 import {
   mockTrendIndicators,

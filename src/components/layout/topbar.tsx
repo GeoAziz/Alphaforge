@@ -11,10 +11,8 @@ import {
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 import { useUser } from "@/firebase";
-// Firebase hooks removed in MVP mock mode:
-// import { useAuth, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-// import { initiateAnonymousSignIn } from "@/firebase/non-blocking-login";
-// import { collection, query, orderBy, limit } from "firebase/firestore";
+import { useAuth } from "@/firebase";
+import { signOut } from "firebase/auth";
 import { Button } from "@/components/ui/button";
 import { Notification } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -30,8 +28,10 @@ const MOCK_NOTIFICATIONS: Notification[] = [
 
 export function Topbar() {
   const { user, isUserLoading } = useUser();
+  const auth = useAuth();
   const pathname = usePathname();
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     // Mock mode: load mock notifications
@@ -43,8 +43,17 @@ export function Topbar() {
   const pageTitle = pathname === '/' ? 'Terminal Home' : 
                     pathname.split('/').filter(Boolean).pop()?.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'Dashboard';
 
-  // Mock mode: user is always connected — no connect button shown
-  // function handleConnect() { initiateAnonymousSignIn(auth); }
+  // Handle logout
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Logout failed:", error);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  }
 
   return (
     <header className="h-14 border-b border-border-subtle bg-surface/80 backdrop-blur-xl flex items-center justify-between px-6 z-40 sticky top-0 shrink-0 select-none">
@@ -152,10 +161,11 @@ export function Topbar() {
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-border-subtle" />
               <DropdownMenuItem 
-                onClick={() => {/* Mock mode: signOut disabled — restore when using Firebase */}}
-                className="text-red focus:bg-red/10 focus:text-red text-[11px] font-black uppercase cursor-pointer rounded-lg px-3 py-2.5"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                className="text-red focus:bg-red/10 focus:text-red text-[11px] font-black uppercase cursor-pointer rounded-lg px-3 py-2.5 disabled:opacity-50"
               >
-                Terminate Node session
+                {isLoggingOut ? 'Terminating...' : 'Terminate Node session'}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

@@ -14,7 +14,7 @@ numpy==1.24.3
 pandas==2.0.3
 requests==2.31.0
 websockets==12.0
-redis==5.0.1
+redis[asyncio]==5.0.1
 celery==5.3.4
 pytest==7.4.3
 pytest-asyncio==0.21.1
@@ -25,3 +25,6 @@ flake8==6.1.0
 mypy==1.7.0
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
+scipy==1.11.4
+aioredis==2.0.1
+ccxt==4.0.77

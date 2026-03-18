@@ -1,0 +1,167 @@
+[
+  {
+    "external_source": "telegram_source_0",
+    "total_signals_received": 85,
+    "total_signals_executed": 71,
+    "signals_ignored": 20,
+    "executed_win_rate": 0.3638112195738896,
+    "total_pnl": 27775.145862515492,
+    "reliability_score": 0.4280131994986937,
+    "recommendation": "UNRELIABLE",
+    "created_at": "2026-03-01T09:46:12.194143"
+  },
+  {
+    "external_source": "tradingview_source_1",
+    "total_signals_received": 141,
+    "total_signals_executed": 102,
+    "signals_ignored": 25,
+    "executed_win_rate": 0.28455394681738827,
+    "total_pnl": 48027.97232775264,
+    "reliability_score": 0.33476934919692736,
+    "recommendation": "UNRELIABLE",
+    "created_at": "2026-02-03T09:46:12.194153"
+  },
+  {
+    "external_source": "tradingview_source_2",
+    "total_signals_received": 163,
+    "total_signals_executed": 131,
+    "signals_ignored": 21,
+    "executed_win_rate": 0.42392862260645564,
+    "total_pnl": 47096.90569688119,
+    "reliability_score": 0.4987395560075949,
+    "recommendation": "UNRELIABLE",
+    "created_at": "2026-02-14T09:46:12.194159"
+  },
+  {
+    "external_source": "telegram_source_3",
+    "total_signals_received": 200,
+    "total_signals_executed": 176,
+    "signals_ignored": 47,
+    "executed_win_rate": 0.4052268159438392,
+    "total_pnl": 31842.17686187305,
+    "reliability_score": 0.4767374305221638,
+    "recommendation": "UNRELIABLE",
+    "created_at": "2026-02-26T09:46:12.194165"
+  },
+  {
+    "external_source": "tradingview_source_4",
+    "total_signals_received": 108,
+    "total_signals_executed": 102,
+    "signals_ignored": 22,
+    "executed_win_rate": 0.8009680323738646,
+    "total_pnl": 1279.4838618254043,
+    "reliability_score": 0.9423153322045466,
+    "recommendation": "HIGHLY_TRUSTED",
+    "created_at": "2026-02-15T09:46:12.194171"
+  },
+  {
+    "external_source": "tradingview_source_5",
+    "total_signals_received": 146,
+    "total_signals_executed": 125,
+    "signals_ignored": 38,
+    "executed_win_rate": 0.377213001602319,
+    "total_pnl": 41197.97860568469,
+    "reliability_score": 0.4437800018850812,
+    "recommendation": "UNRELIABLE",
+    "created_at": "2026-02-05T09:46:12.194177"
+  },
+  {
+    "external_source": "tradingview_source_6",
+    "total_signals_received": 160,
+    "total_signals_executed": 123,
+    "signals_ignored": 22,
+    "executed_win_rate": 0.7549551988526951,
+    "total_pnl": 13388.55014032355,
+    "reliability_score": 0.8881825868855238,
+    "recommendation": "HIGHLY_TRUSTED",
+    "created_at": "2026-02-25T09:46:12.194182"
+  },
+  {
+    "external_source": "telegram_source_7",
+    "total_signals_received": 142,
+    "total_signals_executed": 130,
+    "signals_ignored": 36,
+    "executed_win_rate": 0.3252011849065861,
+    "total_pnl": -2013.4172335991257,
+    "reliability_score": 0.382589629301866,
+    "recommendation": "UNRELIABLE",
+    "created_at": "2026-02-08T09:46:12.194191"
+  },
+  {
+    "external_source": "tradingview_source_8",
+    "total_signals_received": 64,
+    "total_signals_executed": 52,
+    "signals_ignored": 24,
+    "executed_win_rate": 0.7831529749193724,
+    "total_pnl": 9572.243438106865,
+    "reliability_score": 0.9213564410816146,
+    "recommendation": "HIGHLY_TRUSTED",
+    "created_at": "2026-03-11T09:46:12.194198"
+  },
+  {
+    "external_source": "tradingview_source_9",
+    "total_signals_received": 100,
+    "total_signals_executed": 65,
+    "signals_ignored": 19,
+    "executed_win_rate": 0.573868429269103,
+    "total_pnl": 22008.47154368048,
+    "reliability_score": 0.6751393285518859,
+    "recommendation": "RELIABLE",
+    "created_at": "2026-03-16T09:46:12.194208"
+  },
+  {
+    "external_source": "tradingview_source_10",
+    "total_signals_received": 51,
+    "total_signals_executed": 35,
+    "signals_ignored": 9,
+    "executed_win_rate": 0.3943491282432534,
+    "total_pnl": 18108.041246967998,
+    "reliability_score": 0.46394015087441576,
+    "recommendation": "UNRELIABLE",
+    "created_at": "2026-02-18T09:46:12.194214"
+  },
+  {
+    "external_source": "tradingview_source_11",
+    "total_signals_received": 12,
+    "total_signals_executed": 8,
+    "signals_ignored": 4,
+    "executed_win_rate": 0.33344309100210695,
+    "total_pnl": 33023.4281854694,
+    "reliability_score": 0.3922859894142435,
+    "recommendation": "UNRELIABLE",
+    "created_at": "2026-03-17T09:46:12.194219"
+  },
+  {
+    "external_source": "webhook_source_12",
+    "total_signals_received": 73,
+    "total_signals_executed": 50,
+    "signals_ignored": 19,
+    "executed_win_rate": 0.6871420684338704,
+    "total_pnl": 23718.61896176948,
+    "reliability_score": 0.8084024334516122,
+    "recommendation": "HIGHLY_TRUSTED",
+    "created_at": "2026-01-22T09:46:12.194224"
+  },
+  {
+    "external_source": "telegram_source_13",
+    "total_signals_received": 149,
+    "total_signals_executed": 100,
+    "signals_ignored": 47,
+    "executed_win_rate": 0.39234995575137915,
+    "total_pnl": 49476.239754593174,
+    "reliability_score": 0.46158818323691664,
+    "recommendation": "UNRELIABLE",
+    "created_at": "2026-03-09T09:46:12.194229"
+  },
+  {
+    "external_source": "webhook_source_14",
+    "total_signals_received": 165,
+    "total_signals_executed": 103,
+    "signals_ignored": 53,
+    "executed_win_rate": 0.5752514417773621,
+    "total_pnl": 42087.02262028089,
+    "reliability_score": 0.6767664020910142,
+    "recommendation": "RELIABLE",
+    "created_at": "2026-02-23T09:46:12.194234"
+  }
+]

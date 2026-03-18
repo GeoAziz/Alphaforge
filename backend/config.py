@@ -35,6 +35,16 @@ class Config:
     POLYGON_IO_API_KEY = os.getenv("POLYGON_IO_API_KEY")
     TRADINGVIEW_WEBHOOK_SECRET = os.getenv("TRADINGVIEW_WEBHOOK_SECRET")
     
+    # Firebase Configuration (Backend Token Verification & Admin Operations)
+    FIREBASE_PROJECT_ID = os.getenv("FIREBASE_PROJECT_ID")
+    FIREBASE_API_KEY = os.getenv("FIREBASE_API_KEY")
+    FIREBASE_AUTH_DOMAIN = os.getenv("FIREBASE_AUTH_DOMAIN")
+    FIREBASE_STORAGE_BUCKET = os.getenv("FIREBASE_STORAGE_BUCKET")
+    FIREBASE_MESSAGING_SENDER_ID = os.getenv("FIREBASE_MESSAGING_SENDER_ID")
+    FIREBASE_APP_ID = os.getenv("FIREBASE_APP_ID")
+    FIREBASE_SERVICE_ACCOUNT_PATH = os.getenv("FIREBASE_SERVICE_ACCOUNT_PATH", "./serviceAccountKey.json")
+    FIREBASE_ENABLED = os.getenv("FIREBASE_ENABLED", "false").lower() == "true"
+    
     # Paper Trading
     INITIAL_PAPER_BALANCE = float(os.getenv("INITIAL_PAPER_BALANCE", 100000))
     PAPER_TRADING_SLIPPAGE = float(os.getenv("PAPER_TRADING_SLIPPAGE", 0.001))
@@ -47,6 +57,39 @@ class Config:
     
     # Logging
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+
+    # Cache Configuration
+    CACHE_BACKEND = os.getenv("CACHE_BACKEND", "memory")  # "redis" or "memory"
+    REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+    REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
+    REDIS_DB = int(os.getenv("REDIS_DB", 0))
+    
+    # Cache TTLs (seconds)
+    CACHE_TTL_TICKER = int(os.getenv("CACHE_TTL_TICKER", 10))  # 10 seconds for live tickers
+    CACHE_TTL_OHLCV = int(os.getenv("CACHE_TTL_OHLCV", 60))  # 1 minute for OHLCV
+    CACHE_TTL_SENTIMENT = int(os.getenv("CACHE_TTL_SENTIMENT", 300))  # 5 minutes for sentiment
+    CACHE_TTL_METADATA = int(os.getenv("CACHE_TTL_METADATA", 3600))  # 1 hour for metadata
+    
+    # Data Source Configuration
+    DATA_SOURCE_PRIMARY = os.getenv("DATA_SOURCE_PRIMARY", "binance")  # Primary source for crypto
+    DATA_SOURCE_SECONDARY = os.getenv("DATA_SOURCE_SECONDARY", "coingecko")  # Fallback
+    ENABLE_POLYGON = os.getenv("ENABLE_POLYGON", "false").lower() == "true"
+    
+    # CoinGecko API
+    COINGECKO_API_KEY = os.getenv("COINGECKO_API_KEY", "")  # Free tier (optional)
+    
+    # Technical Analysis
+    RSI_PERIOD = int(os.getenv("RSI_PERIOD", 14))
+    MACD_FAST = int(os.getenv("MACD_FAST", 12))
+    MACD_SLOW = int(os.getenv("MACD_SLOW", 26))
+    MACD_SIGNAL = int(os.getenv("MACD_SIGNAL", 9))
+    BB_PERIOD = int(os.getenv("BB_PERIOD", 20))
+    BB_STD_DEV = float(os.getenv("BB_STD_DEV", 2.0))
+    
+    # Signal Generation Thresholds
+    RSI_OVERBOUGHT = int(os.getenv("RSI_OVERBOUGHT", 70))
+    RSI_OVERSOLD = int(os.getenv("RSI_OVERSOLD", 30))
+    MIN_SIGNAL_CONFIDENCE = float(os.getenv("MIN_SIGNAL_CONFIDENCE", 0.5))
 
     # Security / Runtime Hardening
     CORS_ALLOW_ORIGINS = os.getenv("CORS_ALLOW_ORIGINS", "*")

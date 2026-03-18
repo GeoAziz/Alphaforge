@@ -3,9 +3,8 @@
 
 import { useEffect, useState } from 'react';
 import { SpotlightCard } from '@/components/shared/spotlight-card';
-// Firebase hooks removed in MVP mock mode:
-// import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-// import { collection, query, orderBy, limit } from 'firebase/firestore';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { collection, query, orderBy, limit } from 'firebase/firestore';
 import { api } from '@/lib/api';
 import { Signal } from '@/lib/types';
 import { Zap, ChevronRight } from 'lucide-react';

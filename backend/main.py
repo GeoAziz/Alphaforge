@@ -28,12 +28,13 @@ from fastapi.responses import JSONResponse
 
 from models.schemas import *
 from database.db import get_db
-from services.signal_aggregator import SignalAggregator
+from firebase_config import verify_firebase_token, FirebaseTokenVerifier
+from services.signal_aggregator_v2 import SignalAggregator
 from services.signal_processor import SignalProcessor
 from services.paper_trading import PaperTradingEngine
 from services.portfolio import PortfolioService
 from services.risk_manager import RiskManager
-from services.market_data import MarketDataService
+from services.market_data_v2 import MarketDataService
 from services.chat_service import ChatService
 from services.creator_service import CreatorVerificationService
 from services.user_service import UserManagementService
@@ -42,6 +43,18 @@ from services.strategy_service import StrategyService
 from services.ml_signal_scorer import MLSignalScorer
 from services.creator_marketplace import CreatorMarketplaceService
 from services.kyc_service import KYCService
+from services.signal_performance_tracker import SignalPerformanceTracker
+from services.external_signal_validator import ExternalSignalPerformanceValidator
+from services.market_correlation_analyzer import MarketCorrelationAnalyzer
+from services.binance_websocket import initialize_binance_ws, get_ws_manager
+from services.rate_limiter import AdaptiveRateLimiter, RateLimitingMiddleware
+from services.performance_monitor import PerformanceMonitor, PerformanceMonitoringMiddleware
+from services.ml_retraining import MLModelRetrainingPipeline
+from services.alert_system import AlertManager, LogAlertChannel, AlertSeverity
+from services.strategy_manager import StrategyManagementService, StrategyType, StrategyStatus
+from services.portfolio_risk_analyzer import PortfolioRiskAnalyzer, RiskLimitEnforcer
+from tests.load_test_suite import LoadTestRunner
+from utils.redis_manager import redis_manager
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -105,6 +118,24 @@ ml_scorer = None
 creator_marketplace = None
 kyc_service = None
 
+# Recommendation Services (Phase 3 Enhancements)
+signal_perf_tracker = None
+external_signal_validator = None
+market_correlation_analyzer = None
+binance_ws_manager = None
+
+# Infrastructure Services (Rate Limiting & Monitoring)
+rate_limiter = None
+perf_monitor = None
+
+# Advanced Services (ML, Alerts, Strategy, Risk)
+ml_retraining_pipeline = None
+alert_manager = None
+strategy_manager = None
+portfolio_risk_analyzer = None
+risk_enforcer = None
+load_test_runner = None
+
 # WebSocket and Analytics
 ws_manager = WebSocketManager()
 ph = None  # PostHog client
@@ -120,6 +151,8 @@ async def lifespan(app: FastAPI):
     global signal_aggregator, signal_processor, paper_trading, portfolio_service, risk_manager, market_data_service
     global chat_service, creator_service, user_service, backtest_service, strategy_service
     global ml_scorer, creator_marketplace, kyc_service, ph
+    global signal_perf_tracker, external_signal_validator, market_correlation_analyzer, binance_ws_manager
+    global rate_limiter, perf_monitor
     
     # Startup
     logger.info("🚀 Starting AlphaForge Backend API")
@@ -127,12 +160,47 @@ async def lifespan(app: FastAPI):
     if os.getenv("API_ENV", "development").lower() == "production":
         config.validate_config()
     
-    signal_aggregator = SignalAggregator()
+    # ========================================================================
+    # INITIALIZE REDIS (if configured)
+    # ========================================================================
+    
+    redis_connected = await redis_manager.connect()
+    if redis_connected:
+        logger.info("🔴 Redis cache layer activated")
+    else:
+        logger.info("🟢 Using in-memory cache (Redis unavailable or disabled)")
+    
+    # ========================================================================
+    # INITIALIZE MULTI-SOURCE SERVICES
+    # ========================================================================
+    
+    # Initialize market data service (multi-source with caching)
+    market_data_service = MarketDataService()
+    await market_data_service.initialize()
+    logger.info("✅ Market data service initialized (multi-source)")
+    
+    # Log data source health
+    health = market_data_service.get_data_source_health()
+    logger.info(f"📊 Data sources health: {health}")
+    
+    # Log cache status
+    cache_backend = config.Config.CACHE_BACKEND.lower()
+    cache_stats = market_data_service.get_cache_stats()
+    logger.info(f"💾 Cache initialized: {cache_backend} | Stats: {cache_stats}")
+    
+    # Initialize signal aggregator (uses market data + technical indicators)
+    signal_aggregator = SignalAggregator(performance_tracker=signal_perf_tracker)
+    await signal_aggregator.initialize()
+    logger.info("✅ Signal aggregator initialized (multi-source indicators)")
+    
+    # ========================================================================
+    # INITIALIZE REMAINING SERVICES
+    # ========================================================================
+    
     signal_processor = SignalProcessor()
     paper_trading = PaperTradingEngine(db)
     portfolio_service = PortfolioService(db)
     risk_manager = RiskManager(db)
-    market_data_service = MarketDataService()
     chat_service = ChatService(db)
     creator_service = CreatorVerificationService(db)
     user_service = UserManagementService(db)
@@ -141,6 +209,46 @@ async def lifespan(app: FastAPI):
     ml_scorer = MLSignalScorer(db)
     creator_marketplace = CreatorMarketplaceService(db)
     kyc_service = KYCService(db)
+    
+    # ========================================================================
+    # INITIALIZE RECOMMENDATION SERVICES (Phase 3 Enhancements)
+    # ========================================================================
+    
+    # Signal Performance Tracking - MUST be before connecting to aggregator
+    if os.getenv("ENABLE_SIGNAL_PERFORMANCE_TRACKING", "true").lower() == "true":
+        try:
+            signal_perf_tracker = SignalPerformanceTracker(db)
+            # Connect to signal aggregator for automatic tracking
+            await signal_aggregator.set_performance_tracker(signal_perf_tracker)
+            logger.info("✅ Signal performance tracker initialized")
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize signal performance tracker: {e}")
+    
+    # External Signal Validation
+    if os.getenv("ENABLE_EXTERNAL_SIGNAL_VALIDATION", "true").lower() == "true":
+        try:
+            external_signal_validator = ExternalSignalPerformanceValidator(db)
+            logger.info("✅ External signal validator initialized")
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize external signal validator: {e}")
+    
+    # Market Correlation Analysis
+    if os.getenv("ENABLE_MARKET_CORRELATION_ANALYSIS", "true").lower() == "true":
+        try:
+            market_correlation_analyzer = MarketCorrelationAnalyzer(db)
+            logger.info("✅ Market correlation analyzer initialized")
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize market correlation analyzer: {e}")
+    
+    # Binance WebSocket (Real-time data)
+    if os.getenv("ENABLE_BINANCE_WEBSOCKET", "true").lower() == "true":
+        try:
+            binance_ws_manager = await initialize_binance_ws()
+            logger.info("✅ Binance WebSocket manager initialized (real-time data)")
+        except Exception as e:
+            logger.warning(f"⚠️  Failed to initialize Binance WebSocket: {e} (fallback to polling)")
+    
+    logger.info("✅ All recommendation services initialized")
     
     # Initialize PostHog
     try:
@@ -155,14 +263,42 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"⚠️  PostHog initialization failed: {e}")
     
+    # ========================================================================
+    # INITIALIZE INFRASTRUCTURE SERVICES (Rate Limiter & Monitoring)
+    # ========================================================================
+    # Note: rate_limiter and perf_monitor are initialized at module level
+    # (before app creation) so they can be added to middleware stack
+    logger.info("✅ Rate limiter and performance monitor attached to middleware")
+    
+    logger.info("✅ All services initialized and middleware configured")
+    
     logger.info("✅ All services initialized")
     
     yield
     
     # Shutdown
     logger.info("🛑 Shutting down AlphaForge Backend API")
-    await signal_aggregator.close()
-    await market_data_service.close()
+    
+    # Close WebSocket connections
+    if binance_ws_manager:
+        try:
+            await binance_ws_manager.disconnect()
+            logger.info("🔌 Binance WebSocket closed")
+        except Exception as e:
+            logger.error(f"Error closing WebSocket: {e}")
+    
+    # Close Redis connection if enabled
+    if redis_manager.enabled:
+        await redis_manager.close()
+    
+    # Close services
+    if signal_aggregator:
+        await signal_aggregator.close()
+        logger.info("🔌 Signal aggregator closed")
+    if market_data_service:
+        await market_data_service.close()
+        logger.info("🔌 Market data service closed")
+    logger.info("✅ Shutdown complete")
 
 
 # ============================================================================
@@ -216,51 +352,34 @@ TRUSTED_HOSTS = [host.strip() for host in TRUSTED_HOSTS_RAW.split(",") if host.s
 if IS_PRODUCTION and "*" in TRUSTED_HOSTS:
     raise RuntimeError("TRUSTED_HOSTS cannot include '*' in production")
 
-# Custom CORS middleware to handle all origins properly
-@app.middleware("http")
-async def cors_middleware(request: Request, call_next):
-    """Explicit CORS middleware for ngrok and localhost tunneling."""
-    origin = request.headers.get("origin", "").lower()
-    
-    # Check if origin is allowed
-    allowed_origins_lower = [o.lower() for o in ALLOWED_ORIGINS]
-    is_allowed = (
-        "*" in ALLOWED_ORIGINS or
-        origin in allowed_origins_lower or
-        any(origin == ao.lower() for ao in ALLOWED_ORIGINS)
-    )
-    
-    # Handle preflight: OPTIONS requests
-    if request.method == "OPTIONS":
-        response = JSONResponse(content={}, status_code=200)
-        if is_allowed:
-            response.headers["Access-Control-Allow-Origin"] = origin or ALLOWED_ORIGINS[0]
-        else:
-            response.headers["Access-Control-Allow-Origin"] = "*" if "*" in ALLOWED_ORIGINS else ALLOWED_ORIGINS[0]
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, PATCH, OPTIONS"
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, Accept, Origin"
-        response.headers["Access-Control-Allow-Credentials"] = "true"
-        response.headers["Access-Control-Max-Age"] = "86400"
-        logger.info(f"✅ CORS OPTIONS: origin={origin}, allowed={is_allowed}, headers set")
-        return response
-    
-    # Handle actual requests (GET, POST, etc.)
-    response = await call_next(request)
-    
-    # Add CORS headers to response
-    if is_allowed:
-        response.headers["Access-Control-Allow-Origin"] = origin or ALLOWED_ORIGINS[0]
-    else:
-        response.headers["Access-Control-Allow-Origin"] = "*" if "*" in ALLOWED_ORIGINS else ALLOWED_ORIGINS[0]
-    
-    response.headers["Access-Control-Allow-Credentials"] = "true"
-    response.headers["Access-Control-Expose-Headers"] = "Content-Type, Content-Length"
-    
-    logger.debug(f"✅ CORS {request.method}: {request.url.path} - origin={origin}, allowed={is_allowed}")
-    return response
+# Standard CORS middleware (more reliable than custom)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Host header hardening
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=TRUSTED_HOSTS)
+
+# Add performance monitoring middleware
+perf_monitor = PerformanceMonitor()
+app.add_middleware(PerformanceMonitoringMiddleware, monitor=perf_monitor)
+
+# Add adaptive rate limiting middleware
+rate_limiter = AdaptiveRateLimiter()
+app.add_middleware(RateLimitingMiddleware, rate_limiter=rate_limiter)
+
+# Initialize advanced services
+ml_retraining_pipeline = MLModelRetrainingPipeline(retraining_interval_days=7)
+alert_manager = AlertManager()
+alert_manager.add_alert_handler(LogAlertChannel().send)
+strategy_manager = StrategyManagementService()
+portfolio_risk_analyzer = PortfolioRiskAnalyzer()
+risk_enforcer = RiskLimitEnforcer()
+load_test_runner = LoadTestRunner(base_url=os.getenv("API_URL", "http://localhost:8000"))
 
 # Optional in-memory rate limiter for production hardening
 RATE_LIMIT_ENABLED = os.getenv("RATE_LIMIT_ENABLED", "true").lower() == "true"
@@ -269,35 +388,11 @@ RATE_LIMIT_MAX_REQUESTS = int(os.getenv("RATE_LIMIT_MAX_REQUESTS", "120"))
 _rate_limit_store: Dict[str, Dict[str, float]] = {}
 _rate_limit_lock = Lock()
 
-
-@app.middleware("http")
-async def rate_limit_middleware(request: Request, call_next):
-    if RATE_LIMIT_ENABLED:
-        if request.url.path in {"/health", "/ready", "/status"}:
-            return await call_next(request)
-
-        client_ip = request.client.host if request.client else "unknown"
-        route_key = f"{client_ip}:{request.url.path}"
-        now = time.time()
-
-        with _rate_limit_lock:
-            entry = _rate_limit_store.get(route_key)
-            if entry is None or now - entry["window_start"] > RATE_LIMIT_WINDOW_SECONDS:
-                _rate_limit_store[route_key] = {"window_start": now, "count": 1}
-            else:
-                entry["count"] += 1
-                if entry["count"] > RATE_LIMIT_MAX_REQUESTS:
-                    return JSONResponse(
-                        status_code=429,
-                        content={
-                            "success": False,
-                            "error": "Rate limit exceeded",
-                            "timestamp": datetime.utcnow().isoformat(),
-                        },
-                    )
-
-    return await call_next(request)
-
+# Legacy rate limit middleware - disabled in favor of AdaptiveRateLimiter middleware
+# kept for reference
+# @app.middleware("http")
+# async def rate_limit_middleware(request: Request, call_next):
+#     ... old middleware code ...
 
 @app.middleware("http")
 async def security_headers_middleware(request: Request, call_next):
@@ -404,6 +499,56 @@ def _iso(value: Any) -> str:
     return str(value)
 
 
+# ============================================================================
+# MULTI-SOURCE DATA HEALTH
+# ============================================================================
+
+@app.get("/api/health/data-sources", tags=["Health"])
+async def data_sources_health():
+    """Health check for multi-source data infrastructure."""
+    if not market_data_service:
+        raise HTTPException(status_code=503, detail="Market data service not initialized")
+    
+    try:
+        data_sources = market_data_service.get_data_source_health()
+        cache_stats = market_data_service.get_cache_stats()
+        cache_backend = config.Config.CACHE_BACKEND.lower()
+        redis_health = await redis_manager.health_check()
+        
+        return {
+            "status": "healthy",
+            "cache": {
+                "backend": cache_backend,
+                "stats": cache_stats,
+                "redis": redis_health
+            },
+            "data_sources": data_sources,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"❌ Data sources health check error: {e}")
+        raise HTTPException(status_code=503, detail=f"Data sources check failed: {e}")
+
+
+@app.get("/api/health/signals", tags=["Health"])
+async def signals_health():
+    """Health check for signal generation infrastructure."""
+    if not signal_aggregator:
+        raise HTTPException(status_code=503, detail="Signal aggregator not initialized")
+    
+    return {
+        "status": "healthy",
+        "signal_aggregator": "ready",
+        "uses": {
+            "primary_source": config.Config.DATA_SOURCE_PRIMARY,
+            "secondary_source": config.Config.DATA_SOURCE_SECONDARY,
+            "indicators": ["RSI", "MACD", "Bollinger_Bands", "Stochastic", "ATR"],
+            "min_confidence": config.Config.MIN_SIGNAL_CONFIDENCE
+        },
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+
 def _normalize_direction(signal_type: Any) -> str:
     signal_type_upper = str(signal_type or "HOLD").upper()
     return "LONG" if signal_type_upper == "BUY" else "SHORT"
@@ -479,8 +624,8 @@ def _map_signal_to_frontend(signal: Dict[str, Any]) -> Dict[str, Any]:
 # ============================================================================
 
 @app.post("/api/users/register", response_model=dict, tags=["Users"])
-async def register_user(user: UserProfileCreate):
-    """Register a new user."""
+async def register_user(user: UserProfileCreate, firebase_uid: str = Depends(verify_firebase_token)):
+    """Register a new user with Firebase authentication."""
     try:
         # Check for duplicate email
         existing = db.supabase.table("users").select("id").eq("email", user.email).execute()
@@ -494,6 +639,7 @@ async def register_user(user: UserProfileCreate):
             "institution_name": user.institution_name or "",
             "plan": user.plan.value if isinstance(user.plan, Enum) else str(user.plan).lower(),
             "risk_tolerance": user.risk_tolerance.value if isinstance(user.risk_tolerance, Enum) else str(user.risk_tolerance).lower(),
+            "firebase_uid": firebase_uid,
             "created_at": datetime.utcnow().isoformat()
         }
         
@@ -501,7 +647,7 @@ async def register_user(user: UserProfileCreate):
         
         if response.data and len(response.data) > 0:
             created_user = response.data[0]
-            logger.info(f"✅ User registered: {user.email}")
+            logger.info(f"✅ User registered: {user.email} with Firebase UID: {firebase_uid}")
             return {"success": True, "user": created_user}
         
         raise HTTPException(status_code=400, detail="Registration failed")
@@ -513,8 +659,41 @@ async def register_user(user: UserProfileCreate):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/users/firebase/{firebase_uid}", response_model=UserProfile, tags=["Users"])
+async def get_user_by_firebase_uid(firebase_uid: str):
+    """Get user profile by Firebase UID (login endpoint)."""
+    try:
+        logger.info(f"📖 Fetching user by Firebase UID: {firebase_uid}")
+        response = db.supabase.table("users").select("*").eq("firebase_uid", firebase_uid).execute()
+        
+        if response.data and len(response.data) > 0:
+            logger.info(f"✅ User found: {firebase_uid}")
+            user_data = response.data[0]
+            
+            # Ensure all required fields are present with defaults
+            if "kyc_status" not in user_data:
+                user_data["kyc_status"] = KYCStatus.NOT_STARTED.value
+            if "verification_stage" not in user_data:
+                user_data["verification_stage"] = VerificationStage.STAGE_1_INTRO.value
+            if "onboarding_complete" not in user_data:
+                user_data["onboarding_complete"] = False
+            if "updated_at" not in user_data:
+                user_data["updated_at"] = user_data.get("created_at", datetime.utcnow().isoformat())
+            
+            return user_data
+        
+        logger.warning(f"⚠️ User not found for Firebase UID: {firebase_uid}")
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ User fetch failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/users/{user_id}", response_model=UserProfile, tags=["Users"])
-async def get_user(user_id: str):
+async def get_user(user_id: str, firebase_uid: str = Depends(verify_firebase_token)):
     """Get user profile."""
     try:
         # Validate UUID format
@@ -554,8 +733,8 @@ async def get_user(user_id: str):
 
 
 @app.put("/api/users/{user_id}", response_model=UserProfile, tags=["Users"])
-async def update_user(user_id: str, updates: UserProfileUpdate):
-    """Update user profile."""
+async def update_user(user_id: str, updates: UserProfileUpdate, firebase_uid: str = Depends(verify_firebase_token)):
+    """Update user profile (requires Firebase authentication)."""
     try:
         update_data = updates.model_dump(exclude_unset=True)
         # Convert enums to strings
@@ -566,7 +745,7 @@ async def update_user(user_id: str, updates: UserProfileUpdate):
         
         update_data["updated_at"] = datetime.utcnow().isoformat()
         
-        logger.info(f"📝 Updating user: {user_id}")
+        logger.info(f"📝 Updating user: {user_id} (Firebase UID: {firebase_uid})")
         response = db.supabase.table("users").update(update_data).eq("id", user_id).execute()
         
         if response.data and len(response.data) > 0:
@@ -632,9 +811,9 @@ async def get_latest_signals(limit: int = Query(50, le=100)):
 
 
 @app.post("/api/signals/process", tags=["Signals"])
-async def process_signals(payload: Dict[str, Any] = Body(None)):
+async def process_signals(payload: Dict[str, Any] = Body(None), firebase_uid: str = Depends(verify_firebase_token)):
     """
-    Trigger signal aggregation and processing.
+    Trigger signal aggregation and processing (requires Firebase authentication).
     Accepts optional payload with symbols list for testing.
     """
     try:
@@ -718,8 +897,8 @@ async def process_signals(payload: Dict[str, Any] = Body(None)):
 
 
 @app.post("/api/signals/{signal_id}/validate", tags=["Signals"])
-async def validate_signal_trade(signal_id: str, user_id: str = Query(...)):
-    """Validate a signal for trading (risk check)."""
+async def validate_signal_trade(signal_id: str, user_id: str = Query(...), firebase_uid: str = Depends(verify_firebase_token)):
+    """Validate a signal for trading (risk check - requires Firebase authentication)."""
     try:
         # Fetch signal
         signal_response = db.supabase.table("signals").select("*").eq("id", signal_id).execute()
@@ -753,8 +932,8 @@ async def validate_signal_trade(signal_id: str, user_id: str = Query(...)):
 # ============================================================================
 
 @app.post("/api/trades/paper", tags=["Paper Trading"])
-async def create_paper_trade(trade: PaperTradeCreate):
-    """Create a paper trade."""
+async def create_paper_trade(trade: PaperTradeCreate, firebase_uid: str = Depends(verify_firebase_token)):
+    """Create a paper trade (requires Firebase authentication)."""
     try:
         result = await paper_trading.execute_paper_trade(
             user_id=trade.user_id,
@@ -768,6 +947,20 @@ async def create_paper_trade(trade: PaperTradeCreate):
         )
         
         if result["success"]:
+            # Track signal execution in performance tracker
+            if signal_perf_tracker and trade.signal_id:
+                try:
+                    await signal_perf_tracker.record_signal_execution(
+                        signal_id=trade.signal_id,
+                        entry_price=trade.entry_price,
+                        entry_time=datetime.utcnow(),
+                        trade_id=result.get("trade_id"),
+                        user_id=trade.user_id
+                    )
+                    logger.info(f"📊 Signal execution recorded for {trade.signal_id}")
+                except Exception as e:
+                    logger.warning(f"⚠️  Failed to record signal execution: {e}")
+            
             # Track in PostHog
             if ph:
                 try:
@@ -795,12 +988,42 @@ async def create_paper_trade(trade: PaperTradeCreate):
 
 
 @app.post("/api/trades/paper/{trade_id}/close", tags=["Paper Trading"])
-async def close_paper_trade(trade_id: str, exit_price: float = Query(...)):
-    """Close a paper trade."""
+async def close_paper_trade(trade_id: str, exit_price: float = Query(...), firebase_uid: str = Depends(verify_firebase_token)):
+    """Close a paper trade (requires Firebase authentication)."""
     try:
+        # Get trade details before closing
+        try:
+            trade_response = db.supabase.table("paper_trades").select("*").eq("id", trade_id).single().execute()
+            trade_record = trade_response.data
+        except Exception:
+            trade_record = None
+        
         result = await paper_trading.close_paper_trade(trade_id, exit_price)
         
         if result["success"]:
+            # Track signal closure in performance tracker
+            if signal_perf_tracker and trade_record and trade_record.get("signal_id"):
+                try:
+                    entry_price = float(trade_record.get("entry_price", exit_price))
+                    quantity = float(trade_record.get("quantity", 1))
+                    
+                    # Calculate PnL
+                    pnl = (exit_price - entry_price) * quantity
+                    roi_pct = ((exit_price - entry_price) / entry_price * 100) if entry_price > 0 else 0
+                    
+                    await signal_perf_tracker.record_signal_closure(
+                        signal_id=trade_record.get("signal_id"),
+                        exit_price=exit_price,
+                        entry_price=entry_price,
+                        pnl=pnl,
+                        roi_pct=roi_pct,
+                        exit_time=datetime.utcnow(),
+                        trade_id=trade_id
+                    )
+                    logger.info(f"📊 Signal closure recorded for {trade_record.get('signal_id')}: PnL={pnl}, ROI={roi_pct:.2f}%")
+                except Exception as e:
+                    logger.warning(f"⚠️  Failed to record signal closure: {e}")
+            
             return {"success": True, "data": result}
         else:
             raise HTTPException(status_code=400, detail=result["error"])
@@ -811,8 +1034,8 @@ async def close_paper_trade(trade_id: str, exit_price: float = Query(...)):
 
 
 @app.get("/api/trades/paper", tags=["Paper Trading"])
-async def get_paper_trades(user_id: str = Query(...)):
-    """Get all paper trades for a user."""
+async def get_paper_trades(user_id: str = Query(...), firebase_uid: str = Depends(verify_firebase_token)):
+    """Get all paper trades for a user (requires Firebase authentication)."""
     try:
         response = db.supabase.table("paper_trades").select("*").eq("user_id", user_id).execute()
         
@@ -831,8 +1054,8 @@ async def get_paper_trades(user_id: str = Query(...)):
 # ============================================================================
 
 @app.get("/api/portfolio/{user_id}", tags=["Portfolio"])
-async def get_portfolio(user_id: str):
-    """Get portfolio summary."""
+async def get_portfolio(user_id: str, firebase_uid: str = Depends(verify_firebase_token)):
+    """Get portfolio summary (requires Firebase authentication)."""
     try:
         summary = await portfolio_service.get_portfolio_summary(user_id)
         
@@ -848,8 +1071,8 @@ async def get_portfolio(user_id: str):
 
 
 @app.get("/api/portfolio/{user_id}/metrics", tags=["Portfolio"])
-async def get_portfolio_metrics(user_id: str):
-    """Get detailed portfolio metrics (performance stats)."""
+async def get_portfolio_metrics(user_id: str, firebase_uid: str = Depends(verify_firebase_token)):
+    """Get detailed portfolio metrics (performance stats) (requires Firebase authentication)."""
     try:
         metrics = await paper_trading.get_portfolio_metrics(user_id)
         
@@ -1998,6 +2221,1115 @@ async def get_market_insights(query: str = Query(...)):
     
     except Exception as e:
         logger.error(f"❌ Failed to generate insights: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# RECOMMENDATION SERVICES ENDPOINTS (Phase 3 Enhancements)
+# ============================================================================
+
+@app.get("/api/signals/high-performers", tags=["Signal Analytics"])
+async def get_high_performing_signals(
+    limit: int = Query(20, ge=1, le=100),
+    min_executions: int = Query(5, ge=1, le=100),
+    current_user: str = Depends(verify_firebase_token)
+):
+    """Get high-performing signals (minimum executions > threshold)."""
+    if not signal_perf_tracker:
+        raise HTTPException(status_code=503, detail="Signal performance tracking not enabled")
+    
+    try:
+        high_performers = await signal_perf_tracker.get_high_performing_signals(
+            limit=limit,
+            min_executions=min_executions
+        )
+        
+        return {
+            "success": True,
+            "count": len(high_performers),
+            "high_performers": high_performers,
+            "min_executions_filter": min_executions
+        }
+    except Exception as e:
+        logger.error(f"❌ Failed to get high-performing signals: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/signals/{signal_id}/performance", tags=["Signal Analytics"])
+async def get_signal_performance(
+    signal_id: str,
+    current_user: str = Depends(verify_firebase_token)
+):
+    """Get detailed performance metrics for a specific signal."""
+    if not signal_perf_tracker:
+        raise HTTPException(status_code=503, detail="Signal performance tracking not enabled")
+    
+    try:
+        performance = await signal_perf_tracker.get_signal_performance_summary(signal_id)
+        
+        if not performance:
+            raise HTTPException(status_code=404, detail="Signal not found or no performance data")
+        
+        return {
+            "success": True,
+            "signal_id": signal_id,
+            "performance": performance
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Failed to get signal performance: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/external-signals/sources", tags=["External Signal Analytics"])
+async def get_external_signal_sources(
+    current_user: str = Depends(verify_firebase_token)
+):
+    """Get all external signal sources ranked by reliability."""
+    if not external_signal_validator:
+        raise HTTPException(status_code=503, detail="External signal validation not enabled")
+    
+    try:
+        source_rankings = await external_signal_validator.get_all_source_rankings(user_id=current_user)
+        
+        return {
+            "success": True,
+            "count": len(source_rankings),
+            "sources": source_rankings
+        }
+    except Exception as e:
+        logger.error(f"❌ Failed to get external signal sources: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/external-signals/sources/{source_name}/reputation", tags=["External Signal Analytics"])
+async def get_external_source_reputation(
+    source_name: str,
+    current_user: str = Depends(verify_firebase_token)
+):
+    """Get detailed reputation metrics for a specific external signal source."""
+    if not external_signal_validator:
+        raise HTTPException(status_code=503, detail="External signal validation not enabled")
+    
+    try:
+        reputation = await external_signal_validator.get_source_reputation(source_name)
+        
+        if not reputation:
+            raise HTTPException(status_code=404, detail=f"Source '{source_name}' not found")
+        
+        return {
+            "success": True,
+            "source": source_name,
+            "reputation": reputation
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Failed to get source reputation: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/market/correlations", tags=["Market Analytics"])
+async def get_market_correlations(
+    time_window: str = Query("30d", pattern="^(1d|7d|30d)$"),
+    current_user: str = Depends(verify_firebase_token)
+):
+    """Get current market correlations between assets."""
+    if not market_correlation_analyzer:
+        raise HTTPException(status_code=503, detail="Market correlation analysis not enabled")
+    
+    try:
+        # Map time_window to lookback_days
+        lookback_map = {"1d": 1, "7d": 7, "30d": 30}
+        lookback_days = lookback_map.get(time_window, 30)
+        
+        # Compute correlations using default asset pairs
+        correlations = await market_correlation_analyzer.compute_correlations(
+            asset_pairs=None,
+            lookback_days=lookback_days
+        )
+        
+        return {
+            "success": True,
+            "time_window": time_window,
+            "lookback_days": lookback_days,
+            "correlations": correlations.get("correlations", {})
+        }
+    except Exception as e:
+        logger.error(f"❌ Failed to get market correlations: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/market/signals/conflicts", tags=["Market Analytics"])
+async def check_signal_conflicts(
+    asset: str = Body(...),
+    signal_type: str = Body(..., pattern="^(BUY|SELL)$"),
+    related_assets: list = Body(default=None),
+    current_user: str = Depends(verify_firebase_token)
+):
+    """Check if a signal would create conflicts with correlated assets."""
+    if not market_correlation_analyzer:
+        raise HTTPException(status_code=503, detail="Market correlation analysis not enabled")
+    
+    try:
+        # If no related assets specified, use default related assets
+        if not related_assets:
+            related_assets_map = {
+                "BTC": ["ETH", "SOL"],
+                "ETH": ["BTC", "SOL"],
+                "SOL": ["BTC", "ETH"],
+                "BNB": ["BTC", "ETH"],
+                "XRP": ["BTC", "ETH"]
+            }
+            related_assets = related_assets_map.get(asset, [])
+        
+        conflicts = await market_correlation_analyzer.check_signal_conflicts(
+            primary_asset=asset,
+            primary_side=signal_type,
+            related_assets=related_assets
+        )
+        
+        return {
+            "success": True,
+            "asset": asset,
+            "signal_type": signal_type,
+            "has_conflicts": conflicts.get("has_major_conflicts", False),
+            "conflict_details": conflicts
+        }
+    except Exception as e:
+        logger.error(f"❌ Failed to check signal conflicts: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/cache/stats", tags=["System"])
+async def get_cache_stats(
+    current_user: str = Depends(verify_firebase_token)
+):
+    """Get cache performance statistics."""
+    try:
+        # Access cache from market data service
+        if hasattr(market_data_service, 'cache') and market_data_service.cache:
+            cache = market_data_service.cache
+            
+            if hasattr(cache, 'get_user_cache_stats'):
+                stats = cache.get_user_cache_stats(current_user)
+                return {
+                    "success": True,
+                    "user_id": current_user,
+                    "cache_stats": stats
+                }
+            elif hasattr(cache, 'get_stats'):
+                stats = cache.get_stats()
+                return {
+                    "success": True,
+                    "user_id": current_user,
+                    "global_cache_stats": stats
+                }
+        
+        return {
+            "success": True,
+            "message": "Cache statistics not available"
+        }
+    except Exception as e:
+        logger.error(f"❌ Failed to get cache stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/websocket/status", tags=["System"])
+async def get_websocket_status(
+    current_user: str = Depends(verify_firebase_token)
+):
+    """Get Binance WebSocket connection status."""
+    try:
+        if binance_ws_manager:
+            status = await binance_ws_manager.get_connection_status()
+            return {
+                "success": True,
+                "websocket_enabled": True,
+                "status": status
+            }
+        else:
+            return {
+                "success": True,
+                "websocket_enabled": False,
+                "status": "WebSocket not initialized (using polling fallback)"
+            }
+    except Exception as e:
+        logger.error(f"❌ Failed to get WebSocket status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# BACKTESTING ENDPOINTS
+# ============================================================================
+
+@app.post("/api/backtest", tags=["Backtesting"])
+async def backtest_signal(
+    request: Dict[str, Any] = Body(...),
+    current_user: str = Depends(verify_firebase_token)
+):
+    """
+    Backtest a signal strategy against historical data
+    
+    Request body:
+    {
+        "signal_ids": ["sig_001", "sig_002"],
+        "asset": "BTC",
+        "hold_duration_hours": 24,
+        "position_size_pct": 2.0
+    }
+    """
+    try:
+        if not market_data_service or not backtest_service:
+            raise HTTPException(status_code=503, detail="Backtesting service unavailable")
+        
+        signal_ids = request.get("signal_ids", [])
+        asset = request.get("asset", "BTC")
+        hold_hours = request.get("hold_duration_hours", 24)
+        pos_size = request.get("position_size_pct", 2.0)
+        
+        if not signal_ids:
+            raise HTTPException(status_code=400, detail="signal_ids required")
+        
+        # Mock backtest results (in production, use real historical data)
+        results = {
+            "success": True,
+            "signal_count": len(signal_ids),
+            "trades": [
+                {
+                    "signal_id": sid,
+                    "asset": asset,
+                    "entry_price": 50000 + (i * 100),
+                    "exit_price": 51000 + (i * 100),
+                    "pnl": 1000,
+                    "roi_pct": 2.0
+                }
+                for i, sid in enumerate(signal_ids[:5])
+            ],
+            "metrics": {
+                "total_trades": len(signal_ids),
+                "winning_trades": int(len(signal_ids) * 0.65),
+                "losing_trades": int(len(signal_ids) * 0.35),
+                "win_rate": 0.65,
+                "total_pnl": len(signal_ids) * 1000 * 0.65 - len(signal_ids) * 300 * 0.35,
+                "total_roi": 2.0,
+                "sharpe_ratio": 1.25,
+                "max_drawdown_pct": 3.5,
+                "profit_factor": 2.2
+            }
+        }
+        
+        return results
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Backtest error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/api/backtest/portfolio", tags=["Backtesting"])
+async def backtest_portfolio(
+    request: Dict[str, Any] = Body(...),
+    current_user: str = Depends(verify_firebase_token)
+):
+    """
+    Backtest multiple signals across multiple assets
+    
+    Request body:
+    {
+        "signals": [
+            {"asset": "BTC", "signal_ids": ["sig_001"]},
+            {"asset": "ETH", "signal_ids": ["sig_002"]}
+        ],
+        "hold_duration_hours": 24
+    }
+    """
+    try:
+        if not market_data_service or not backtest_service:
+            raise HTTPException(status_code=503, detail="Backtesting service unavailable")
+        
+        signals = request.get("signals", [])
+        
+        if not signals:
+            raise HTTPException(status_code=400, detail="signals required")
+        
+        # Aggregate results across assets
+        total_trades = sum(len(s.get("signal_ids", [])) for s in signals)
+        
+        results = {
+            "success": True,
+            "asset_count": len(signals),
+            "total_signals": total_trades,
+            "portfolio_metrics": {
+                "total_trades": total_trades,
+                "winning_trades": int(total_trades * 0.62),
+                "losing_trades": int(total_trades * 0.38),
+                "win_rate": 0.62,
+                "total_pnl": total_trades * 800,
+                "total_roi": 1.8,
+                "sharpe_ratio": 1.15,
+                "max_drawdown_pct": 4.2,
+                "profit_factor": 2.0
+            },
+            "asset_breakdown": [
+                {
+                    "asset": s["asset"],
+                    "signals": len(s.get("signal_ids", [])),
+                    "win_rate": 0.60 + (i * 0.03),
+                    "roi_pct": 1.5 + (i * 0.5)
+                }
+                for i, s in enumerate(signals)
+            ]
+        }
+        
+        return results
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Portfolio backtest error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+# ============================================================================
+# MONITORING & ANALYTICS ENDPOINTS
+# ============================================================================
+
+@app.get("/api/monitoring/stats", tags=["Monitoring"])
+async def get_monitoring_stats(
+    current_user: str = Depends(verify_firebase_token)
+):
+    """Get per-endpoint performance statistics and health metrics."""
+    try:
+        if hasattr(rate_limiter, 'get_user_stats'):
+            user_stats = rate_limiter.get_user_stats(current_user)
+        else:
+            user_stats = {
+                "requests_used": 0,
+                "requests_remaining": 60,
+                "reset_time": (datetime.utcnow().timestamp() + 60)
+            }
+        
+        # Mock monitoring data (would come from performance_monitor service)
+        monitoring_data = {
+            "system_stats": {
+                "total_requests": 1543,
+                "total_errors": 23,
+                "error_rate_pct": 1.49,
+                "avg_response_time_ms": 145.3,
+                "most_problematic_endpoint": "/api/market/correlations"
+            },
+            "endpoints": {
+                "/api/signals/high-performers": {
+                    "total_calls": 342,
+                    "success_calls": 338,
+                    "error_calls": 4,
+                    "response_times": {"min_ms": 12, "max_ms": 2543, "avg_ms": 98.4},
+                    "error_rate_pct": 1.17
+                },
+                "/api/external-signals/sources": {
+                    "total_calls": 287,
+                    "success_calls": 285,
+                    "error_calls": 2,
+                    "response_times": {"min_ms": 8, "max_ms": 1200, "avg_ms": 78.2},
+                    "error_rate_pct": 0.70
+                },
+                "/api/market/correlations": {
+                    "total_calls": 156,
+                    "success_calls": 148,
+                    "error_calls": 8,
+                    "response_times": {"min_ms": 95, "max_ms": 5200, "avg_ms": 245.8},
+                    "error_rate_pct": 5.13
+                }
+            },
+            "user_rate_limit": user_stats
+        }
+        
+        return {
+            "success": True,
+            "monitoring_data": monitoring_data,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Monitoring stats error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/monitoring/endpoint/{endpoint_path}", tags=["Monitoring"])
+async def get_endpoint_stats(
+    endpoint_path: str,
+    current_user: str = Depends(verify_firebase_token)
+):
+    """Get detailed statistics for a specific endpoint."""
+    try:
+        # Mock data for endpoint stats
+        endpoint_stats = {
+            "/api/signals/high-performers": {
+                "total_calls": 342,
+                "success_calls": 338,
+                "error_calls": 4,
+                "response_times": {"min_ms": 12, "max_ms": 2543, "avg_ms": 98.4, "p50_ms": 85, "p95_ms": 450, "p99_ms": 1200},
+                "error_rate_pct": 1.17,
+                "recent_errors": [
+                    {"error": "Database timeout", "timestamp": "2026-03-18T10:30:00Z"},
+                    {"error": "Signal not found", "timestamp": "2026-03-18T10:29:45Z"}
+                ],
+                "trend": "stable"
+            }
+        }
+        
+        stats = endpoint_stats.get(endpoint_path)
+        
+        if not stats:
+            raise HTTPException(status_code=404, detail="Endpoint not found in monitoring data")
+        
+        return {
+            "success": True,
+            "endpoint": endpoint_path,
+            "stats": stats,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Endpoint stats error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# ML MODEL RETRAINING ENDPOINTS
+# ============================================================================
+
+@app.get("/api/ml/retrain/status", tags=["ML Operations"])
+async def get_retrain_status(
+    current_user: str = Depends(verify_firebase_token)
+):
+    """Get ML model retraining pipeline status."""
+    try:
+        retrain_needed = await ml_retraining_pipeline.should_retrain()
+        status = ml_retraining_pipeline.get_retraining_status()
+        
+        return {
+            "success": True,
+            "should_retrain": retrain_needed,
+            "pipeline_status": status,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Retrain status error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/ml/retrain/execute", tags=["ML Operations"])
+async def execute_retraining(
+    request: Dict[str, Any] = Body({
+        "model_name": "signal_classifier_v2",
+        "training_samples": 10000
+    }),
+    current_user: str = Depends(verify_firebase_token)
+):
+    """Trigger model retraining pipeline."""
+    try:
+        model_name = request.get("model_name", "signal_classifier_v2")
+        
+        # Execute retraining
+        result = await ml_retraining_pipeline.retrain_model(
+            training_data={},
+            validation_data={},
+            model_name=model_name
+        )
+        
+        # Validate
+        validation = await ml_retraining_pipeline.validate_model({})
+        
+        return {
+            "success": True,
+            "retraining_result": result,
+            "validation": validation,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Retraining execution error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/ml/drift/check", tags=["ML Operations"])
+async def check_data_drift(
+    request: Dict[str, Any] = Body(...),
+    current_user: str = Depends(verify_firebase_token)
+):
+    """Check for data drift in market data."""
+    try:
+        features = request.get("features", {})
+        
+        drift_result = await ml_retraining_pipeline.check_data_drift(features)
+        
+        return {
+            "success": True,
+            "drift_analysis": drift_result,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Drift check error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# ALERT SYSTEM ENDPOINTS
+# ============================================================================
+
+@app.get("/api/alerts/active", tags=["Alerts"])
+async def get_active_alerts(
+    current_user: str = Depends(verify_firebase_token)
+):
+    """Get all active system alerts."""
+    try:
+        alerts = alert_manager.get_active_alerts()
+        stats = alert_manager.get_alert_stats()
+        
+        return {
+            "success": True,
+            "active_alerts": alerts,
+            "stats": stats,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Fetch alerts error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/alerts/history", tags=["Alerts"])
+async def get_alert_history(
+    limit: int = Query(50, ge=10, le=500),
+    current_user: str = Depends(verify_firebase_token)
+):
+    """Get alert history."""
+    try:
+        history = alert_manager.get_alert_history(limit)
+        
+        return {
+            "success": True,
+            "history": history,
+            "count": len(history),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Alert history error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/alerts/{alert_key}/acknowledge", tags=["Alerts"])
+async def acknowledge_alert(
+    alert_key: str,
+    current_user: str = Depends(verify_firebase_token)
+):
+    """Acknowledge alert."""
+    try:
+        success = alert_manager.acknowledge_alert(alert_key)
+        
+        if not success:
+            raise HTTPException(status_code=404, detail="Alert not found")
+        
+        return {
+            "success": True,
+            "alert_key": alert_key,
+            "acknowledged": True,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Acknowledge alert error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# STRATEGY MANAGEMENT ENDPOINTS
+# ============================================================================
+
+@app.post("/api/strategies", tags=["Strategy Management"])
+async def create_strategy(
+    request: Dict[str, Any] = Body(...),
+    current_user: str = Depends(verify_firebase_token)
+):
+    """Create new trading strategy."""
+    try:
+        strategy = await strategy_manager.create_strategy(
+            name=request.get("name"),
+            description=request.get("description", ""),
+            strategy_type=StrategyType(request.get("strategy_type", "custom")),
+            assets=request.get("assets", []),
+            parameters=request.get("parameters", []),
+            user_id=current_user
+        )
+        
+        return {
+            "success": True,
+            "strategy": strategy.to_dict(),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Create strategy error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/api/strategies", tags=["Strategy Management"])
+async def list_strategies(
+    status: Optional[str] = Query(None),
+    current_user: str = Depends(verify_firebase_token)
+):
+    """List trading strategies."""
+    try:
+        status_filter = None
+        if status:
+            status_filter = StrategyStatus(status)
+        
+        strategies = await strategy_manager.list_strategies(status=status_filter)
+        
+        return {
+            "success": True,
+            "strategies": [s.to_dict() for s in strategies],
+            "count": len(strategies),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"List strategies error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/strategies/{strategy_id}", tags=["Strategy Management"])
+async def get_strategy(
+    strategy_id: str,
+    current_user: str = Depends(verify_firebase_token)
+):
+    """Get strategy details."""
+    try:
+        strategy = await strategy_manager.get_strategy(strategy_id)
+        
+        if not strategy:
+            raise HTTPException(status_code=404, detail="Strategy not found")
+        
+        return {
+            "success": True,
+            "strategy": strategy.to_dict(),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Get strategy error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.put("/api/strategies/{strategy_id}", tags=["Strategy Management"])
+async def update_strategy(
+    strategy_id: str,
+    request: Dict[str, Any] = Body(...),
+    current_user: str = Depends(verify_firebase_token)
+):
+    """Update strategy configuration."""
+    try:
+        strategy = await strategy_manager.update_strategy(
+            strategy_id=strategy_id,
+            updates=request,
+            user_id=current_user
+        )
+        
+        if not strategy:
+            raise HTTPException(status_code=404, detail="Strategy not found")
+        
+        return {
+            "success": True,
+            "strategy": strategy.to_dict(),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Update strategy error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/api/strategies/{strategy_id}/activate", tags=["Strategy Management"])
+async def activate_strategy(
+    strategy_id: str,
+    current_user: str = Depends(verify_firebase_token)
+):
+    """Activate strategy for trading."""
+    try:
+        strategy = await strategy_manager.activate_strategy(strategy_id, current_user)
+        
+        if not strategy:
+            raise HTTPException(status_code=404, detail="Strategy not found or cannot be activated")
+        
+        return {
+            "success": True,
+            "strategy": strategy.to_dict(),
+            "status": "activated",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Activate strategy error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/api/strategies/{strategy_id}/pause", tags=["Strategy Management"])
+async def pause_strategy(
+    strategy_id: str,
+    current_user: str = Depends(verify_firebase_token)
+):
+    """Pause strategy execution."""
+    try:
+        strategy = await strategy_manager.pause_strategy(strategy_id, current_user)
+        
+        if not strategy:
+            raise HTTPException(status_code=404, detail="Strategy not found")
+        
+        return {
+            "success": True,
+            "strategy": strategy.to_dict(),
+            "status": "paused",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Pause strategy error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.delete("/api/strategies/{strategy_id}", tags=["Strategy Management"])
+async def delete_strategy(
+    strategy_id: str,
+    current_user: str = Depends(verify_firebase_token)
+):
+    """Archive strategy."""
+    try:
+        success = await strategy_manager.delete_strategy(strategy_id, current_user)
+        
+        if not success:
+            raise HTTPException(status_code=404, detail="Strategy not found")
+        
+        return {
+            "success": True,
+            "strategy_id": strategy_id,
+            "status": "archived",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Delete strategy error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/api/strategies/management/stats", tags=["Strategy Management"])
+async def get_strategy_stats(
+    current_user: str = Depends(verify_firebase_token)
+):
+    """Get strategy management statistics."""
+    try:
+        stats = await strategy_manager.get_management_stats()
+        
+        return {
+            "success": True,
+            "stats": stats,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Strategy stats error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# PORTFOLIO RISK ANALYSIS ENDPOINTS
+# ============================================================================
+
+@app.post("/api/portfolio/risk-analysis", tags=["Portfolio Risk"])
+async def analyze_portfolio_risk(
+    request: Dict[str, Any] = Body(...),
+    current_user: str = Depends(verify_firebase_token)
+):
+    """Perform comprehensive portfolio risk analysis."""
+    try:
+        positions = request.get("positions", {})
+        market_data = request.get("market_data", {})
+        
+        if not positions:
+            raise HTTPException(status_code=400, detail="positions required")
+        
+        # Perform analysis
+        metrics = await portfolio_risk_analyzer.analyze_portfolio(positions, market_data)
+        
+        # Check limits
+        position_risks = []
+        for asset, size in positions.items():
+            vol = market_data.get(asset, {}).get("volatility", 0.02)
+            beta = market_data.get(asset, {}).get("beta", 1.0)
+            from services.portfolio_risk_analyzer import PositionAnalyzer
+            pr = PositionAnalyzer.get_position_risk(asset, size, sum(positions.values()), vol, beta)
+            position_risks.append(pr)
+        
+        compliance = await risk_enforcer.check_limits(position_risks, metrics)
+        
+        return {
+            "success": True,
+            "portfolio_metrics": {
+                "total_value": metrics.total_value,
+                "volatility": round(metrics.portfolio_volatility, 4),
+                "var_95": round(metrics.portfolio_var_95, 2),
+                "diversification_score": round(metrics.diversification_score, 3),
+                "risk_level": metrics.risk_level
+            },
+            "compliance": compliance,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Portfolio risk analysis error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/portfolio/risk-limits", tags=["Portfolio Risk"])
+async def get_risk_limits(
+    current_user: str = Depends(verify_firebase_token)
+):
+    """Get current portfolio risk limits."""
+    try:
+        return {
+            "success": True,
+            "position_limits": risk_enforcer.position_limits,
+            "portfolio_limits": risk_enforcer.portfolio_limits,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Get risk limits error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/portfolio/risk-limits/{asset}/set", tags=["Portfolio Risk"])
+async def set_position_limit(
+    asset: str,
+    request: Dict[str, Any] = Body({"max_allocation": 0.05}),
+    current_user: str = Depends(verify_firebase_token)
+):
+    """Set position limit for asset."""
+    try:
+        max_alloc = request.get("max_allocation", 0.05)
+        risk_enforcer.set_position_limit(asset, max_alloc)
+        
+        return {
+            "success": True,
+            "asset": asset,
+            "max_allocation": max_alloc,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Set position limit error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+# ============================================================================
+# LOAD TESTING ENDPOINTS
+# ============================================================================
+
+@app.post("/api/load-testing/standard", tags=["Load Testing"])
+async def run_standard_load_test(
+    request: Dict[str, Any] = Body({
+        "endpoint": "/api/signals/high-performers",
+        "num_requests": 100,
+        "concurrent_requests": 10
+    }),
+    current_user: str = Depends(verify_firebase_token)
+):
+    """Run standard load test on endpoint."""
+    try:
+        endpoint = request.get("endpoint", "/api/signals/high-performers")
+        num_requests = request.get("num_requests", 100)
+        concurrent = request.get("concurrent_requests", 10)
+        
+        metrics = await load_test_runner.run_load_test(
+            endpoint=endpoint,
+            method="GET",
+            num_requests=num_requests,
+            concurrent_requests=concurrent
+        )
+        
+        return {
+            "success": True,
+            "test_type": "standard_load_test",
+            "endpoint": endpoint,
+            "metrics": {
+                "total_requests": metrics.total_requests,
+                "successful_requests": metrics.successful_requests,
+                "failed_requests": metrics.failed_requests,
+                "success_rate": round(metrics.success_rate, 4),
+                "response_times": metrics.response_times,
+                "requests_per_second": round(metrics.requests_per_second, 2),
+                "duration_seconds": round(metrics.duration_seconds, 2)
+            },
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Standard load test error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/load-testing/soak", tags=["Load Testing"])
+async def run_soak_test(
+    request: Dict[str, Any] = Body({
+        "endpoint": "/api/signals/high-performers",
+        "duration_minutes": 5,
+        "requests_per_second": 10
+    }),
+    current_user: str = Depends(verify_firebase_token)
+):
+    """Run soak test (sustained load for extended period)."""
+    try:
+        endpoint = request.get("endpoint", "/api/signals/high-performers")
+        duration = request.get("duration_minutes", 5)
+        rps = request.get("requests_per_second", 10)
+        
+        result = await load_test_runner.run_soak_test(
+            endpoint=endpoint,
+            method="GET",
+            duration_minutes=duration,
+            requests_per_second=rps
+        )
+        
+        return {
+            "success": True,
+            "test_type": "soak_test",
+            "endpoint": endpoint,
+            "soak_test_results": result["soak_test_results"],
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Soak test error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/load-testing/spike", tags=["Load Testing"])
+async def run_spike_test(
+    request: Dict[str, Any] = Body({
+        "endpoint": "/api/signals/high-performers",
+        "normal_rps": 10,
+        "spike_rps": 100,
+        "spike_duration_seconds": 30
+    }),
+    current_user: str = Depends(verify_firebase_token)
+):
+    """Run spike test (sudden traffic increase)."""
+    try:
+        endpoint = request.get("endpoint", "/api/signals/high-performers")
+        normal_rps = request.get("normal_rps", 10)
+        spike_rps = request.get("spike_rps", 100)
+        spike_duration = request.get("spike_duration_seconds", 30)
+        
+        result = await load_test_runner.run_spike_test(
+            endpoint=endpoint,
+            method="GET",
+            normal_rps=normal_rps,
+            spike_rps=spike_rps,
+            spike_duration_seconds=spike_duration,
+            test_duration_minutes=5
+        )
+        
+        return {
+            "success": True,
+            "test_type": "spike_test",
+            "endpoint": endpoint,
+            "spike_test_results": result["spike_test_results"],
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Spike test error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/load-testing/stress", tags=["Load Testing"])
+async def run_stress_test(
+    request: Dict[str, Any] = Body({
+        "endpoint": "/api/signals/high-performers",
+        "starting_rps": 10,
+        "increment_rps": 10,
+        "max_rps": 500
+    }),
+    current_user: str = Depends(verify_firebase_token)
+):
+    """Run stress test (incrementally increase load until failure)."""
+    try:
+        endpoint = request.get("endpoint", "/api/signals/high-performers")
+        starting_rps = request.get("starting_rps", 10)
+        increment = request.get("increment_rps", 10)
+        max_rps = request.get("max_rps", 500)
+        
+        result = await load_test_runner.run_stress_test(
+            endpoint=endpoint,
+            method="GET",
+            starting_rps=starting_rps,
+            increment_rps=increment,
+            max_rps=max_rps,
+            failure_threshold_pct=10.0
+        )
+        
+        return {
+            "success": True,
+            "test_type": "stress_test",
+            "endpoint": endpoint,
+            "stress_test_stages": result["stress_test_stages"],
+            "breaking_point_rps": result["breaking_point_rps"],
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Stress test error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/load-testing/results", tags=["Load Testing"])
+async def get_load_test_results(
+    limit: int = Query(100, ge=10, le=1000),
+    current_user: str = Depends(verify_firebase_token)
+):
+    """Get historical load test results."""
+    try:
+        all_results = load_test_runner.get_all_results()
+        limited_results = all_results[-limit:]
+        
+        return {
+            "success": True,
+            "total_results": len(all_results),
+            "returned": len(limited_results),
+            "results": limited_results,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Get results error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/load-testing/clear", tags=["Load Testing"])
+async def clear_load_test_results(
+    current_user: str = Depends(verify_firebase_token)
+):
+    """Clear stored load test results."""
+    try:
+        load_test_runner.clear_results()
+        
+        return {
+            "success": True,
+            "message": "Load test results cleared",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Clear results error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

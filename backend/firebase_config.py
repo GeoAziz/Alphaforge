@@ -1,12 +1,12 @@
 """
 Firebase Admin SDK initialization for token verification in FastAPI.
-Place this in backend/firebase_admin.py
+Place this in backend/firebase_config.py
 """
 
 import os
 import json
 from typing import Optional
-import firebase_admin
+import firebase_admin as fb_admin
 from firebase_admin import credentials, auth
 from fastapi import HTTPException, Header
 from functools import lru_cache
@@ -43,8 +43,8 @@ class FirebaseTokenVerifier:
                     creds_dict = json.load(f)
                 
                 creds = credentials.Certificate(creds_dict)
-                if not firebase_admin._apps:
-                    firebase_admin.initialize_app(creds)
+                if not fb_admin._apps:
+                    fb_admin.initialize_app(creds)
                 logger.info(f"✅ Firebase Admin SDK initialized from {service_account_path}")
                 self.firebase_enabled = True
             else:
@@ -76,7 +76,7 @@ class FirebaseTokenVerifier:
             token = token.replace("Bearer ", "").strip()
             
             # Check if Firebase is initialized
-            if not firebase_admin._apps:
+            if not fb_admin._apps:
                 logger.warning("Firebase not initialized, using mock verification")
                 # For development: accept any token format
                 return {"uid": "dev-user", "email": "dev@example.com"}
@@ -85,18 +85,22 @@ class FirebaseTokenVerifier:
             logger.info(f"Token verified for user: {decoded_token.get('uid')}")
             return decoded_token
             
-        except firebase_admin.exceptions.InvalidIdTokenError as e:
+        except ValueError as e:
+            # Invalid token format
             logger.error(f"Invalid ID token: {e}")
             raise HTTPException(status_code=401, detail="Invalid authentication token")
-        except firebase_admin.exceptions.ExpiredIdTokenError as e:
-            logger.error(f"Expired ID token: {e}")
-            raise HTTPException(status_code=401, detail="Authentication token expired")
-        except firebase_admin.exceptions.RevokedIdTokenError as e:
-            logger.error(f"Revoked ID token: {e}")
-            raise HTTPException(status_code=401, detail="Authentication token revoked")
         except Exception as e:
-            logger.error(f"Token verification failed: {e}")
-            raise HTTPException(status_code=401, detail="Authentication failed")
+            # Catch all other exceptions (expired, revoked, etc.)
+            error_msg = str(e).lower()
+            if "expired" in error_msg:
+                logger.error(f"Expired ID token: {e}")
+                raise HTTPException(status_code=401, detail="Authentication token expired")
+            elif "revoked" in error_msg:
+                logger.error(f"Revoked ID token: {e}")
+                raise HTTPException(status_code=401, detail="Authentication token revoked")
+            else:
+                logger.error(f"Token verification failed: {e}")
+                raise HTTPException(status_code=401, detail="Authentication failed")
 
 
 def get_firebase_verifier() -> FirebaseTokenVerifier:
@@ -114,11 +118,17 @@ async def verify_firebase_token(authorization: Optional[str] = Header(None)) -> 
         async def protected_endpoint(user_id: str = Depends(verify_firebase_token)):
             return {"message": f"Hello {user_id}"}
     """
-    if not authorization:
-        # For development: allow requests without token
-        if os.getenv("API_ENV") == "development":
-            logger.warning("No authorization header provided, using demo user")
+    # Development mode: Allow any token or no token
+    if os.getenv("API_ENV") == "development":
+        if not authorization:
+            logger.warning("No authorization header provided, using demo user (dev mode)")
             return "demo-user"
+        # In dev mode, accept any token format
+        logger.warning("Using development mode token verification (accepting any token)")
+        return "demo-user"
+    
+    # Production mode: Require valid Firebase token
+    if not authorization:
         raise HTTPException(status_code=401, detail="Missing authorization header")
     
     verifier = get_firebase_verifier()
