@@ -7,6 +7,8 @@ import { useUser } from '@/firebase';
 // import { doc } from 'firebase/firestore';
 // import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
 import { api } from '@/lib/api';
+import { useAnalytics } from '@/providers/posthog-provider';
+import { useWebSocket } from '@/hooks/use-websocket';
 import { HeroSection } from '@/components/dashboard/hero-section';
 import { PerformanceSummary } from '@/components/dashboard/performance-summary';
 import { MarketOverview } from '@/components/dashboard/market-overview';
@@ -20,17 +22,30 @@ import { cn } from '@/lib/utils';
 
 export default function DashboardPage() {
   const { user } = useUser();
+  const analytics = useAnalytics();
+  const { isConnected: marketConnected } = useWebSocket('/ws/market-updates');
+  const { isConnected: signalsConnected } = useWebSocket('/ws/signals');
   const [mounted, setMounted] = useState(false);
   const [summary, setSummary] = useState<PortfolioSummary | null>(null);
   const [isSummaryLoading, setIsSummaryLoading] = useState(true);
 
   useEffect(() => {
     setMounted(true);
-    api.portfolio.getSummary('mock-user-001').then(data => {
+    
+    // Track dashboard view
+    analytics.pageView('/dashboard');
+    
+    // Use actual user ID if authenticated, fallback to demo ID
+    const userId = user?.uid || 'demo-user-001';
+    
+    api.portfolio.getSummary(userId).then(data => {
       setSummary(data);
       setIsSummaryLoading(false);
+    }).catch(error => {
+      console.error('Failed to load portfolio summary:', error);
+      setIsSummaryLoading(false);
     });
-  }, []);
+  }, [user?.uid, analytics]);
 
   return (
     <div className={cn(
@@ -39,7 +54,11 @@ export default function DashboardPage() {
     )}>
       <header className="flex flex-col gap-1">
         <h1 className="text-3xl font-black uppercase tracking-tighter gradient-text leading-none">Intelligence Terminal</h1>
-        <p className="text-text-secondary text-sm font-medium tracking-tight">Real-time algorithmic consensus and portfolio optimization cluster.</p>
+        <p className="text-text-secondary text-sm font-medium tracking-tight">
+          Real-time algorithmic consensus and portfolio optimization cluster.
+          {marketConnected && signalsConnected && <span className="text-green-500"> • Live</span>}
+          {(!marketConnected || !signalsConnected) && <span className="text-amber-600"> • Connecting...</span>}
+        </p>
       </header>
 
       {/* Institutional 12-Column Asymmetric Bento Grid */}

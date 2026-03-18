@@ -1,0 +1,21 @@
+# Additional dependencies for optional features
+# Add these to backend/requirements.txt
+
+# Sentry error tracking
+sentry-sdk>=1.40.0
+sentry-sdk[fastapi]>=1.40.0
+
+# WebSocket support
+websockets>=12.0
+
+# PostHog analytics
+posthog>=3.1.0
+
+# Firebase Admin SDK for token verification
+firebase-admin>=6.4.0
+
+# Optional: APScheduler for scheduled tasks
+APScheduler>=3.10.0
+
+# Optional: python-dotenv for environment variables
+python-dotenv>=1.0.0

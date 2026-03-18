@@ -347,6 +347,92 @@
       "verification_stage": "stage_2_paper_trading",
       "onboarding_complete": false,
       "updated_at": "2026-03-17T15:45:20.301730"
+    },
+    {
+      "email": "test_1f3ff05a@alphaforge.test",
+      "display_name": "Test User",
+      "institution_name": "",
+      "plan": "basic",
+      "risk_tolerance": "moderate",
+      "created_at": "2026-03-17T21:14:28.396843",
+      "id": "f28ab219-c365-49c9-b1b7-68e3abef872c"
+    },
+    {
+      "email": "test_293da926@alphaforge.test",
+      "display_name": "Test User",
+      "institution_name": "",
+      "plan": "basic",
+      "risk_tolerance": "moderate",
+      "created_at": "2026-03-17T21:14:28.442488",
+      "id": "1159f617-e36c-499e-b833-c386e4ba2439",
+      "kyc_status": "NOT_STARTED",
+      "verification_stage": "stage_1_intro",
+      "onboarding_complete": false,
+      "updated_at": "2026-03-17T21:14:28.442488"
+    },
+    {
+      "email": "test_f0952c8a@alphaforge.test",
+      "display_name": "Updated Name",
+      "institution_name": "",
+      "plan": "basic",
+      "risk_tolerance": "aggressive",
+      "created_at": "2026-03-17T21:14:28.488578",
+      "id": "11e61459-68ef-4974-b56f-eef2431eabd6",
+      "updated_at": "2026-03-17T21:14:28.497737"
+    },
+    {
+      "email": "test_3380d78e@alphaforge.test",
+      "display_name": "Test User",
+      "institution_name": "",
+      "plan": "basic",
+      "risk_tolerance": "moderate",
+      "created_at": "2026-03-17T21:14:34.338840",
+      "id": "10026832-e35f-4ce3-a765-d91cd870c18b"
+    },
+    {
+      "email": "test_3662f08d@alphaforge.test",
+      "display_name": "Test User",
+      "institution_name": "",
+      "plan": "basic",
+      "risk_tolerance": "moderate",
+      "created_at": "2026-03-17T21:14:34.391060",
+      "id": "d3fbad1b-5f75-4b4f-9134-a6ba52582c53"
+    },
+    {
+      "email": "test_9ecbe587@alphaforge.test",
+      "display_name": "Test User",
+      "institution_name": "",
+      "plan": "basic",
+      "risk_tolerance": "moderate",
+      "created_at": "2026-03-17T21:14:34.439931",
+      "id": "264ab823-5f93-4b89-b174-8cb3b0e18ff5"
+    },
+    {
+      "email": "test_c7e44625@alphaforge.test",
+      "display_name": "Test User",
+      "institution_name": "",
+      "plan": "basic",
+      "risk_tolerance": "moderate",
+      "created_at": "2026-03-17T21:14:34.489188",
+      "id": "792d44ee-9fef-435c-8436-c37ab28ad6de"
+    },
+    {
+      "email": "test_2879ba3c@alphaforge.test",
+      "display_name": "Test User",
+      "institution_name": "",
+      "plan": "basic",
+      "risk_tolerance": "moderate",
+      "created_at": "2026-03-17T21:14:37.189700",
+      "id": "a3b81148-5088-4631-8c61-420799da9743"
+    },
+    {
+      "email": "test_370012e5@alphaforge.test",
+      "display_name": "Test User",
+      "institution_name": "",
+      "plan": "basic",
+      "risk_tolerance": "moderate",
+      "created_at": "2026-03-17T21:14:37.327082",
+      "id": "2285f3ea-f110-4e9d-80a9-48f47bf0f383"
     }
   ],
   "signals": [
@@ -1121,6 +1207,36 @@
       "id": "2bf1f9f4-2ff5-4c5b-a405-e98b8a9cc0f7",
       "created_by": "system",
       "created_at": "2026-03-17T15:45:20.181498"
+    },
+    {
+      "id": "b076c326-1442-47fe-a5b3-03c31020c789",
+      "ticker": "BTC",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "entry_price": null,
+      "stop_loss_price": null,
+      "take_profit_price": null,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "created_by": "system",
+      "created_at": "2026-03-17T21:14:34.277892"
+    },
+    {
+      "id": "7facf955-206e-489f-9368-28781d55e391",
+      "ticker": "ETH",
+      "signal_type": "HOLD",
+      "confidence": 0.65,
+      "entry_price": null,
+      "stop_loss_price": null,
+      "take_profit_price": null,
+      "rationale": "Fallback signal due to unavailable external providers",
+      "drivers": [
+        "fallback_engine"
+      ],
+      "created_by": "system",
+      "created_at": "2026-03-17T21:14:34.288043"
     }
   ],
   "paper_trades": [
@@ -1591,6 +1707,22 @@
       "total_pnl": 0,
       "id": "f59af13b-939c-4e08-8243-58141c06d9a8",
       "created_at": "2026-03-17T15:45:20.196339"
+    },
+    {
+      "user_id": "10026832-e35f-4ce3-a765-d91cd870c18b",
+      "starting_balance": 100000,
+      "current_balance": 100000,
+      "total_pnl": 0,
+      "id": "8b540e8b-ff05-4861-a81a-ce96ee9637b3",
+      "created_at": "2026-03-17T21:14:34.347087"
+    },
+    {
+      "user_id": "a3b81148-5088-4631-8c61-420799da9743",
+      "starting_balance": 100000,
+      "current_balance": 100000,
+      "total_pnl": 0,
+      "id": "e81f9d33-bcaa-40dc-ab58-ff804d34493a",
+      "created_at": "2026-03-17T21:14:37.200625"
     }
   ],
   "external_signals": [

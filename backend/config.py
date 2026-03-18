@@ -48,6 +48,22 @@ class Config:
     # Logging
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
+    # Security / Runtime Hardening
+    CORS_ALLOW_ORIGINS = os.getenv("CORS_ALLOW_ORIGINS", "*")
+    TRUSTED_HOSTS = os.getenv("TRUSTED_HOSTS", "*")
+    RATE_LIMIT_ENABLED = os.getenv("RATE_LIMIT_ENABLED", "true").lower() == "true"
+    RATE_LIMIT_WINDOW_SECONDS = int(os.getenv("RATE_LIMIT_WINDOW_SECONDS", 60))
+    RATE_LIMIT_MAX_REQUESTS = int(os.getenv("RATE_LIMIT_MAX_REQUESTS", 120))
+    SECURITY_HEADERS_ENABLED = os.getenv("SECURITY_HEADERS_ENABLED", "true").lower() == "true"
+
+    # Database strictness
+    ALLOW_MOCK_DB_FALLBACK = os.getenv("ALLOW_MOCK_DB_FALLBACK", "true").lower() == "true"
+    REQUIRE_REAL_DB = os.getenv("REQUIRE_REAL_DB", "false").lower() == "true"
+    REQUIRED_DB_TABLES = os.getenv(
+        "REQUIRED_DB_TABLES",
+        "users,signals,paper_trades,positions,portfolios,creator_profiles,kyc_verifications,audit_logs,external_signals,api_keys,strategies,creator_strategies,strategy_subscriptions,strategy_paper_trades,backtests,chat_messages,notifications,user_risk_settings,external_signal_rules",
+    )
+
 
 def validate_config():
     """Validate required configuration based on environment."""
@@ -72,6 +88,14 @@ def validate_config():
         raise ValueError(f"Missing required config for {env}: {', '.join(missing)}")
 
     print(f"✅ Configuration validated for {env}")
+
+
+def is_production() -> bool:
+    return (Config.ENV or "development").lower() == "production"
+
+
+def get_required_tables() -> list[str]:
+    return [table.strip() for table in Config.REQUIRED_DB_TABLES.split(",") if table.strip()]
 
 
 class SignalConfig:

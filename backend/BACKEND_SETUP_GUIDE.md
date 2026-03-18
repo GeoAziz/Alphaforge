@@ -161,6 +161,8 @@ API_ENV=development          # development or production
 API_HOST=0.0.0.0            # Listen on all interfaces (ngrok friendly)
 API_PORT=8000               # Port to listen on
 LOG_LEVEL=INFO              # Logging level
+CORS_ALLOW_ORIGINS=http://localhost:3000
+TRUSTED_HOSTS=localhost,127.0.0.1
 ```
 
 **Database:**
@@ -195,6 +197,35 @@ MAX_POSITION_SIZE_PCT=0.02      # 2% max per position
 MAX_PORTFOLIO_EXPOSURE_PCT=0.20 # 20% per asset
 MAX_LEVERAGE=5                  # max leverage
 ```
+
+**Production Hardening:**
+```
+ALLOW_MOCK_DB_FALLBACK=false
+REQUIRE_REAL_DB=true
+RATE_LIMIT_ENABLED=true
+RATE_LIMIT_WINDOW_SECONDS=60
+RATE_LIMIT_MAX_REQUESTS=120
+SECURITY_HEADERS_ENABLED=true
+TRADINGVIEW_WEBHOOK_SECRET=...
+TRADINGVIEW_WEBHOOK_HMAC_SECRET=...
+```
+
+### Production Readiness Validation
+
+Before public launch, run:
+
+```bash
+export API_ENV=production
+export ALLOW_MOCK_DB_FALLBACK=false
+export REQUIRE_REAL_DB=true
+
+pytest -q tests/test_production_readiness.py
+```
+
+Expected outcome:
+- `/ready` returns `database_mode=supabase`
+- `required_tables_ok=true`
+- Critical user → signal → paper trade → portfolio flow passes
 
 ---
 

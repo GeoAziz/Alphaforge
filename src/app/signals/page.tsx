@@ -7,6 +7,8 @@ import { useUser } from "@/firebase";
 // import { collection, query, orderBy } from "firebase/firestore";
 // import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { api } from "@/lib/api";
+import { useAnalytics } from "@/providers/posthog-provider";
+import { useWebSocket } from "@/hooks/use-websocket";
 import { SignalCard } from "@/components/signals/signal-card";
 import { SignalFilters } from "@/components/signals/signal-filters";
 import { SignalDetailPanel } from "@/components/signals/signal-detail-panel";
@@ -17,6 +19,8 @@ import { SpotlightCard } from "@/components/shared/spotlight-card";
 
 export default function SignalsPage() {
   const { user } = useUser();
+  const analytics = useAnalytics();
+  const { data: liveSignals, isConnected } = useWebSocket('/ws/signals');
   const [rawSignals, setRawSignals] = useState<Signal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedSignal, setSelectedSignal] = useState<Signal | null>(null);
@@ -31,11 +35,19 @@ export default function SignalsPage() {
 
   useEffect(() => {
     setMounted(true);
+    analytics.pageView('/signals');
     api.signals.getLiveSignals(user?.uid || 'mock-user-001').then(data => {
       setRawSignals(data);
       setIsLoading(false);
     });
-  }, [user]);
+  }, [user, analytics]);
+  
+  // Update signals from WebSocket
+  useEffect(() => {
+    if (liveSignals && Array.isArray(liveSignals)) {
+      setRawSignals(liveSignals);
+    }
+  }, [liveSignals]);
 
   const filteredSignals = useMemo(() => {
     if (!rawSignals) return [];
@@ -88,9 +100,15 @@ export default function SignalsPage() {
               <p className="text-muted-foreground text-sm font-medium">Real-time algorithmic consensus and institutional signal rationale.</p>
             </div>
             <div className="flex items-center gap-3">
-              <div className="h-9 px-4 rounded-md border border-border-subtle bg-elevated/20 flex items-center gap-2 text-[10px] font-black uppercase text-green">
-                <div className="w-1.5 h-1.5 rounded-full bg-green animate-pulse" />
-                Live Stream Active
+              <div className={cn(
+                "h-9 px-4 rounded-md border border-border-subtle bg-elevated/20 flex items-center gap-2 text-[10px] font-black uppercase",
+                isConnected ? "text-green" : "text-amber-600"
+              )}>
+                <div className={cn(
+                  "w-1.5 h-1.5 rounded-full animate-pulse",
+                  isConnected ? "bg-green" : "bg-amber-600"
+                )} />
+                {isConnected ? "Live Stream Active" : "Connecting..."}
               </div>
             </div>
           </header>

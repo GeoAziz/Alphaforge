@@ -1,0 +1,40 @@
+services:
+  - type: web
+    name: alphaforge-backend
+    env: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    autoDeploy: true
+    healthCheckPath: /ready
+    envVars:
+      - key: API_ENV
+        value: production
+      - key: ALLOW_MOCK_DB_FALLBACK
+        value: false
+      - key: REQUIRE_REAL_DB
+        value: true
+      - key: RATE_LIMIT_ENABLED
+        value: true
+      - key: SECURITY_HEADERS_ENABLED
+        value: true
+      - key: CORS_ALLOW_ORIGINS
+        sync: false
+      - key: TRUSTED_HOSTS
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: TRADINGVIEW_WEBHOOK_SECRET
+        sync: false
+      - key: TRADINGVIEW_WEBHOOK_HMAC_SECRET
+        sync: false
+      - key: ALPHA_VANTAGE_API_KEY
+        sync: false
+      - key: POLYGON_IO_API_KEY
+        sync: false

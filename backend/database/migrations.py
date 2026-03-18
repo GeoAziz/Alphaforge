@@ -362,7 +362,7 @@ CREATE TABLE IF NOT EXISTS backtests (
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   strategy_name TEXT NOT NULL,
   strategy_params JSONB DEFAULT '{}'::jsonb,
-  symbols TEXT[] DEFAULT '["BTC","ETH"]'::text[],
+  symbols TEXT[] DEFAULT '{BTC,ETH}'::text[],
   start_date DATE,
   end_date DATE,
   initial_capital NUMERIC(18,2) DEFAULT 100000,

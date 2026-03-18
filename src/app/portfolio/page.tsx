@@ -6,6 +6,8 @@ import { useUser } from '@/firebase';
 // import { useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
 // import { collection, doc, query, orderBy } from 'firebase/firestore';
 import { api } from '@/lib/api';
+import { useAnalytics } from '@/providers/posthog-provider';
+import { useWebSocket } from '@/hooks/use-websocket';
 import { SpotlightCard } from '@/components/shared/spotlight-card';
 import { AnimatedCounter } from '@/components/shared/animated-counter';
 import { Position, Trade, PortfolioSummary } from '@/lib/types';
@@ -23,6 +25,8 @@ import { TradeHistory } from '@/components/portfolio/trade-history';
 
 export default function PortfolioPage() {
   const { user } = useUser();
+  const analytics = useAnalytics();
+  const { isConnected: marketConnected } = useWebSocket('/ws/market-updates');
   const [summary, setSummary] = useState<PortfolioSummary | null>(null);
   const [positions, setPositions] = useState<Position[]>([]);
   const [trades, setTrades] = useState<Trade[]>([]);
@@ -31,11 +35,12 @@ export default function PortfolioPage() {
   const [isTradesLoading, setIsTradesLoading] = useState(true);
 
   useEffect(() => {
+    analytics.pageView('/portfolio');
     const uid = user?.uid || 'mock-user-001';
     api.portfolio.getSummary(uid).then(d => { setSummary(d); setIsSummaryLoading(false); });
     api.portfolio.getPositions(uid).then(d => { setPositions(d); setIsPositionsLoading(false); });
     api.portfolio.getTrades(uid).then(d => { setTrades(d); setIsTradesLoading(false); });
-  }, [user]);
+  }, [user, analytics]);
 
   if (!user) {
     return (

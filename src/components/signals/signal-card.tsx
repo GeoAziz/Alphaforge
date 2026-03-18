@@ -1,10 +1,12 @@
 'use client';
 
+import { useEffect } from 'react';
 import { Signal } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { SpotlightCard } from '@/components/shared/spotlight-card';
 import { GradientBorder } from '@/components/shared/gradient-border';
 import { ConfidencePill } from '@/components/shared/confidence-pill';
+import { useAnalytics } from '@/providers/posthog-provider';
 import { Clock, TrendingUp } from 'lucide-react';
 
 interface SignalCardProps {
@@ -19,14 +21,31 @@ interface SignalCardProps {
  * Features conditional GradientBorder for high-confidence nodes (>= 85%).
  */
 export function SignalCard({ signal, onClick, isSelected, className }: SignalCardProps) {
+  const analytics = useAnalytics();
   const age = Date.now() - new Date(signal.createdAt).getTime();
   const isStale = age > 3600000; // 1hr+
+
+  const handleClick = () => {
+    // Track signal interaction
+    analytics.signalInteraction('viewed', signal.id, signal.strategy);
+    onClick(signal);
+  };
+
+  useEffect(() => {
+    // Track signal appeared in view
+    analytics.action('signal_appeared', {
+      signal_id: signal.id,
+      asset: signal.asset,
+      direction: signal.direction,
+      confidence: signal.confidence,
+    });
+  }, [signal.id, analytics, signal]);
 
   return (
     <div className={cn("transition-all duration-300", isStale && "opacity-60 grayscale-[0.5]", className)}>
       <GradientBorder active={signal.confidence >= 85}>
         <SpotlightCard 
-          onClick={() => onClick(signal)}
+          onClick={handleClick}
           className={cn(
             "p-6 cursor-pointer group bg-transparent border-none",
             isSelected && "bg-primary/5"

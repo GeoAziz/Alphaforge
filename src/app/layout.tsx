@@ -10,6 +10,7 @@ import { MockClientProvider } from '@/firebase/mock-provider';
 // OnboardingCheck disabled in mock mode — mock user is always onboarded
 // import { OnboardingCheck } from '@/components/onboarding/onboarding-check';
 import { LayoutShell } from '@/components/layout/layout-shell';
+import { PostHogProvider } from '@/providers/posthog-provider';
 
 export const metadata: Metadata = {
   title: 'AlphaForge | Institutional Grade Signal Intelligence',
@@ -29,14 +30,15 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased noise-surface overflow-hidden">
-        {/* MVP Mock Mode: MockClientProvider replaces FirebaseClientProvider */}
-        {/* To switch to Firebase: replace MockClientProvider with FirebaseClientProvider and wrap with OnboardingCheck */}
-        <MockClientProvider>
-          <LayoutShell>
-            {children}
-          </LayoutShell>
-          <Toaster />
-        </MockClientProvider>
+        {/* MVP Mock Mode with PostHog Analytics */}
+        <PostHogProvider>
+          <MockClientProvider>
+            <LayoutShell>
+              {children}
+            </LayoutShell>
+            <Toaster />
+          </MockClientProvider>
+        </PostHogProvider>
       </body>
     </html>
   );

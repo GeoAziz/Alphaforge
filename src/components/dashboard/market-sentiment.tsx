@@ -1,8 +1,10 @@
 'use client';
 
+import { useEffect } from 'react';
 import { SpotlightCard } from '@/components/shared/spotlight-card';
 import { Brain, Info } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { useAnalytics } from '@/providers/posthog-provider';
 import { 
   Tooltip, 
   TooltipContent, 
@@ -11,8 +13,17 @@ import {
 } from "@/components/ui/tooltip";
 
 export function MarketSentimentCell() {
+  const analytics = useAnalytics();
   const sentimentScore = 72; // Greed
   const label = 'Greed';
+
+  useEffect(() => {
+    // Track sentiment viewed
+    analytics.action('market_sentiment_viewed', {
+      score: sentimentScore,
+      label,
+    });
+  }, [analytics, sentimentScore]);
 
   return (
     <SpotlightCard className="p-8 h-full flex flex-col justify-between">

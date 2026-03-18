@@ -10,15 +10,20 @@ import os
 import logging
 import uuid
 import time
+import hmac
+import hashlib
+import asyncio
+import json
 from contextlib import asynccontextmanager
 from datetime import datetime
 from enum import Enum
 from statistics import mean
-from typing import Any, Dict
+from typing import Any, Dict, List, Set, Optional
 from threading import Lock
 
-from fastapi import FastAPI, HTTPException, Depends, Query, Header, Request
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI, HTTPException, Depends, Query, Body, Header, Request, Path, WebSocket, WebSocketDisconnect
+from starlette.middleware.cors import CORSMiddleware
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 
 from models.schemas import *
@@ -34,10 +39,54 @@ from services.creator_service import CreatorVerificationService
 from services.user_service import UserManagementService
 from services.backtest_service import BacktestingService
 from services.strategy_service import StrategyService
+from services.ml_signal_scorer import MLSignalScorer
+from services.creator_marketplace import CreatorMarketplaceService
+from services.kyc_service import KYCService
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# ============================================================================
+# WEBSOCKET MANAGER
+# ============================================================================
+
+class WebSocketManager:
+    """Manages WebSocket connections and broadcasting."""
+    
+    def __init__(self):
+        self.active_connections: Dict[str, Set[WebSocket]] = {}
+    
+    async def connect(self, websocket: WebSocket, group: str):
+        """Accept and register connection."""
+        await websocket.accept()
+        if group not in self.active_connections:
+            self.active_connections[group] = set()
+        self.active_connections[group].add(websocket)
+        logger.info(f"WebSocket connected to group: {group}")
+    
+    def disconnect(self, websocket: WebSocket, group: str):
+        """Remove connection."""
+        if group in self.active_connections:
+            self.active_connections[group].discard(websocket)
+    
+    async def broadcast_to_group(self, group: str, message: Dict[str, Any]):
+        """Broadcast to all connections in group."""
+        if group not in self.active_connections:
+            return
+        
+        json_data = json.dumps(message)
+        disconnected = []
+        
+        for connection in self.active_connections[group]:
+            try:
+                await connection.send_text(json_data)
+            except Exception as e:
+                logger.error(f"Broadcast error: {e}")
+                disconnected.append(connection)
+        
+        for ws in disconnected:
+            self.disconnect(ws, group)
 
 # Global service instances
 db = get_db()
@@ -52,6 +101,13 @@ creator_service = None
 user_service = None
 backtest_service = None
 strategy_service = None
+ml_scorer = None
+creator_marketplace = None
+kyc_service = None
+
+# WebSocket and Analytics
+ws_manager = WebSocketManager()
+ph = None  # PostHog client
 
 
 # ============================================================================
@@ -63,6 +119,7 @@ async def lifespan(app: FastAPI):
     """Startup and shutdown events."""
     global signal_aggregator, signal_processor, paper_trading, portfolio_service, risk_manager, market_data_service
     global chat_service, creator_service, user_service, backtest_service, strategy_service
+    global ml_scorer, creator_marketplace, kyc_service, ph
     
     # Startup
     logger.info("🚀 Starting AlphaForge Backend API")
@@ -81,6 +138,22 @@ async def lifespan(app: FastAPI):
     user_service = UserManagementService(db)
     backtest_service = BacktestingService(db)
     strategy_service = StrategyService(db)
+    ml_scorer = MLSignalScorer(db)
+    creator_marketplace = CreatorMarketplaceService(db)
+    kyc_service = KYCService(db)
+    
+    # Initialize PostHog
+    try:
+        from posthog import Posthog
+        posthog_key = os.getenv("POSTHOG_API_KEY")
+        posthog_host = os.getenv("POSTHOG_HOST", "https://us.i.posthog.com")
+        if posthog_key:
+            ph = Posthog(api_key=posthog_key, host=posthog_host)
+            logger.info("✅ PostHog analytics initialized")
+        else:
+            logger.warning("⚠️  PostHog API key not set")
+    except Exception as e:
+        logger.warning(f"⚠️  PostHog initialization failed: {e}")
     
     logger.info("✅ All services initialized")
     
@@ -103,18 +176,91 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-CORS_ALLOW_ORIGINS = os.getenv("CORS_ALLOW_ORIGINS", "*")
+API_ENV = os.getenv("API_ENV", "development").lower()
+IS_PRODUCTION = API_ENV == "production"
+REQUIRE_REAL_DB = os.getenv("REQUIRE_REAL_DB", "true" if IS_PRODUCTION else "false").lower() == "true"
+SECURITY_HEADERS_ENABLED = os.getenv("SECURITY_HEADERS_ENABLED", "true").lower() == "true"
+
+# CORS configuration - allow development frontends and ngrok tunnels
+DEV_URLS = [
+    "http://localhost:3000",
+    "http://localhost:9002",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:9002",
+]
+# Parse ngrok URL from environment (format: https://xxxx.ngrok-free.app)
+ngrok_url = os.getenv("NGROK_TUNNEL_URL", "").strip()
+if not ngrok_url:
+    # Auto-extract from NEXT_PUBLIC_API_URL if it's an ngrok URL
+    api_url = os.getenv("NEXT_PUBLIC_API_URL", "")
+    if "ngrok" in api_url:
+        ngrok_url = api_url
+if ngrok_url and not ngrok_url.endswith("/"):
+    DEV_URLS.append(ngrok_url)
+
+CORS_ALLOW_ORIGINS = os.getenv("CORS_ALLOW_ORIGINS", ",".join(DEV_URLS) if not IS_PRODUCTION else "")
 ALLOWED_ORIGINS = [origin.strip() for origin in CORS_ALLOW_ORIGINS.split(",") if origin.strip()] or ["*"]
 
-# CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Debug: Log CORS configuration
+logger.info(f"🔐 CORS Configuration (IS_PRODUCTION={IS_PRODUCTION})")
+logger.info(f"📍 Allowed Origins: {ALLOWED_ORIGINS}")
+if ngrok_url:
+    logger.info(f"🌐 ngrok URL detected: {ngrok_url}")
 
+if IS_PRODUCTION and "*" in ALLOWED_ORIGINS:
+    raise RuntimeError("CORS_ALLOW_ORIGINS cannot include '*' in production")
+
+TRUSTED_HOSTS_RAW = os.getenv("TRUSTED_HOSTS", "*")
+TRUSTED_HOSTS = [host.strip() for host in TRUSTED_HOSTS_RAW.split(",") if host.strip()] or ["*"]
+
+if IS_PRODUCTION and "*" in TRUSTED_HOSTS:
+    raise RuntimeError("TRUSTED_HOSTS cannot include '*' in production")
+
+# Custom CORS middleware to handle all origins properly
+@app.middleware("http")
+async def cors_middleware(request: Request, call_next):
+    """Explicit CORS middleware for ngrok and localhost tunneling."""
+    origin = request.headers.get("origin", "").lower()
+    
+    # Check if origin is allowed
+    allowed_origins_lower = [o.lower() for o in ALLOWED_ORIGINS]
+    is_allowed = (
+        "*" in ALLOWED_ORIGINS or
+        origin in allowed_origins_lower or
+        any(origin == ao.lower() for ao in ALLOWED_ORIGINS)
+    )
+    
+    # Handle preflight: OPTIONS requests
+    if request.method == "OPTIONS":
+        response = JSONResponse(content={}, status_code=200)
+        if is_allowed:
+            response.headers["Access-Control-Allow-Origin"] = origin or ALLOWED_ORIGINS[0]
+        else:
+            response.headers["Access-Control-Allow-Origin"] = "*" if "*" in ALLOWED_ORIGINS else ALLOWED_ORIGINS[0]
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, Accept, Origin"
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Max-Age"] = "86400"
+        logger.info(f"✅ CORS OPTIONS: origin={origin}, allowed={is_allowed}, headers set")
+        return response
+    
+    # Handle actual requests (GET, POST, etc.)
+    response = await call_next(request)
+    
+    # Add CORS headers to response
+    if is_allowed:
+        response.headers["Access-Control-Allow-Origin"] = origin or ALLOWED_ORIGINS[0]
+    else:
+        response.headers["Access-Control-Allow-Origin"] = "*" if "*" in ALLOWED_ORIGINS else ALLOWED_ORIGINS[0]
+    
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers["Access-Control-Expose-Headers"] = "Content-Type, Content-Length"
+    
+    logger.debug(f"✅ CORS {request.method}: {request.url.path} - origin={origin}, allowed={is_allowed}")
+    return response
+
+# Host header hardening
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=TRUSTED_HOSTS)
 
 # Optional in-memory rate limiter for production hardening
 RATE_LIMIT_ENABLED = os.getenv("RATE_LIMIT_ENABLED", "true").lower() == "true"
@@ -127,6 +273,9 @@ _rate_limit_lock = Lock()
 @app.middleware("http")
 async def rate_limit_middleware(request: Request, call_next):
     if RATE_LIMIT_ENABLED:
+        if request.url.path in {"/health", "/ready", "/status"}:
+            return await call_next(request)
+
         client_ip = request.client.host if request.client else "unknown"
         route_key = f"{client_ip}:{request.url.path}"
         now = time.time()
@@ -150,6 +299,22 @@ async def rate_limit_middleware(request: Request, call_next):
     return await call_next(request)
 
 
+@app.middleware("http")
+async def security_headers_middleware(request: Request, call_next):
+    response = await call_next(request)
+
+    if SECURITY_HEADERS_ENABLED:
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        if IS_PRODUCTION:
+            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+
+    return response
+
+
 # ============================================================================
 # HEALTH & STATUS
 # ============================================================================
@@ -158,7 +323,7 @@ async def rate_limit_middleware(request: Request, call_next):
 async def health_check():
     """Health check endpoint."""
     return {
-        "status": "healthy",
+        "status": "ok",
         "timestamp": datetime.utcnow().isoformat(),
         "version": "1.0.0"
     }
@@ -170,6 +335,7 @@ async def status():
     return {
         "api_running": True,
         "database": "connected",
+        "database_mode": "mock" if db.is_mock_mode else "supabase",
         "services": {
             "signal_aggregator": "ready" if signal_aggregator else "not_ready",
             "signal_processor": "ready" if signal_processor else "not_ready",
@@ -186,6 +352,21 @@ async def readiness_check():
     """Readiness probe endpoint."""
     try:
         _ = db.supabase
+        if REQUIRE_REAL_DB and db.is_mock_mode:
+            raise HTTPException(status_code=503, detail="Service not ready: running in mock database mode")
+
+        required_tables_raw = os.getenv(
+            "REQUIRED_DB_TABLES",
+            "users,signals,paper_trades,positions,portfolios,creator_profiles,kyc_verifications,audit_logs,external_signals,api_keys,strategies,creator_strategies,strategy_subscriptions,strategy_paper_trades,backtests,chat_messages,notifications,user_risk_settings,external_signal_rules",
+        )
+        required_tables = [table.strip() for table in required_tables_raw.split(",") if table.strip()]
+        table_check = db.verify_required_tables(required_tables) if required_tables else {"ok": True, "missing_tables": []}
+        if REQUIRE_REAL_DB and not table_check.get("ok", False):
+            raise HTTPException(
+                status_code=503,
+                detail=f"Service not ready: missing required tables: {', '.join(table_check.get('missing_tables', []))}",
+            )
+
         services_ready = all(
             [
                 signal_aggregator is not None,
@@ -205,7 +386,10 @@ async def readiness_check():
         return {
             "status": "ready" if services_ready else "degraded",
             "database": "ready",
+            "database_mode": "mock" if db.is_mock_mode else "supabase",
             "services_ready": services_ready,
+            "required_tables_ok": table_check.get("ok", True),
+            "missing_tables": table_check.get("missing_tables", []),
             "timestamp": datetime.utcnow().isoformat(),
         }
     except Exception as e:
@@ -298,6 +482,12 @@ def _map_signal_to_frontend(signal: Dict[str, Any]) -> Dict[str, Any]:
 async def register_user(user: UserProfileCreate):
     """Register a new user."""
     try:
+        # Check for duplicate email
+        existing = db.supabase.table("users").select("id").eq("email", user.email).execute()
+        if existing.data and len(existing.data) > 0:
+            logger.warning(f"⚠️ Duplicate email: {user.email}")
+            raise HTTPException(status_code=409, detail="Email already exists")
+        
         user_data = {
             "email": user.email,
             "display_name": user.display_name,
@@ -316,6 +506,8 @@ async def register_user(user: UserProfileCreate):
         
         raise HTTPException(status_code=400, detail="Registration failed")
     
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"❌ Registration failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -325,6 +517,13 @@ async def register_user(user: UserProfileCreate):
 async def get_user(user_id: str):
     """Get user profile."""
     try:
+        # Validate UUID format
+        try:
+            uuid.UUID(user_id)
+        except (ValueError, AttributeError):
+            logger.warning(f"⚠️ Invalid user ID format: {user_id}")
+            raise HTTPException(status_code=400, detail="Invalid user ID format")
+        
         logger.info(f"📖 Fetching user: {user_id}")
         response = db.supabase.table("users").select("*").eq("id", user_id).execute()
         
@@ -433,14 +632,18 @@ async def get_latest_signals(limit: int = Query(50, le=100)):
 
 
 @app.post("/api/signals/process", tags=["Signals"])
-async def process_signals():
+async def process_signals(payload: Dict[str, Any] = Body(None)):
     """
     Trigger signal aggregation and processing.
-    This would normally run on a schedule, but exposed as endpoint for testing.
+    Accepts optional payload with symbols list for testing.
     """
     try:
-        # Aggregate from sources
-        symbols = ["BTC", "ETH", "BNB", "SOL"]
+        # Determine symbols from payload or use defaults
+        if payload and "symbols" in payload:
+            symbols = payload.get("symbols", ["BTC", "ETH", "BNB", "SOL"])
+        else:
+            symbols = ["BTC", "ETH", "BNB", "SOL"]
+        
         raw_signals = await signal_aggregator.fetch_all_signals(symbols)
 
         if not raw_signals:
@@ -452,7 +655,6 @@ async def process_signals():
                     "confidence": 0.65,
                     "rationale": "Fallback signal due to unavailable external providers",
                     "drivers": ["fallback_engine"],
-                    "source": "internal_fallback",
                 }
                 for symbol in symbols
             ]
@@ -460,21 +662,49 @@ async def process_signals():
         # Process signals
         processed = signal_processor.process_signals(raw_signals)
         
-        # Store in database
+        # Store in database only if database is available
         stored_signals = []
-        for signal in processed:
-            payload = {**signal}
-            payload.setdefault("id", str(uuid.uuid4()))
-            payload.setdefault("created_by", "system")
-            payload.setdefault("created_at", datetime.utcnow().isoformat())
-
-            insert_response = db.supabase.table("signals").insert(payload).execute()
-            if getattr(insert_response, "data", None):
-                stored_signals.append(insert_response.data[0])
-            else:
-                stored_signals.append(payload)
+        try:
+            for signal in processed:
+                # Only include valid database columns
+                payload_db = {
+                    "id": signal.get("id", str(uuid.uuid4())),
+                    "ticker": signal.get("ticker"),
+                    "signal_type": signal.get("signal_type"),
+                    "confidence": signal.get("confidence"),
+                    "entry_price": signal.get("entry_price"),
+                    "stop_loss_price": signal.get("stop_loss_price"),
+                    "take_profit_price": signal.get("take_profit_price"),
+                    "rationale": signal.get("rationale"),
+                    "drivers": signal.get("drivers", []),
+                    "created_by": signal.get("created_by", "system"),
+                    "created_at": signal.get("created_at", datetime.utcnow().isoformat()),
+                }
+                
+                insert_response = db.supabase.table("signals").insert(payload_db).execute()
+                if getattr(insert_response, "data", None):
+                    stored_signals.append(insert_response.data[0])
+                else:
+                    stored_signals.append(payload_db)
+        except Exception as db_error:
+            logger.warning(f"⚠️ Database storage failed: {db_error}. Returning processed signals without persistence.")
+            stored_signals = processed
         
-        logger.info(f"✅ Processed and stored {len(processed)} signals")
+        logger.info(f"✅ Processed {len(processed)} signals")
+        
+        # Track in PostHog
+        if ph:
+            try:
+                ph.capture(
+                    distinct_id="system",
+                    event="signals_processed",
+                    properties={
+                        "count": len(processed),
+                        "symbols": symbols,
+                    }
+                )
+            except Exception as e:
+                logger.warning(f"PostHog tracking failed: {e}")
         
         return {
             "success": True,
@@ -538,6 +768,23 @@ async def create_paper_trade(trade: PaperTradeCreate):
         )
         
         if result["success"]:
+            # Track in PostHog
+            if ph:
+                try:
+                    ph.capture(
+                        distinct_id=trade.user_id,
+                        event="trade_executed_paper",
+                        properties={
+                            "asset": trade.asset,
+                            "direction": trade.direction.value,
+                            "quantity": trade.quantity,
+                            "entry_price": trade.entry_price,
+                            "trade_id": result.get("trade_id"),
+                        }
+                    )
+                except Exception as e:
+                    logger.warning(f"PostHog tracking failed: {e}")
+            
             return {"success": True, "trade_id": result["trade_id"], "data": result}
         else:
             raise HTTPException(status_code=400, detail=result["error"])
@@ -736,22 +983,41 @@ async def get_open_interest():
 # ============================================================================
 
 @app.post("/webhooks/tradingview", tags=["Webhooks"])
-async def tradingview_webhook(payload: Dict[str, Any], x_webhook_secret: str = Header(None)):
+async def tradingview_webhook(
+    request: Request,
+    payload: Dict[str, Any],
+    x_webhook_secret: str = Header(None),
+    x_webhook_signature: str = Header(None),
+):
     """
     Receive TradingView webhook alerts and ingest as signals.
     """
     try:
         # Verify webhook secret
         expected_secret = os.getenv("TRADINGVIEW_WEBHOOK_SECRET")
+        expected_hmac_secret = os.getenv("TRADINGVIEW_WEBHOOK_HMAC_SECRET")
+
+        # Optional HMAC signature verification (preferred)
+        if expected_hmac_secret and expected_hmac_secret.strip():
+            raw_body = await request.body()
+            digest = hmac.new(
+                expected_hmac_secret.encode("utf-8"),
+                raw_body,
+                hashlib.sha256,
+            ).hexdigest()
+            if not x_webhook_signature or not hmac.compare_digest(x_webhook_signature, digest):
+                logger.warning("❌ Invalid webhook signature")
+                raise HTTPException(status_code=401, detail="Unauthorized: Invalid webhook signature")
         
         # If secret is configured, validate it
         if expected_secret and expected_secret.strip():
             if not x_webhook_secret or x_webhook_secret != expected_secret:
-                logger.warning(f"❌ Invalid webhook secret (expected: {expected_secret}, got: {x_webhook_secret})")
+                logger.warning("❌ Invalid webhook secret")
                 raise HTTPException(status_code=401, detail="Unauthorized: Invalid webhook secret")
         else:
-            # If no secret configured, allow for MVP testing
-            logger.warning("⚠️ Webhook secret not configured, allowing unauthenticated requests")
+            if IS_PRODUCTION:
+                raise HTTPException(status_code=503, detail="Webhook secret is not configured in production")
+            logger.warning("⚠️ Webhook secret not configured, allowing unauthenticated requests in non-production")
         
         # Parse webhook payload
         ticker = payload.get("ticker", "UNKNOWN")
@@ -904,6 +1170,179 @@ async def get_creator_reputation(creator_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/api/creators", tags=["Creator"])
+async def create_creator_profile(user_id: str = Query(...), payload: Dict[str, Any] = None):
+    """Create or update a creator profile (roadmap compatibility endpoint)."""
+    try:
+        payload = payload or {}
+        profile_data = {
+            "user_id": user_id,
+            "bio": payload.get("bio", ""),
+            "fee_percent": float(payload.get("fee_percent", 0)),
+            "updated_at": datetime.utcnow().isoformat(),
+        }
+
+        response = db.supabase.table("creator_profiles").upsert(profile_data).execute()
+        creator_profile = response.data[0] if response.data else profile_data
+
+        return {
+            "success": True,
+            "creator": creator_profile,
+            "strategy_ids": payload.get("strategy_ids", []),
+        }
+    except Exception as e:
+        logger.error(f"❌ Failed to create creator profile: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/creators", tags=["Creator"])
+async def list_creators(limit: int = Query(50, le=100), offset: int = Query(0)):
+    """List creator profiles (roadmap compatibility endpoint)."""
+    try:
+        response = (
+            db.supabase.table("creator_profiles")
+            .select("*")
+            .order("updated_at", desc=True)
+            .range(offset, offset + limit - 1)
+            .execute()
+        )
+        creators = response.data or []
+        return {"success": True, "creators": creators, "count": len(creators)}
+    except Exception as e:
+        logger.error(f"❌ Failed to list creators: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/creators/{creator_id}", tags=["Creator"])
+async def get_creator_profile(creator_id: str):
+    """Get creator profile by creator profile id or user id."""
+    try:
+        by_profile_id = db.supabase.table("creator_profiles").select("*").eq("id", creator_id).execute()
+        if by_profile_id.data:
+            return {"success": True, "creator": by_profile_id.data[0]}
+
+        by_user_id = db.supabase.table("creator_profiles").select("*").eq("user_id", creator_id).execute()
+        if by_user_id.data:
+            return {"success": True, "creator": by_user_id.data[0]}
+
+        raise HTTPException(status_code=404, detail="Creator not found")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Failed to get creator profile: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/creators/{creator_id}/strategies", tags=["Creator"])
+async def get_creator_strategies(creator_id: str):
+    """Get creator strategies by creator profile id or user id."""
+    try:
+        profile = db.supabase.table("creator_profiles").select("user_id").eq("id", creator_id).execute()
+        resolved_user_id = profile.data[0].get("user_id") if profile.data else creator_id
+
+        response = (
+            db.supabase.table("creator_strategies")
+            .select("*")
+            .eq("user_id", resolved_user_id)
+            .order("created_at", desc=True)
+            .execute()
+        )
+        strategies = response.data or []
+        return {"success": True, "strategies": strategies, "count": len(strategies)}
+    except Exception as e:
+        logger.error(f"❌ Failed to get creator strategies: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/creators/{creator_id}/stats", tags=["Creator"])
+async def get_creator_stats(creator_id: str):
+    """Get creator performance stats summary."""
+    try:
+        rep = await creator_service.get_reputation_score(creator_id)
+        if not rep.get("success"):
+            raise HTTPException(status_code=404, detail=rep.get("error", "Creator stats unavailable"))
+
+        strategies = await get_creator_strategies(creator_id)
+        strategy_count = len(strategies.get("strategies", [])) if isinstance(strategies, dict) else 0
+
+        return {
+            "success": True,
+            "creator_id": creator_id,
+            "stats": {
+                "reputation_score": rep.get("reputation_score", 0),
+                "tier": rep.get("tier", "Unverified"),
+                "strategy_count": strategy_count,
+                "win_rate": float(rep.get("components", {}).get("win_rate", 0)),
+            },
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Failed to get creator stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/creators/{creator_id}/subscribe", tags=["Creator"])
+async def subscribe_to_creator(creator_id: str, user_id: str = Query(...)):
+    """Subscribe to a creator (maps to strategy subscription model)."""
+    try:
+        strategies = await get_creator_strategies(creator_id)
+        strategy_items = strategies.get("strategies", []) if isinstance(strategies, dict) else []
+        if not strategy_items:
+            raise HTTPException(status_code=404, detail="Creator has no subscribable strategies")
+
+        target_strategy_id = strategy_items[0].get("id")
+        result = await strategy_service.subscribe_to_strategy(user_id, target_strategy_id)
+        if not result.get("success"):
+            raise HTTPException(status_code=400, detail=result.get("error", "Subscription failed"))
+
+        return {
+            "success": True,
+            "creator_id": creator_id,
+            "strategy_id": target_strategy_id,
+            "subscription_id": result.get("subscription_id"),
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Failed to subscribe to creator: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/strategies/{strategy_id}/copy", tags=["Strategy"])
+async def copy_creator_strategy(strategy_id: str, user_id: str = Query(...)):
+    """Copy a creator strategy into the user's strategy library."""
+    try:
+        source = db.supabase.table("creator_strategies").select("*").eq("id", strategy_id).execute()
+        if not source.data:
+            raise HTTPException(status_code=404, detail="Strategy not found")
+
+        source_strategy = source.data[0]
+        copied = {
+            "user_id": user_id,
+            "name": f"Copy - {source_strategy.get('name', 'Strategy')}",
+            "description": source_strategy.get("description", ""),
+            "parameters": source_strategy.get("parameters", {}),
+            "is_public": False,
+            "created_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.utcnow().isoformat(),
+        }
+
+        insert_result = db.supabase.table("strategies").insert(copied).execute()
+        copied_id = insert_result.data[0].get("id") if insert_result.data else None
+
+        return {
+            "success": True,
+            "source_strategy_id": strategy_id,
+            "copied_strategy_id": copied_id,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Failed to copy strategy: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ============================================================================
 # KYC & USER VERIFICATION ENDPOINTS
 # ============================================================================
@@ -947,8 +1386,92 @@ async def submit_kyc(user_id: str = Query(...)):
     except HTTPException:
         raise
 
+
+@app.post("/api/kyc/start", tags=["KYC"])
+async def kyc_start(user_id: str = Query(...)):
+    """Roadmap compatibility endpoint to initiate KYC."""
+    result = await user_service.submit_kyc(user_id, {"documents": [], "status": "started"})
+    if not result.get("success"):
+        raise HTTPException(status_code=400, detail=result.get("error", "Failed to start KYC"))
+    return {"success": True, "user_id": user_id, "kyc_id": result.get("kyc_id")}
+
+
+@app.post("/api/kyc/upload", tags=["KYC"])
+async def kyc_upload(user_id: str = Query(...), doc_type: str = Query(...), file_url: str = Query(...)):
+    """Roadmap compatibility endpoint to attach KYC document metadata."""
+    try:
+        current = await user_service.get_kyc_status(user_id)
+        if not current.get("success"):
+            raise HTTPException(status_code=404, detail=current.get("error", "KYC record not found"))
+
+        existing = current.get("kyc_details") or {}
+        documents = existing.get("documents") or []
+        documents.append({"doc_type": doc_type, "file_url": file_url, "uploaded_at": datetime.utcnow().isoformat()})
+
+        update_data = {
+            "documents": documents,
+            "status": "SUBMITTED",
+            "created_at": existing.get("created_at") or datetime.utcnow().isoformat(),
+        }
+
+        db.supabase.table("kyc_verifications").upsert({"user_id": user_id, **update_data}).execute()
+        db.supabase.table("users").update({"kyc_status": "SUBMITTED"}).eq("id", user_id).execute()
+
+        return {"success": True, "user_id": user_id, "document_count": len(documents)}
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"❌ Failed to submit KYC: {e}")
+        logger.error(f"❌ Failed to upload KYC document metadata: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/kyc/status", tags=["KYC"])
+async def kyc_status(user_id: str = Query(...)):
+    """Roadmap compatibility endpoint for KYC status checks."""
+    result = await user_service.get_kyc_status(user_id)
+    if not result.get("success"):
+        raise HTTPException(status_code=404, detail=result.get("error", "KYC status not found"))
+    return result
+
+
+@app.post("/api/kyc/submit", tags=["KYC"])
+async def kyc_submit(user_id: str = Query(...), payload: Dict[str, Any] = None):
+    """Roadmap compatibility endpoint for final KYC submission."""
+    result = await user_service.submit_kyc(user_id, payload or {"submitted": True})
+    if not result.get("success"):
+        raise HTTPException(status_code=400, detail=result.get("error", "Failed to submit KYC"))
+    return {"success": True, "user_id": user_id, "kyc_id": result.get("kyc_id")}
+
+
+@app.post("/api/kyc/admin/approve", tags=["KYC"])
+async def kyc_admin_approve(user_id: str = Query(...)):
+    """Admin endpoint to approve KYC."""
+    try:
+        db.supabase.table("kyc_verifications").update(
+            {"status": "APPROVED", "completed_at": datetime.utcnow().isoformat()}
+        ).eq("user_id", user_id).execute()
+        db.supabase.table("users").update({"kyc_status": "APPROVED"}).eq("id", user_id).execute()
+        return {"success": True, "user_id": user_id, "status": "APPROVED"}
+    except Exception as e:
+        logger.error(f"❌ Failed to approve KYC: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/kyc/admin/reject", tags=["KYC"])
+async def kyc_admin_reject(user_id: str = Query(...), reason: str = Query("manual_review_failed")):
+    """Admin endpoint to reject KYC."""
+    try:
+        db.supabase.table("kyc_verifications").update(
+            {
+                "status": "REJECTED",
+                "aml_reason": reason,
+                "completed_at": datetime.utcnow().isoformat(),
+            }
+        ).eq("user_id", user_id).execute()
+        db.supabase.table("users").update({"kyc_status": "REJECTED"}).eq("id", user_id).execute()
+        return {"success": True, "user_id": user_id, "status": "REJECTED", "reason": reason}
+    except Exception as e:
+        logger.error(f"❌ Failed to reject KYC: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -1854,6 +2377,17 @@ async def frontend_live_signals(user_id: str, limit: int = Query(50, le=100)):
     return [_map_signal_to_frontend(signal) for signal in (response.data or [])]
 
 
+@app.get("/api/frontend/signals/latest", tags=["Signals"])
+async def frontend_latest_signals(limit: int = Query(10, le=100)):
+    """Get latest generated signals."""
+    try:
+        response = db.supabase.table("signals").select("*").order("created_at", desc=True).limit(limit).execute()
+        return [_map_signal_to_frontend(signal) for signal in (response.data or [])]
+    except Exception as e:
+        logger.error(f"❌ Failed to get latest signals: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/frontend/signals/{signal_id}", tags=["Frontend"])
 async def frontend_signal_detail(signal_id: str):
     response = db.supabase.table("signals").select("*").eq("id", signal_id).execute()
@@ -2028,6 +2562,328 @@ async def frontend_notifications(user_id: str):
             "createdAt": datetime.utcnow().isoformat(),
         }
     ]
+
+
+# ============================================================================
+# PHASE 2: ML SIGNAL SCORING
+# ============================================================================
+
+@app.post("/api/ml/score-signal", tags=["ML Scoring"])
+async def score_signal(
+    signal_id: str = Query(...),
+    signal_data: Dict[str, Any] = Body(...)
+):
+    """Score signal using ML model."""
+    try:
+        if ml_scorer is None:
+            raise HTTPException(status_code=503, detail="ML scoring service not initialized")
+        result = await ml_scorer.score_signal(signal_id, signal_data)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Scoring failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/ml/model/performance", tags=["ML Scoring"])
+async def get_ml_performance():
+    """Get ML model performance metrics."""
+    try:
+        performance = await ml_scorer.get_model_performance()
+        return performance
+    except Exception as e:
+        logger.error(f"❌ Failed to get ML performance: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/ml/train", tags=["ML Scoring"])
+async def train_ml_model(training_data: List[Dict[str, Any]] = None):
+    """Train ML model (Phase 2 feature)."""
+    try:
+        result = await ml_scorer.train_model(training_data or [])
+        return result
+    except Exception as e:
+        logger.error(f"❌ Train failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# PHASE 2: CREATOR MARKETPLACE
+# ============================================================================
+
+@app.post("/api/creators", tags=["Marketplace"])
+async def create_creator(
+    user_id: str = Query(...),
+    bio: str = Query(...),
+    strategy_ids: List[str] = Query(None)
+):
+    """Create creator profile."""
+    try:
+        result = await creator_marketplace.create_creator_profile(
+            user_id, bio, strategy_ids
+        )
+        return result
+    except Exception as e:
+        logger.error(f"❌ Creator creation failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/creators", tags=["Marketplace"])
+async def list_creators(
+    limit: int = Query(50, le=100),
+    offset: int = Query(0),
+    sort_by: str = Query("reputation_score")
+):
+    """List all verified creators."""
+    try:
+        result = await creator_marketplace.list_creators(limit, offset, sort_by)
+        return result
+    except Exception as e:
+        logger.error(f"❌ Creator listing failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/creators/{creator_id}", tags=["Marketplace"])
+async def get_creator(creator_id: str):
+    """Get creator profile."""
+    try:
+        result = await creator_marketplace.get_creator_profile(creator_id)
+        return result
+    except Exception as e:
+        logger.error(f"❌ Failed to get creator: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/creators/{creator_id}/strategies", tags=["Marketplace"])
+async def publish_strategy(
+    creator_id: str,
+    strategy_data: Dict[str, Any]
+):
+    """Publish strategy to marketplace."""
+    try:
+        result = await creator_marketplace.publish_strategy(creator_id, strategy_data)
+        return result
+    except Exception as e:
+        logger.error(f"❌ Strategy publishing failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/strategies/marketplace", tags=["Marketplace"])
+async def list_marketplace_strategies(
+    limit: int = Query(50, le=100),
+    offset: int = Query(0)
+):
+    """List marketplace strategies."""
+    try:
+        result = await creator_marketplace.list_creators(limit, offset)
+        return result
+    except Exception as e:
+        logger.error(f"❌ Marketplace query failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/strategies/{strategy_id}/subscribe", tags=["Marketplace"])
+async def subscribe_to_strategy(
+    strategy_id: str = Path(...),
+    user_id: str = Query(...),
+    allocation_pct: float = Query(10.0)
+):
+    """Subscribe user to strategy."""
+    try:
+        result = await creator_marketplace.subscribe_to_strategy(
+            user_id, strategy_id, allocation_pct
+        )
+        return result
+    except Exception as e:
+        logger.error(f"❌ Subscription failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/strategies/{strategy_id}/paper-trade-status", tags=["Marketplace"])
+async def check_paper_trading_gate(strategy_id: str = Path(...)):
+    """Check if strategy passed paper trading validation gate."""
+    try:
+        result = await creator_marketplace.check_paper_trading_completion(strategy_id)
+        return result
+    except Exception as e:
+        logger.error(f"❌ Paper trading check failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# PHASE 2: KYC VERIFICATION
+# ============================================================================
+
+@app.post("/api/kyc/start", tags=["KYC"])
+async def start_kyc(
+    user_id: str = Query(...),
+    kyc_level: str = Query("enhanced")
+):
+    """Start KYC verification process."""
+    try:
+        result = await kyc_service.start_kyc(user_id, kyc_level)
+        return result
+    except Exception as e:
+        logger.error(f"❌ KYC start failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/kyc/status", tags=["KYC"])
+async def get_kyc_status(user_id: str = Query(...)):
+    """Get user KYC verification status."""
+    try:
+        result = await kyc_service.get_kyc_status(user_id)
+        return result
+    except Exception as e:
+        logger.error(f"❌ KYC status fetch failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/kyc/upload", tags=["KYC"])
+async def upload_kyc_document(
+    user_id: str = Query(...),
+    document_type: str = Query(...),
+    document_url: str = Query(...)
+):
+    """Upload KYC document."""
+    try:
+        result = await kyc_service.upload_document(
+            user_id, document_type, document_url
+        )
+        return result
+    except Exception as e:
+        logger.error(f"❌ Document upload failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/kyc/submit", tags=["KYC"])
+async def submit_kyc(user_id: str = Query(...)):
+    """Submit KYC for review."""
+    try:
+        result = await kyc_service.submit_kyc(user_id)
+        return result
+    except Exception as e:
+        logger.error(f"❌ KYC submission failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/kyc/resubmit", tags=["KYC"])
+async def resubmit_kyc(user_id: str = Query(...)):
+    """Resubmit rejected KYC."""
+    try:
+        result = await kyc_service.resubmit_kyc(user_id)
+        return result
+    except Exception as e:
+        logger.error(f"❌ KYC resubmission failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/kyc/admin/pending", tags=["KYC", "Admin"])
+async def get_pending_kyc_reviews(limit: int = Query(50, le=100)):
+    """Admin: Get pending KYC reviews."""
+    try:
+        result = await kyc_service.get_pending_kyc_reviews(limit)
+        return result
+    except Exception as e:
+        logger.error(f"❌ Failed to get pending reviews: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/kyc/admin/approve", tags=["KYC", "Admin"])
+async def approve_kyc(
+    user_id: str = Query(...),
+    admin_id: str = Query(...),
+    notes: str = Query("")
+):
+    """Admin: Approve KYC."""
+    try:
+        result = await kyc_service.approve_kyc(user_id, admin_id, notes)
+        return result
+    except Exception as e:
+        logger.error(f"❌ KYC approval failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/kyc/admin/reject", tags=["KYC", "Admin"])
+async def reject_kyc(
+    user_id: str = Query(...),
+    admin_id: str = Query(...),
+    rejection_reason: str = Query(...)
+):
+    """Admin: Reject KYC."""
+    try:
+        result = await kyc_service.reject_kyc(user_id, admin_id, rejection_reason)
+        return result
+    except Exception as e:
+        logger.error(f"❌ KYC rejection failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# WEBSOCKET ENDPOINTS - REAL-TIME UPDATES
+# ============================================================================
+
+@app.websocket("/ws/market-updates")
+async def websocket_market_updates(websocket: WebSocket):
+    """Stream real-time market data updates."""
+    await ws_manager.connect(websocket, "market-updates")
+    
+    try:
+        while True:
+            # Fetch latest market data
+            tickers = await market_data_service.fetch_market_tickers(['BTC', 'ETH', 'SOL', 'DOGE'])
+            
+            # Broadcast to all connected clients
+            await ws_manager.broadcast_to_group("market-updates", {
+                "type": "market_update",
+                "data": tickers,
+                "timestamp": datetime.utcnow().isoformat(),
+            })
+            
+            # Update every 5 seconds
+            await asyncio.sleep(5)
+            
+    except WebSocketDisconnect:
+        ws_manager.disconnect(websocket, "market-updates")
+        logger.info("WebSocket disconnected: market-updates")
+    except Exception as e:
+        logger.error(f"WebSocket error in market-updates: {e}")
+        ws_manager.disconnect(websocket, "market-updates")
+
+
+@app.websocket("/ws/signals")
+async def websocket_signals(websocket: WebSocket):
+    """Stream real-time signal updates."""
+    await ws_manager.connect(websocket, "signals")
+    
+    try:
+        while True:
+            # Fetch live signals from database
+            try:
+                response = db.supabase.table("signals").select("*").order("created_at", desc=True).limit(50).execute()
+                signals = [_map_signal_to_frontend(signal) for signal in (response.data or [])]
+            except Exception as e:
+                logger.warning(f"Failed to fetch signals: {e}")
+                signals = []
+            
+            # Only broadcast if there are signals
+            if signals:
+                await ws_manager.broadcast_to_group("signals", {
+                    "type": "signal_update",
+                    "data": signals,
+                    "timestamp": datetime.utcnow().isoformat(),
+                })
+            
+            # Update every 2 seconds
+            await asyncio.sleep(2)
+            
+    except WebSocketDisconnect:
+        ws_manager.disconnect(websocket, "signals")
+        logger.info("WebSocket disconnected: signals")
+    except Exception as e:
+        logger.error(f"WebSocket error in signals: {e}")
+        ws_manager.disconnect(websocket, "signals")
 
 
 # ============================================================================
