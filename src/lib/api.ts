@@ -38,14 +38,38 @@ class ApiError extends Error {
   }
 }
 
+async function getAuthToken(): Promise<string | null> {
+  try {
+    const { auth } = await import('@/firebase').then(async (m) => {
+      const sdk = m.initializeFirebase();
+      return sdk;
+    });
+    const user = auth.currentUser;
+    if (user) {
+      return await user.getIdToken();
+    }
+  } catch (error) {
+    console.warn('Failed to get auth token:', error);
+  }
+  return null;
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = await getAuthToken();
+  
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(init?.headers as Record<string, string> || {}),
+  };
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
     credentials: 'include', // Include credentials for cross-origin requests
-    headers: {
-      'Content-Type': 'application/json',
-      ...(init?.headers || {}),
-    },
+    headers,
     cache: 'no-store',
   });
 

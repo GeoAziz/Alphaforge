@@ -55,6 +55,7 @@ from services.strategy_manager import StrategyManagementService, StrategyType, S
 from services.portfolio_risk_analyzer import PortfolioRiskAnalyzer, RiskLimitEnforcer
 from tests.load_test_suite import LoadTestRunner
 from utils.redis_manager import redis_manager
+from services.startup_orchestrator import get_orchestrator
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -161,7 +162,26 @@ async def lifespan(app: FastAPI):
         config.validate_config()
     
     # ========================================================================
-    # INITIALIZE REDIS (if configured)
+    # ORCHESTRATED STARTUP (Database Migration & Verification)
+    # ========================================================================
+    
+    orchestrator = get_orchestrator()
+    
+    # Auto-migrate in development, manual in production
+    auto_migrate = os.getenv("API_ENV", "development").lower() != "production"
+    
+    startup_ok = await orchestrator.startup(auto_migrate=auto_migrate)
+    
+    if not startup_ok:
+        logger.error("❌ Startup orchestration failed - Backend cannot start")
+        # In production, fail hard; in development, warn but attempt to continue
+        if os.getenv("API_ENV", "development").lower() == "production":
+            raise RuntimeError("Backend startup verification failed")
+        else:
+            logger.warning("⚠️  Continuing in degraded mode...")
+    
+    # ========================================================================
+    # INITIALIZE REDIS & CACHE (if configured)
     # ========================================================================
     
     redis_connected = await redis_manager.connect()

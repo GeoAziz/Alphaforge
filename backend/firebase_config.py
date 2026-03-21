@@ -6,7 +6,7 @@ Place this in backend/firebase_config.py
 import os
 import json
 from typing import Optional
-import firebase_admin as fb_admin
+import firebase_admin
 from firebase_admin import credentials, auth
 from fastapi import HTTPException, Header
 from functools import lru_cache

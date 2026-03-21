@@ -8,7 +8,9 @@ load_dotenv()
 conn_str = os.getenv("DATABASE_URL")
 
 migrations = [
-    "CREATE TABLE IF NOT EXISTS signal_performance (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), signal_id TEXT NOT NULL UNIQUE, asset TEXT NOT NULL, direction TEXT NOT NULL CHECK (direction IN ('BUY', 'SELL')), entry_price NUMERIC(20,8) NOT NULL, exit_price NUMERIC(20,8), pnl NUMERIC(18,8), roi_pct NUMERIC(8,4), is_winning BOOLEAN, outcome TEXT CHECK (outcome IN ('WINNING_TRADE', 'LOSING_TRADE')), execution_timestamp TIMESTAMP WITH TIME ZONE, position_size NUMERIC(18,8), created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW())",
+    # Drop and recreate signal_performance with correct schema
+    "DROP TABLE IF EXISTS signal_performance CASCADE",
+    "CREATE TABLE signal_performance (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), signal_id TEXT NOT NULL UNIQUE, num_times_executed INT DEFAULT 0, num_times_closed INT DEFAULT 0, total_pnl NUMERIC(18,2) DEFAULT 0, avg_pnl_per_execution NUMERIC(18,2) DEFAULT 0, win_count INT DEFAULT 0, loss_count INT DEFAULT 0, win_rate NUMERIC(8,4) DEFAULT 0, total_roi_pct NUMERIC(12,4) DEFAULT 0, avg_roi_per_execution NUMERIC(12,4) DEFAULT 0, best_trade_pnl NUMERIC(18,2) DEFAULT 0, worst_trade_pnl NUMERIC(18,2) DEFAULT 0, max_drawdown_pct NUMERIC(12,4) DEFAULT 0, sharpe_ratio NUMERIC(12,6) DEFAULT 0, first_execution_at TIMESTAMP WITH TIME ZONE, last_execution_at TIMESTAMP WITH TIME ZONE, signal_accuracy_score NUMERIC(8,4) DEFAULT 0, is_high_performer BOOLEAN DEFAULT FALSE, created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(), asset TEXT, is_winning BOOLEAN, last_updated_at TIMESTAMP WITH TIME ZONE)",
     "CREATE INDEX IF NOT EXISTS idx_signal_performance_asset ON signal_performance(asset)",
     "CREATE INDEX IF NOT EXISTS idx_signal_performance_is_winning ON signal_performance(is_winning)",
     "CREATE INDEX IF NOT EXISTS idx_signal_performance_created ON signal_performance(created_at DESC)",

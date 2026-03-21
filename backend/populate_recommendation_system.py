@@ -4,12 +4,13 @@ Recommendation System Data Populator
 Loads generated historical data into the recommendation system database
 """
 
-import asyncio
 import os
 import json
 from datetime import datetime
 from typing import Any, Dict
+from collections import defaultdict
 import logging
+import statistics
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(message)s')
@@ -40,45 +41,111 @@ class DataPopulator:
             "errors": []
         }
     
-    async def populate_signal_performance(self, trades: list):
-        """Insert historical trades into signal_performance table"""
+    def populate_signal_performance(self, trades: list):
+        """Aggregate trades by signal and insert into signal_performance table"""
         
-        logger.info(f"\n📥 Loading {len(trades)} trades into signal_performance table...")
+        logger.info(f"\n📥 Aggregating {len(trades)} trades into signal metrics...")
         
-        for i, trade in enumerate(trades):
+        # Aggregate trades by signal_id
+        signals = defaultdict(list)
+        for trade in trades:
+            signals[trade["signal_id"]].append(trade)
+        
+        logger.info(f"   Aggregating into {len(signals)} unique signals...")
+        
+        # Process each signal's trades
+        for i, (signal_id, signal_trades) in enumerate(signals.items()):
             try:
-                # Calculate derived fields
-                win = 1 if trade["roi_pct"] > 0 else 0
+                # Calculate aggregated metrics
+                roi_values = [t["roi_pct"] for t in signal_trades]
+                pnl_values = [t["pnl"] for t in signal_trades]
+                
+                winning_trades = [t for t in signal_trades if t["roi_pct"] > 0]
+                losing_trades = [t for t in signal_trades if t["roi_pct"] <= 0]
+                
+                win_count = len(winning_trades)
+                loss_count = len(losing_trades)
+                total_trades = len(signal_trades)
+                win_rate = (win_count / total_trades * 100) if total_trades > 0 else 0
+                
+                total_pnl = sum(pnl_values)
+                avg_pnl_per_execution = total_pnl / total_trades if total_trades > 0 else 0
+                total_roi_pct = sum(roi_values)
+                avg_roi_per_execution = total_roi_pct / total_trades if total_trades > 0 else 0
+                
+                best_trade_pnl = max(pnl_values) if pnl_values else 0
+                worst_trade_pnl = min(pnl_values) if pnl_values else 0
+                
+                # Calculate Sharpe ratio (simplified)
+                if len(roi_values) > 1:
+                    std_dev = statistics.stdev(roi_values) if len(roi_values) > 1 else 0
+                    sharpe_ratio = (avg_roi_per_execution / std_dev) if std_dev > 0 else 0
+                else:
+                    sharpe_ratio = 0
+                
+                # Calculate max drawdown (simplified)
+                max_drawdown_pct = 0
+                if pnl_values:
+                    cumsum = 0
+                    peak = 0
+                    for pnl in pnl_values:
+                        cumsum += pnl
+                        if cumsum > peak:
+                            peak = cumsum
+                        drawdown = peak - cumsum
+                        if drawdown > max_drawdown_pct:
+                            max_drawdown_pct = drawdown
+                
+                # High performer if win_rate > 60%
+                is_high_performer = win_rate > 60
+                
+                # Get first and last execution times
+                timestamps = [datetime.fromisoformat(t["timestamp"]) for t in signal_trades]
+                first_execution_at = min(timestamps).isoformat() if timestamps else datetime.utcnow().isoformat()
+                last_execution_at = max(timestamps).isoformat() if timestamps else datetime.utcnow().isoformat()
+                
+                # Signal accuracy score based on consistency
+                accuracy_score = (win_rate / 100 * 100) + (50 if avg_roi_per_execution > 0 else 0)
+                accuracy_score = min(accuracy_score, 100)
                 
                 data = {
-                    "signal_id": trade["signal_id"],
-                    "asset": trade["asset"],
-                    "direction": trade["direction"],
-                    "entry_price": trade["entry_price"],
-                    "exit_price": trade["exit_price"],
-                    "pnl": trade["pnl"],
-                    "roi_pct": trade["roi_pct"],
-                    "is_winning": win,
-                    "outcome": trade["outcome"],
-                    "execution_timestamp": trade["timestamp"],
-                    "position_size": trade["size"],
-                    "created_at": datetime.utcnow().isoformat()
+                    "signal_id": signal_id,
+                    "asset": signal_trades[0]["asset"],  # Use asset from first trade
+                    "num_times_executed": total_trades,
+                    "num_times_closed": total_trades,
+                    "total_pnl": total_pnl,
+                    "avg_pnl_per_execution": avg_pnl_per_execution,
+                    "win_count": win_count,
+                    "loss_count": loss_count,
+                    "win_rate": win_rate,
+                    "total_roi_pct": total_roi_pct,
+                    "avg_roi_per_execution": avg_roi_per_execution,
+                    "best_trade_pnl": best_trade_pnl,
+                    "worst_trade_pnl": worst_trade_pnl,
+                    "max_drawdown_pct": max_drawdown_pct,
+                    "sharpe_ratio": sharpe_ratio,
+                    "first_execution_at": first_execution_at,
+                    "last_execution_at": last_execution_at,
+                    "signal_accuracy_score": accuracy_score,
+                    "is_high_performer": is_high_performer,
+                    "is_winning": win_rate > 50,
+                    "last_updated_at": datetime.utcnow().isoformat()
                 }
                 
                 # Insert using Supabase
-                response = await self.db.supabase.table("signal_performance").insert(data).execute()
+                response = self.db.supabase.table("signal_performance").insert(data).execute()
                 self.stats["trades_inserted"] += 1
                 
                 if (i + 1) % 50 == 0:
-                    logger.info(f"  ✓ Inserted {i + 1}/{len(trades)} trades")
+                    logger.info(f"  ✓ Inserted {i + 1}/{len(signals)} signal aggregates")
                     
             except Exception as e:
-                logger.error(f"  ✗ Error inserting trade {trade['signal_id']}: {str(e)}")
+                logger.error(f"  ✗ Error inserting signal {signal_id}: {str(e)}")
                 self.stats["errors"].append(str(e))
         
-        logger.info(f"✅ Inserted {self.stats['trades_inserted']} trades")
+        logger.info(f"✅ Inserted {self.stats['trades_inserted']} signal aggregates")
     
-    async def populate_external_sources(self, sources: list):
+    def populate_external_sources(self, sources: list):
         """Update or insert external signal source rankings"""
         
         logger.info(f"\n📥 Loading {len(sources)} external sources into signal_sources table...")
@@ -99,7 +166,7 @@ class DataPopulator:
                 
                 # Try to update, if no rows affected then insert
                 try:
-                    response = await (self.db.supabase
+                    response = (self.db.supabase
                         .table("signal_sources")
                         .update(data)
                         .eq("external_source", source["external_source"])
@@ -107,10 +174,10 @@ class DataPopulator:
                     
                     if not response.data:
                         # No rows updated, insert instead
-                        await self.db.supabase.table("signal_sources").insert(data).execute()
+                        self.db.supabase.table("signal_sources").insert(data).execute()
                 except Exception:
                     # Insert on update failure
-                    await self.db.supabase.table("signal_sources").insert(data).execute()
+                    self.db.supabase.table("signal_sources").insert(data).execute()
                 
                 self.stats["sources_updated"] += 1
                 
@@ -123,7 +190,7 @@ class DataPopulator:
         
         logger.info(f"✅ Processed {self.stats['sources_updated']} sources")
     
-    async def populate_correlations(self, correlations: list):
+    def populate_correlations(self, correlations: list):
         """Insert market correlation data"""
         
         logger.info(f"\n📥 Loading {len(correlations)} correlations into market_correlations table...")
@@ -144,10 +211,10 @@ class DataPopulator:
                     "trend_strength_30d": corr["trend_strength_30d"],
                     "divergence_detected": corr["divergence_detected"],
                     "divergence_strength": corr["divergence_strength"],
-                    "computed_at": datetime.utcnow().isoformat()
+                    "last_computed_at": datetime.utcnow().isoformat()
                 }
                 
-                response = await self.db.supabase.table("market_correlations").insert(data).execute()
+                response = self.db.supabase.table("market_correlations").insert(data).execute()
                 self.stats["correlations_inserted"] += 1
                 
                 if (i + 1) % 5 == 0:
@@ -182,7 +249,7 @@ class DataPopulator:
         logger.info("="*70)
 
 
-async def main():
+def main():
     """Main function"""
     
     logger.info("\n" + "="*70)
@@ -206,9 +273,9 @@ async def main():
         populator = DataPopulator(db)
         
         logger.info("\n📥 POPULATING DATABASE")
-        await populator.populate_signal_performance(trades)
-        await populator.populate_external_sources(sources)
-        await populator.populate_correlations(correlations)
+        populator.populate_signal_performance(trades)
+        populator.populate_external_sources(sources)
+        populator.populate_correlations(correlations)
         
         # Print stats
         populator.print_stats()
@@ -219,39 +286,48 @@ async def main():
         
         # Test 1: High performers
         logger.info("\n1️⃣  High Performers (Win Rate > 60%):")
-        hp_response = await db.supabase.table("signal_performance").select(
-            "signal_id, asset, roi_pct, is_winning"
-        ).gte("roi_pct", 1).limit(5).execute()
-        
-        if hp_response.data:
-            for trade in hp_response.data:
-                logger.info(f"   {trade['signal_id']}: {trade['asset']} ROI: {trade['roi_pct']:.1f}%")
-        else:
-            logger.info("   No high performers found yet")
+        try:
+            hp_response = db.supabase.table("signal_performance").select(
+                "signal_id, asset, win_rate, is_winning"
+            ).gte("win_rate", 60).limit(5).execute()
+            
+            if hp_response.data:
+                for trade in hp_response.data:
+                    logger.info(f"   {trade['signal_id']}: {trade['asset']} Win Rate: {trade['win_rate']:.1f}%")
+            else:
+                logger.info("   No high performers found yet")
+        except Exception as e:
+            logger.error(f"❌ Error: {e}")
         
         # Test 2: Reliable sources
         logger.info("\n2️⃣  Reliable External Sources (Score > 0.7):")
-        rs_response = await db.supabase.table("signal_sources").select(
-            "external_source, reliability_score, recommendation"
-        ).gte("reliability_score", 0.7).limit(5).execute()
-        
-        if rs_response.data:
-            for source in rs_response.data:
-                logger.info(f"   {source['external_source']}: {source['recommendation']} ({source['reliability_score']:.2f})")
-        else:
-            logger.info("   No reliable sources found yet")
+        try:
+            rs_response = db.supabase.table("signal_sources").select(
+                "external_source, reliability_score, recommendation"
+            ).gte("reliability_score", 0.7).limit(5).execute()
+            
+            if rs_response.data:
+                for source in rs_response.data:
+                    logger.info(f"   {source['external_source']}: {source['recommendation']} ({source['reliability_score']:.2f})")
+            else:
+                logger.info("   No reliable sources found yet")
+        except Exception as e:
+            logger.error(f"❌ Error: {e}")
         
         # Test 3: Correlations
         logger.info("\n3️⃣  Market Correlations (Sample):")
-        corr_response = await db.supabase.table("market_correlations").select(
-            "asset1, asset2, correlation_30d, divergence_detected"
-        ).limit(5).execute()
-        
-        if corr_response.data:
-            for corr in corr_response.data:
-                logger.info(f"   {corr['asset1']}/{corr['asset2']}: {corr['correlation_30d']:.2f} (Divergence: {corr['divergence_detected']})")
-        else:
-            logger.info("   No correlations found yet")
+        try:
+            corr_response = db.supabase.table("market_correlations").select(
+                "asset1, asset2, correlation_30d, divergence_detected"
+            ).limit(5).execute()
+            
+            if corr_response.data:
+                for corr in corr_response.data:
+                    logger.info(f"   {corr['asset1']}/{corr['asset2']}: {corr['correlation_30d']:.2f} (Divergence: {corr['divergence_detected']})")
+            else:
+                logger.info("   No correlations found yet")
+        except Exception as e:
+            logger.error(f"❌ Error: {e}")
         
         logger.info("\n" + "="*70)
         logger.info("✨ Data population complete!")
@@ -264,4 +340,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

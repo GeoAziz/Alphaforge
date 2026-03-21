@@ -232,8 +232,7 @@ POSTHOG_HOST
 
 ### Existing (already configured)
 ```env
-NEXT_PUBLIC_API_URL  # Already: https://9205-102-215-79-114.ngrok-free.app
-```
+NEXT_PUBLIC_API_URL  # Already: https://435c-102-215-79-114.ngrok-free.app```
 
 ---
 
