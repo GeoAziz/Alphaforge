@@ -155,8 +155,8 @@ def check_services():
         print_info("Importing FastAPI application...")
         # Don't actually import main.py as it will try to start
         # Just check imports
-        from services.signal_aggregator_v2 import SignalAggregator
-        from services.market_data_v2 import MarketDataService
+        from services.signal_aggregator import SignalAggregator
+        from services.market_data import MarketDataService
         from services.paper_trading import PaperTradingEngine
         from services.kyc_service import KYCService
         

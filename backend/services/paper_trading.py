@@ -450,11 +450,14 @@ class PaperTradingEngine:
                     "gate_start": paper_data.get("gate_start"),
                     "gate_end": paper_data.get("gate_end"),
                 },
-                "merkle_root": hashlib.sha256(
+                # Content-addressed audit hash for this signal record. This is a
+                # local integrity hash, NOT a blockchain anchor — on-chain proof
+                # anchoring is a Phase 4+ feature per the PRD and is not implemented.
+                # Do not claim immutability or on-chain verification until it is.
+                "audit_hash": hashlib.sha256(
                     f"{signal_id}:{signal.get('created_at', '')}".encode()
                 ).hexdigest(),
-                "blockchain_anchor": f"0x{hashlib.sha256(signal_id.encode()).hexdigest()[:64]}",
-                "immutable": True,
+                "blockchain_anchored": False,
             }
 
             return {"success": True, "proof": proof_data}

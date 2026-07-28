@@ -38,7 +38,18 @@ yarn-error.log*
 next-env.d.ts
 
 .genkit/*
-.env*
+
+# Environment files (secrets) — never commit
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+
+# Firebase service account keys
+serviceAccountKey.json
+**/serviceAccountKey.json
 
 # firebase
 firebase-debug.log

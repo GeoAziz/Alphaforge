@@ -133,14 +133,16 @@ class UserProfile(UserProfileBase):
 
 class MarketTicker(BaseModel):
     symbol: str
-    name: Optional[str] = None
-    last_price: float
+    price: float
     bid_price: Optional[float] = None
     ask_price: Optional[float] = None
     change_24h: float
     change_24h_pct: float
     volume_24h: Optional[float] = None
     market_cap: Optional[float] = None
+    high_24h: Optional[float] = None
+    low_24h: Optional[float] = None
+    source: Optional[str] = None
     timestamp: datetime
 
 

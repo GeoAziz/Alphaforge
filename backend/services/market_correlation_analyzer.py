@@ -212,7 +212,7 @@ class MarketCorrelationAnalyzer:
             correlation = np.corrcoef(returns1, returns2)[0, 1]
             # Handle NaN from corrcoef
             return float(correlation) if not np.isnan(correlation) else 0.0
-        except:
+        except (IndexError, ValueError, TypeError):
             return 0.0
     
     @staticmethod

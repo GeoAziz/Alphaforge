@@ -81,7 +81,7 @@ export function SignalCard({ signal, onClick, isSelected, className }: SignalCar
                 <div className="text-xs font-mono font-bold">1:{signal.riskRewardRatio}</div>
               </div>
               <div className="flex items-center justify-end md:col-span-2 gap-4">
-                {signal.pnlPercent !== null && (
+                {signal.pnlPercent != null && (
                   <div className={cn(
                     "text-xs font-black font-mono flex items-center gap-1",
                     signal.pnlPercent >= 0 ? "text-green" : "text-red"

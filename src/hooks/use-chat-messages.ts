@@ -2,32 +2,28 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { ChatMessage, ChatAction } from '@/lib/types';
+import { api } from '@/lib/api';
+import { useUser } from '@/firebase';
 
 /**
- * useChatMessages - Manages institutional AI chat state and simulated streaming.
+ * useChatMessages - Manages AlphaAI chat state, backed by the real
+ * /api/chat/* endpoints (backend/services/chat_service.py). History is
+ * loaded from the server per-user; nothing is generated client-side.
  */
 export function useChatMessages() {
+  const { user } = useUser();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
 
-  // Load history from localStorage on mount
+  // Load real history from the backend once we know who the user is.
   useEffect(() => {
-    const saved = localStorage.getItem('af_chat_history');
-    if (saved) {
-      try {
-        setMessages(JSON.parse(saved));
-      } catch (e) {
-        console.error('Failed to parse chat history');
-      }
-    }
-  }, []);
-
-  // Save history on change
-  useEffect(() => {
-    if (messages.length > 0) {
-      localStorage.setItem('af_chat_history', JSON.stringify(messages.slice(-50)));
-    }
-  }, [messages]);
+    if (!user?.uid || historyLoaded) return;
+    api.chat.getHistory(user.uid)
+      .then(setMessages)
+      .catch((e) => console.error('Failed to load chat history:', e))
+      .finally(() => setHistoryLoaded(true));
+  }, [user?.uid, historyLoaded]);
 
   const addMessage = useCallback((role: 'user' | 'assistant', content: string, actions?: ChatAction[]) => {
     const newMessage: ChatMessage = {
@@ -42,47 +38,42 @@ export function useChatMessages() {
   }, []);
 
   const streamResponse = useCallback(async (question: string) => {
+    if (!user?.uid) {
+      addMessage('assistant', 'You need to be signed in to chat with AlphaAI.');
+      return;
+    }
+
     setIsLoading(true);
-    
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 800));
+    try {
+      const result = await api.chat.sendMessage({ user_id: user.uid, message: question });
+      const responseText = result.ai_response || "Sorry, I couldn't generate a response.";
 
-    // Simple response logic for Phase 1 Mock
-    let responseText = "";
-    let actions: ChatAction[] = [];
-
-    if (question.toLowerCase().includes('signal')) {
-      responseText = "Analyzing recent signals... I've detected a high-confidence Momentum Breakout on BTCUSDT. The pattern has a 72% historical win rate. Would you like to view the full rational?";
-      actions = [{ label: 'View Signal', type: 'view_signal', targetId: 'sig-1' }];
-    } else if (question.toLowerCase().includes('risk') || question.toLowerCase().includes('exposure')) {
-      responseText = "Your current portfolio risk score is 6.8 (Medium-High). You have 3 open positions with a combined margin utilization of 28%. I recommend reviewing your stop-loss levels for SOLUSDT.";
-      actions = [{ label: 'Risk Settings', type: 'link', url: '/settings' }];
-    } else {
-      responseText = "I am AlphaAI, your institutional trading assistant. I can analyze signals, check portfolio risk, or explain strategy logic. How can I assist your terminal session today?";
+      // Character-reveal the real response for the existing terminal-typing feel.
+      const assistantMsg = addMessage('assistant', '');
+      let currentText = '';
+      for (let i = 0; i < responseText.length; i++) {
+        currentText += responseText[i];
+        setMessages(prev => {
+          const last = prev[prev.length - 1];
+          if (last && last.id === assistantMsg.id) {
+            return [...prev.slice(0, -1), { ...last, content: currentText }];
+          }
+          return prev;
+        });
+        await new Promise(resolve => setTimeout(resolve, 8));
+      }
+    } catch (e) {
+      console.error('Chat message failed:', e);
+      addMessage('assistant', 'AlphaAI is temporarily unavailable. Please try again shortly.');
+    } finally {
+      setIsLoading(false);
     }
-
-    // "Streaming" the response
-    const assistantMsg = addMessage('assistant', "", actions);
-    let currentText = "";
-    
-    for (let i = 0; i < responseText.length; i++) {
-      currentText += responseText[i];
-      setMessages(prev => {
-        const last = prev[prev.length - 1];
-        if (last && last.id === assistantMsg.id) {
-          return [...prev.slice(0, -1), { ...last, content: currentText }];
-        }
-        return prev;
-      });
-      await new Promise(resolve => setTimeout(resolve, 15)); // character streaming speed
-    }
-
-    setIsLoading(false);
-  }, [addMessage]);
+  }, [user?.uid, addMessage]);
 
   const clearChat = useCallback(() => {
+    // Clears the local view only — server-side history is the source of
+    // truth and is intentionally not deleted from here (audit trail).
     setMessages([]);
-    localStorage.removeItem('af_chat_history');
   }, []);
 
   return { messages, isLoading, addMessage, streamResponse, clearChat };

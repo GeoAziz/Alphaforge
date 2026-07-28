@@ -30,7 +30,8 @@ class MigrationManager:
         'creator_profiles', 'creator_strategies', 'strategy_subscriptions',
         'kyc_verifications', 'audit_logs', 'external_signals',
         'external_signal_rules', 'api_keys', 'backtests',
-        'chat_messages', 'notifications', 'user_risk_settings', 'strategies'
+        'chat_messages', 'notifications', 'user_risk_settings', 'strategies',
+        'user_strategies', 'strategy_templates'
     ]
     
     # Recommendation tables that must exist after Phase 2

@@ -698,6 +698,7 @@ export interface PaperTradeResult {
   winRate: number
   roi: number
   maxDrawdown: number
+  sharpeRatio: number
   vsBacktestDelta: number           // win rate deviation from backtest claim
   passed: boolean
   completedAt: string
@@ -800,20 +801,8 @@ export interface UserProfile {
   riskTolerance: 'conservative' | 'balanced' | 'aggressive'
   connectedExchanges: ConnectedExchange[]
   onboardingComplete: boolean
-}
-
-// ── User ──
-
-export interface UserProfile {
-  id: string
-  name: string
-  email: string
-  plan: 'free' | 'basic' | 'pro' | 'vip'
-  riskTolerance: 'conservative' | 'balanced' | 'aggressive'
-  connectedExchanges: ConnectedExchange[]
-  onboardingComplete: boolean
-  kycStatus?: KycStatus               // NEW: KYC/AML verification status
-  riskScoreData?: PortfolioRiskScore  // NEW: portfolio risk calculation
+  kycStatus?: KycStatus
+  riskScoreData?: PortfolioRiskScore
 }
 
 // ── KYC / AML ──
@@ -838,21 +827,6 @@ export interface PortfolioRiskScore {
   volatilityRisk: number
   breakdown: string               // human-readable summary
   updatedAt: string
-}
-
-// ── Paper Trading ──
-
-export interface PaperTradeResult {
-  strategyId: string
-  duration: number                  // days
-  signalCount: number
-  winRate: number
-  roi: number
-  maxDrawdown: number
-  sharpeRatio: number              // NEW: actual Sharpe achieved
-  vsBacktestDelta: number           // win rate deviation from backtest claim
-  passed: boolean
-  completedAt: string
 }
 
 // ── Marketplace Pricing ──

@@ -16,7 +16,7 @@ This guide shows how to integrate the newly created backend features into your A
 ### Step 1: Generate Historical Data
 
 ```bash
-cd /home/devmahnx/Dev/alphaforge/backend
+cd backend
 python generate_historical_data.py
 ```
 

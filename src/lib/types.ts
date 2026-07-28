@@ -117,6 +117,7 @@ export interface LiquidationCluster {
   asset: string;
   value: number;
   type: 'long' | 'short';
+  estimated?: boolean;
 }
 
 export interface Strategy {
@@ -209,6 +210,7 @@ export interface MarketplaceStrategy {
   winRate: number;
   roi: number;
   maxDrawdown: number;
+  sharpeRatio: number;
   subscribers: number;
   riskLevel: RiskLevel;
   monthlyPrice: number;
@@ -235,7 +237,7 @@ export interface Signal {
   createdAt: string;
   closedAt?: string;
   pnlPercent?: number;
-  drivers: string[];
+  drivers: SignalDriver[];
 }
 
 export interface SignalDriver {
@@ -277,8 +279,8 @@ export interface ModelPerformance {
   id: string;
   modelName: string;
   accuracy: number;
-  latency: number;
-  uptime: number;
+  latency: number | null;
+  uptime: number | null;
   lastTraining: string;
 }
 
@@ -387,6 +389,15 @@ export interface WebhookEvent {
   matchedSignalId?: string;
 }
 
+export interface EducationContent {
+  content_id: string;
+  title: string;
+  category: string;
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  content: string;
+  created_at: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
@@ -400,4 +411,21 @@ export interface ChatAction {
   type: 'copy_strategy' | 'view_backtest' | 'view_signal' | 'trade' | 'link';
   targetId?: string;
   url?: string;
+}
+
+export interface MonitoringStats {
+  system_stats: {
+    total_requests: number;
+    total_errors: number;
+    error_rate_pct: number;
+    avg_response_time_ms: number;
+    most_problematic_endpoint: string;
+  };
+  endpoints: Record<string, {
+    total_calls: number;
+    success_calls: number;
+    error_calls: number;
+    response_times: { min_ms: number; max_ms: number; avg_ms: number };
+    error_rate_pct: number;
+  }>;
 }

@@ -109,7 +109,7 @@ export default function ProofDetailPage({ params }: { params: Promise<{ id: stri
                   {signal.drivers.map((d, i) => (
                     <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-elevated/20 border border-border-subtle">
                       <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                      <span className="text-[11px] font-bold text-text-secondary uppercase">{d}</span>
+                      <span className="text-[11px] font-bold text-text-secondary uppercase">{d.label}</span>
                     </div>
                   ))}
                 </div>

@@ -9,7 +9,7 @@ import { IngestionRulesPanel } from '@/components/external-signals/ingestion-rul
 import { ExternalSignalFeed } from '@/components/external-signals/external-signal-feed';
 import { WebhookHistory } from '@/components/external-signals/webhook-history';
 import { SpotlightCard } from '@/components/shared/spotlight-card';
-import { Zap, Share2, ShieldAlert } from 'lucide-react';
+import { Zap, Share2, ShieldAlert, AlertCircle } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function ExternalSignalsPage() {
@@ -18,6 +18,7 @@ export default function ExternalSignalsPage() {
   const [events, setEvents] = useState<WebhookEvent[]>([]);
   const [rule, setRule] = useState<SignalIngestionRule | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -29,6 +30,9 @@ export default function ExternalSignalsPage() {
         setSignals(s);
         setEvents(e);
         setRule(r);
+        setIsLoading(false);
+      }).catch(err => {
+        setError(err.message || 'Failed to load external signals');
         setIsLoading(false);
       });
     }
@@ -54,6 +58,16 @@ export default function ExternalSignalsPage() {
         <h1 className="text-3xl font-black tracking-tight uppercase leading-none">External Intelligence</h1>
         <p className="text-muted-foreground text-sm font-medium">Bridge TradingView alerts and third-party algorithmic nodes into AlphaForge execution.</p>
       </header>
+
+      {error && (
+        <div className="p-4 rounded-xl bg-red/10 border border-red/20 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <AlertCircle size={16} className="text-red shrink-0" />
+            <span className="text-xs font-bold text-red">{error}</span>
+          </div>
+          <button onClick={() => { window.location.reload(); }} className="text-[10px] font-black uppercase text-red hover:text-red/80 transition-colors">Retry</button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-8">
         {/* Setup Guide */}

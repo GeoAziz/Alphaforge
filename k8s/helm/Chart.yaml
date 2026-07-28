@@ -1,0 +1,19 @@
+apiVersion: v2
+name: alphaforge
+description: AlphaForge - AI-Powered Trading Signals Platform
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - trading
+  - signals
+  - crypto
+  - ai
+  - machine-learning
+maintainers:
+  - name: AlphaForge Team
+    email: team@alphaforge.app
+home: https://alphaforge.app
+icon: https://alphaforge.app/icon.png
+sources:
+  - https://github.com/alphaforge/alphaforge

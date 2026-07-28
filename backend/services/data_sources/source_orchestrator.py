@@ -11,6 +11,7 @@ from .base_source import BaseDataSource
 from .binance_source import BinanceDataSource
 from .coingecko_source import CoinGeckoDataSource
 from .polygon_source import PolygonDataSource
+from .exchange_adapters import BybitDataSource, OKXDataSource, BitgetDataSource
 
 
 class DataSourceOrchestrator:
@@ -19,19 +20,19 @@ class DataSourceOrchestrator:
     
     Strategy:
     1. Try primary source (Binance for crypto)
-    2. If fails or rate limited, try secondary (CoinGecko)
-    3. If both fail, return cached/fallback data
+    2. If fails or rate limited, try secondary exchanges (Bybit, OKX, Bitget)
+    3. If all fail, try CoinGecko as last resort
     """
     
-    def __init__(self, enable_polygon: bool = False):
+    def __init__(self, enable_polygon: bool = False, enable_exchanges: bool = True):
         self.sources: Dict[str, BaseDataSource] = {}
         self.source_priority = []
         self.asset_type_routing = {}  # Route assets to best source
         
         # Initialize sources
-        self._init_sources(enable_polygon)
+        self._init_sources(enable_polygon, enable_exchanges)
     
-    def _init_sources(self, enable_polygon: bool = False):
+    def _init_sources(self, enable_polygon: bool = False, enable_exchanges: bool = True):
         """Initialize all data sources."""
         # Binance (best for crypto)
         self.sources["binance"] = BinanceDataSource()
@@ -39,19 +40,31 @@ class DataSourceOrchestrator:
         # CoinGecko (robust fallback for crypto)
         self.sources["coingecko"] = CoinGeckoDataSource()
         
+        # Exchange fallback sources
+        if enable_exchanges:
+            self.sources["bybit"] = BybitDataSource()
+            self.sources["okx"] = OKXDataSource()
+            self.sources["bitget"] = BitgetDataSource()
+        
         # Polygon (for stocks/forex)
         if enable_polygon:
             self.sources["polygon"] = PolygonDataSource()
         
-        # Set default priority: Binance > CoinGecko > Polygon
+        # Set default priority: Binance > Bybit > OKX > Bitget > CoinGecko > Polygon
         self.source_priority = ["binance", "coingecko"]
+        if enable_exchanges:
+            self.source_priority = ["binance", "bybit", "okx", "bitget", "coingecko"]
         if enable_polygon:
             self.source_priority.append("polygon")
         
-        # Route crypto to Binance, fallback to CoinGecko
+        # Route crypto to Binance, fallback to exchange sources then CoinGecko
         crypto_symbols = ["BTC", "ETH", "SOL", "BNB", "XRP", "ADA", "DOGE", "AVAX", "DOT"]
-        for symbol in crypto_symbols:
-            self.asset_type_routing[symbol] = ["binance", "coingecko"]
+        if enable_exchanges:
+            for symbol in crypto_symbols:
+                self.asset_type_routing[symbol] = ["binance", "bybit", "okx", "bitget", "coingecko"]
+        else:
+            for symbol in crypto_symbols:
+                self.asset_type_routing[symbol] = ["binance", "coingecko"]
     
     async def fetch_ticker(self, symbol: str) -> Optional[Dict[str, Any]]:
         """

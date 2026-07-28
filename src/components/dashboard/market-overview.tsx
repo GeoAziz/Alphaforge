@@ -9,17 +9,21 @@ import { DataQualityIndicator } from '@/components/shared/data-quality-indicator
 // import { collection, query, limit } from 'firebase/firestore';
 import { api } from '@/lib/api';
 import { MarketTicker } from '@/lib/types';
-import { Activity, ArrowUpRight, ArrowDownRight, Database } from 'lucide-react';
+import { Activity, ArrowUpRight, ArrowDownRight, Database, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export function MarketOverview() {
   const [tickers, setTickers] = useState<MarketTicker[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     api.market.getTickers().then(data => {
       setTickers(data.slice(0, 3));
+      setIsLoading(false);
+    }).catch(err => {
+      setError(err.message || 'Failed to load market data');
       setIsLoading(false);
     });
   }, []);
@@ -43,7 +47,15 @@ export function MarketOverview() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {isLoading ? (
+        {error ? (
+          <div className="col-span-3 p-4 rounded-xl bg-red/10 border border-red/20 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <AlertCircle size={14} className="text-red shrink-0" />
+              <span className="text-[10px] font-bold text-red">{error}</span>
+            </div>
+            <button onClick={() => { setError(null); setIsLoading(true); api.market.getTickers().then(d => { setTickers(d.slice(0, 3)); setIsLoading(false); }).catch(e => { setError(e.message || 'Failed to load'); setIsLoading(false); }); }} className="text-[10px] font-black uppercase text-red hover:text-red/80">Retry</button>
+          </div>
+        ) : isLoading ? (
           Array(3).fill(0).map((_, i) => (
             <div key={i} className="space-y-2">
               <Skeleton className="h-4 w-16" />

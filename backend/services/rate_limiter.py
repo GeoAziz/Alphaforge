@@ -4,6 +4,7 @@ Implements per-user and per-endpoint rate limiting to prevent abuse
 """
 
 import logging
+import os
 from datetime import datetime, timedelta
 from typing import Dict, Optional, Tuple
 from collections import defaultdict
@@ -161,16 +162,17 @@ class AdaptiveRateLimiter(RateLimiter):
 
 class RateLimitingMiddleware:
     """ASGI middleware for rate limiting"""
-    
+
     def __init__(self, app, rate_limiter: Optional[RateLimiter] = None):
         self.app = app
         self.rate_limiter = rate_limiter or AdaptiveRateLimiter()
-    
+        self.enabled = os.getenv("RATE_LIMIT_ENABLED", "true").lower() == "true"
+
     async def __call__(self, scope, receive, send):
-        if scope["type"] != "http":
+        if scope["type"] != "http" or not self.enabled:
             await self.app(scope, receive, send)
             return
-        
+
         # Get user ID from headers or use IP
         headers = dict(scope.get("headers", []))
         user_id = headers.get(b"x-user-id", headers.get(b"authorization", b"anonymous")).decode()[:50]

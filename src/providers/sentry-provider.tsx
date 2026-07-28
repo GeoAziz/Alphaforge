@@ -26,16 +26,6 @@ export function initSentry() {
       process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
     release: process.env.NEXT_PUBLIC_APP_VERSION,
 
-    // Session replay
-    integrations: [
-      new Sentry.Replay({
-        maskAllText: true,
-        blockAllMedia: true,
-      }),
-    ],
-    replaysSessionSampleRate: 0.1,
-    replaysOnErrorSampleRate: 1.0,
-
     // Ignore certain errors
     beforeSend(event, hint) {
       // Ignore network errors (they're usually not actionable)
@@ -84,7 +74,7 @@ export const errorTracking = {
    * Capture an exception
    */
   captureException: (error: Error, context?: Record<string, any>) => {
-    Sentry.withScope((scope) => {
+    Sentry.withScope((scope: Sentry.Scope) => {
       if (context) {
         Object.entries(context).forEach(([key, value]) => {
           scope.setContext(key, { value });
@@ -149,13 +139,13 @@ export const errorTracking = {
   },
 
   /**
-   * Start a transaction (for performance monitoring)
+   * Start a span (for performance monitoring)
    */
-  startTransaction: (name: string, op?: string) => {
-    return Sentry.startTransaction({
+  startSpan: (name: string, op?: string) => {
+    return Sentry.startSpan({
       name,
       op: op || 'http.request',
-    });
+    }, () => {});
   },
 };
 

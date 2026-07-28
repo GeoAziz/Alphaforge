@@ -396,7 +396,7 @@ pip install -r requirements.txt
 
 - **Setup Guide:** See `BACKEND_SETUP_GUIDE.md`
 - **API Docs:** http://localhost:8000/docs (Swagger UI)
-- **System Design:** See [main system design doc](../docs/alpharorge_system_design.md)
+- **System Design:** See [main system design doc](../docs/alphaforge_system_design.md)
 - **Microservices Arch:** See [architecture doc](../docs/alphaforge_microservices_architecture.md)
 
 ---

@@ -10,6 +10,7 @@ import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SpotlightCard } from '@/components/shared/spotlight-card';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface BacktestFormProps {
   strategies: Strategy[] | null;
@@ -38,6 +39,9 @@ export function BacktestForm({ strategies, onRun, isLoading }: BacktestFormProps
           
           <div className="space-y-2">
             <Label className="text-[10px] font-black uppercase text-text-muted">Algorithm Selection</Label>
+            {isLoading ? (
+              <Skeleton className="h-12 w-full rounded-xl" />
+            ) : (
             <Select onValueChange={setSelectedStrategy}>
               <SelectTrigger className="bg-elevated/50 border-border-subtle h-12 text-xs font-bold uppercase">
                 <SelectValue placeholder="Select Strategy Cluster" />
@@ -49,6 +53,7 @@ export function BacktestForm({ strategies, onRun, isLoading }: BacktestFormProps
                 <SelectItem value="default" className="font-bold text-text-muted italic text-[10px]">Momentum Alpha Core</SelectItem>
               </SelectContent>
             </Select>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">

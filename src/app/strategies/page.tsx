@@ -10,16 +10,21 @@ import { SpotlightCard } from '@/components/shared/spotlight-card';
 import { StrategyDetailPanel } from '@/components/strategies/strategy-detail-panel';
 import { StrategyGrid } from '@/components/strategies/strategy-grid';
 import { Strategy } from '@/lib/types';
+import { AlertCircle } from 'lucide-react';
 
 export default function StrategiesPage() {
   const { user } = useUser();
   const [strategies, setStrategies] = useState<Strategy[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedStrategy, setSelectedStrategy] = useState<Strategy | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     api.strategies.getUserStrategies(user?.uid || 'mock-user-001').then(data => {
       setStrategies(data);
+      setIsLoading(false);
+    }).catch(err => {
+      setError(err.message || 'Failed to load strategies');
       setIsLoading(false);
     });
   }, [user]);
@@ -41,6 +46,16 @@ export default function StrategiesPage() {
         <h1 className="text-3xl font-black tracking-tight uppercase">Core Strategies</h1>
         <p className="text-muted-foreground text-sm">Proprietary algorithmic engines driving AlphaForge intelligence.</p>
       </header>
+
+      {error && (
+        <div className="p-4 rounded-xl bg-red/10 border border-red/20 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <AlertCircle size={16} className="text-red shrink-0" />
+            <span className="text-xs font-bold text-red">{error}</span>
+          </div>
+          <button onClick={() => { setError(null); setIsLoading(true); api.strategies.getUserStrategies(user?.uid || 'mock-user-001').then(d => { setStrategies(d); setIsLoading(false); }).catch(e => { setError(e.message || 'Failed to load'); setIsLoading(false); }); }} className="text-[10px] font-black uppercase text-red hover:text-red/80 transition-colors">Retry</button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         <StrategyGrid 

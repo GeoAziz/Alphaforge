@@ -19,6 +19,7 @@ import { QuickAlerts } from '@/components/dashboard/quick-alerts';
 import { RecentSignals } from '@/components/dashboard/recent-signals';
 import { PortfolioSummary } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import { AlertCircle } from 'lucide-react';
 
 export default function DashboardPage() {
   const { user } = useUser();
@@ -28,6 +29,7 @@ export default function DashboardPage() {
   const [mounted, setMounted] = useState(false);
   const [summary, setSummary] = useState<PortfolioSummary | null>(null);
   const [isSummaryLoading, setIsSummaryLoading] = useState(true);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -43,6 +45,7 @@ export default function DashboardPage() {
       setIsSummaryLoading(false);
     }).catch(error => {
       console.error('Failed to load portfolio summary:', error);
+      setSummaryError(error.message || 'Failed to load portfolio data');
       setIsSummaryLoading(false);
     });
   }, [user?.uid, analytics]);
@@ -60,6 +63,16 @@ export default function DashboardPage() {
           {(!marketConnected || !signalsConnected) && <span className="text-amber-600"> • Connecting...</span>}
         </p>
       </header>
+
+      {summaryError && (
+        <div className="p-4 rounded-xl bg-red/10 border border-red/20 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <AlertCircle size={16} className="text-red shrink-0" />
+            <span className="text-xs font-bold text-red">{summaryError}</span>
+          </div>
+          <button onClick={() => { setSummaryError(null); setIsSummaryLoading(true); api.portfolio.getSummary(user?.uid || 'demo-user-001').then(d => { setSummary(d); setIsSummaryLoading(false); }).catch(e => { setSummaryError(e.message || 'Failed to load'); setIsSummaryLoading(false); }); }} className="text-[10px] font-black uppercase text-red hover:text-red/80 transition-colors">Retry</button>
+        </div>
+      )}
 
       {/* Institutional 12-Column Asymmetric Bento Grid */}
       <div className="grid grid-cols-12 gap-6 auto-rows-[minmax(180px,auto)]">

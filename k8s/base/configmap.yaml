@@ -1,0 +1,34 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alphaforge-config
+  namespace: alphaforge
+  labels:
+    app.kubernetes.io/name: alphaforge
+data:
+  API_ENV: "production"
+  LOG_LEVEL: "INFO"
+  CACHE_BACKEND: "redis"
+  REDIS_HOST: "redis-master.alphaforge.svc.cluster.local"
+  REDIS_PORT: "6379"
+  KAFKA_BOOTSTRAP_SERVERS: "kafka.alphaforge.svc.cluster.local:9092"
+  CLICKHOUSE_HOST: "clickhouse.alphaforge.svc.cluster.local"
+  CLICKHOUSE_PORT: "8123"
+  RATE_LIMIT_ENABLED: "true"
+  RATE_LIMIT_WINDOW_SECONDS: "60"
+  RATE_LIMIT_MAX_REQUESTS: "120"
+  SECURITY_HEADERS_ENABLED: "true"
+  ENABLE_PERFORMANCE_MONITORING: "true"
+  ENABLE_ERROR_TRACKING: "true"
+  ENABLE_MULTI_TIMEFRAME_SIGNALS: "true"
+  ENABLE_SENTIMENT_ANALYSIS: "true"
+  ENABLE_NEWS_DRIVEN_SIGNALS: "true"
+  ENABLE_ML_SIGNAL_RETRAINING: "true"
+  MAX_SIGNAL_CONFIDENCE: "0.5"
+  RSI_PERIOD: "14"
+  MACD_FAST: "12"
+  MACD_SLOW: "26"
+  MACD_SIGNAL: "9"
+  BB_PERIOD: "20"
+  BB_STD_DEV: "2.0"
+  REQUIRED_DB_TABLES: "users,signals,paper_trades,positions,portfolios,creator_profiles,kyc_verifications,audit_logs,external_signals,api_keys,strategies,creator_strategies,strategy_subscriptions,strategy_paper_trades,backtests,chat_messages,notifications,user_risk_settings,external_signal_rules,user_strategies,strategy_templates"

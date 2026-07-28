@@ -164,7 +164,7 @@ class BinanceDataSource(BaseDataSource):
             self.rate_limit_remaining = int(headers.get("X-MBX-USED-WEIGHT-1M", 0))
             if self.rate_limit_remaining > 1200:
                 self.rate_limit_remaining = 1200
-        except:
+        except (ValueError, TypeError):
             pass
     
     async def close(self):

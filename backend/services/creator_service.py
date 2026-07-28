@@ -229,7 +229,7 @@ class CreatorVerificationService:
             if response.data:
                 stage = response.data[0].get("verification_stage")
                 return self.STAGES.index(stage) + 1 if stage in self.STAGES else 1
-        except:
+        except (IndexError, KeyError, ValueError):
             pass
-        
+
         return 1

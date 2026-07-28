@@ -2,29 +2,27 @@
 
 import { useState, useEffect } from 'react';
 import { useUser } from '@/firebase';
-import { useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
-import { collection, doc, query, limit } from 'firebase/firestore';
 import { api } from '@/lib/api';
 import {
   mockTrendIndicators,
   mockSocialSentimentDetails,
-  mockOnChainMetricDetails
 } from '@/data/mock-market-data';
 import { SpotlightCard } from '@/components/shared/spotlight-card';
 import { generateMarketInsights, MarketInsightsOutput } from '@/ai/flows/market-insights-flow';
-import { 
-  MarketTicker, 
-  MarketSentiment, 
-  FundingRate, 
-  OpenInterest, 
+import {
+  MarketTicker,
+  MarketSentiment,
+  FundingRate,
+  OpenInterest,
   TrendIndicator,
   SocialSentimentDetail,
-  OnChainMetricDetail,
+  OnChainActivity,
+  LiquidationCluster,
   MarketDataQuality
 } from '@/lib/types';
 import { 
   TrendingUp, Brain, ArrowUpRight, ArrowDownRight, Loader2, Zap, 
-  ShieldCheck, Gauge, AlertCircle, DollarSign, Waves, MessageSquare, Database, Network
+  ShieldCheck, Gauge, AlertCircle, DollarSign, Waves, MessageSquare, Database, Network, RefreshCw
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -80,17 +78,21 @@ export default function MarketIntelligencePage() {
   const [aiInsights, setAiInsights] = useState<MarketInsightsOutput | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
 
-  // Mock data state (replaces 8 Firestore queries)
   const [tickers, setTickers] = useState<MarketTicker[]>([]);
   const [sentiment, setSentiment] = useState<MarketSentiment | null>(null);
   const [fundingRates, setFundingRates] = useState<FundingRate[]>([]);
   const [openInterest, setOpenInterest] = useState<OpenInterest[]>([]);
   const [quality, setQuality] = useState<MarketDataQuality[]>([]);
+  const [onChainActivity, setOnChainActivity] = useState<OnChainActivity[]>([]);
+  const [metrics, setMetrics] = useState<OnChainMetricDetail[]>([]);
+  const [liquidationClusters, setLiquidationClusters] = useState<LiquidationCluster[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // These come from mock data directly (not in api.ts yet)
+  // No live source yet for trend-strength (MA crossover) or social-sentiment
+  // source-breakdown data — illustrative demo data only, not live feeds.
   const trends: TrendIndicator[] = mockTrendIndicators;
   const social: SocialSentimentDetail[] = mockSocialSentimentDetails;
-  const metrics: OnChainMetricDetail[] = mockOnChainMetricDetails;
 
   useEffect(() => {
     Promise.all([
@@ -99,22 +101,30 @@ export default function MarketIntelligencePage() {
       api.market.getFundingRates(),
       api.market.getOpenInterest(),
       api.market.getDataQuality(),
-    ]).then(([t, s, f, o, q]) => {
+      api.market.getOnChainActivity(),
+      api.market.getOnChainMetrics(),
+      api.market.getLiquidationClusters(),
+    ]).then(([t, s, f, o, q, activity, onChainMetrics, liq]) => {
       setTickers(t);
       setSentiment(s);
       setFundingRates(f);
       setOpenInterest(o);
       setQuality(q);
+      setOnChainActivity(activity);
+      setMetrics(onChainMetrics);
+      setLiquidationClusters(liq);
+      setIsLoading(false);
+    }).catch(err => {
+      setError(err.message || 'Failed to load market data');
+      setIsLoading(false);
     });
   }, []);
 
-  const liquidationData = [
-    { name: 'BTC Longs', size: 45, type: 'long' },
-    { name: 'ETH Shorts', size: 25, type: 'short' },
-    { name: 'SOL Longs', size: 15, type: 'long' },
-    { name: 'PEPE Longs', size: 10, type: 'long' },
-    { name: 'ARB Shorts', size: 5, type: 'short' },
-  ];
+  const liquidationData = liquidationClusters.map(c => ({
+    name: `${c.asset} ${c.type === 'long' ? 'Longs' : 'Shorts'}`,
+    size: c.value,
+    type: c.type,
+  }));
 
   async function handleGenerateInsights() {
     if (!tickers || !sentiment) return;
@@ -153,6 +163,27 @@ export default function MarketIntelligencePage() {
         <p className="text-muted-foreground text-sm">Real-time institutional data streams and AI-augmented trend synthesis.</p>
       </header>
 
+      {error && (
+        <div className="p-4 rounded-xl bg-red/10 border border-red/20 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <AlertCircle size={16} className="text-red shrink-0" />
+            <span className="text-xs font-bold text-red">{error}</span>
+          </div>
+          <button onClick={() => { setError(null); setIsLoading(true); Promise.all([api.market.getTickers(), api.market.getSentiment(), api.market.getFundingRates(), api.market.getOpenInterest(), api.market.getDataQuality()]).then(([t, s, f, o, q]) => { setTickers(t); setSentiment(s); setFundingRates(f); setOpenInterest(o); setQuality(q); setIsLoading(false); }).catch(e => { setError(e.message || 'Failed to load'); setIsLoading(false); }); }} className="text-[10px] font-black uppercase text-red hover:text-red/80 transition-colors flex items-center gap-1"><RefreshCw size={10} /> Retry</button>
+        </div>
+      )}
+
+      {isLoading ? (
+        <div className="grid grid-cols-12 gap-6">
+          <div className="col-span-12 lg:col-span-8 h-80 rounded-2xl bg-elevated/20 animate-pulse border border-border-subtle" />
+          <div className="col-span-12 lg:col-span-4 h-80 rounded-2xl bg-elevated/20 animate-pulse border border-border-subtle" />
+          <div className="col-span-12 lg:col-span-4 h-64 rounded-2xl bg-elevated/20 animate-pulse border border-border-subtle" />
+          <div className="col-span-12 lg:col-span-8 h-64 rounded-2xl bg-elevated/20 animate-pulse border border-border-subtle" />
+          <div className="col-span-12 lg:col-span-6 h-72 rounded-2xl bg-elevated/20 animate-pulse border border-border-subtle" />
+          <div className="col-span-12 lg:col-span-6 h-72 rounded-2xl bg-elevated/20 animate-pulse border border-border-subtle" />
+          <div className="col-span-12 h-64 rounded-2xl bg-elevated/20 animate-pulse border border-border-subtle" />
+        </div>
+      ) : (
       <div className="grid grid-cols-12 gap-6">
         {/* Core Asset Monitoring */}
         <SpotlightCard className="col-span-12 lg:col-span-8 p-6">
@@ -446,6 +477,7 @@ export default function MarketIntelligencePage() {
           </SpotlightCard>
         </div>
       </div>
+      )}
     </div>
   );
 }

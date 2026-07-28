@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
 import { Signal, SignalProof } from '@/lib/types';
 import { SpotlightCard } from '@/components/shared/spotlight-card';
-import { ShieldCheck, Search, Filter, ArrowRight, Database, Fingerprint, ExternalLink, Activity } from 'lucide-react';
+import { ShieldCheck, Search, Filter, ArrowRight, Database, Fingerprint, ExternalLink, Activity, AlertCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -15,10 +15,14 @@ export default function ProofCenterPage() {
   const [signals, setSignals] = useState<Signal[]>([]);
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     api.signals.getLiveSignals('public').then(data => {
       setSignals(data);
+      setIsLoading(false);
+    }).catch(err => {
+      setError(err.message || 'Failed to load signals');
       setIsLoading(false);
     });
   }, []);
@@ -46,6 +50,16 @@ export default function ProofCenterPage() {
           <Filter size={14} /> Filter Registry
         </Button>
       </div>
+
+      {error && (
+        <div className="p-4 rounded-xl bg-red/10 border border-red/20 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <AlertCircle size={16} className="text-red shrink-0" />
+            <span className="text-xs font-bold text-red">{error}</span>
+          </div>
+          <button onClick={() => { setError(null); setIsLoading(true); api.signals.getLiveSignals('public').then(d => { setSignals(d); setIsLoading(false); }).catch(e => { setError(e.message || 'Failed to load'); setIsLoading(false); }); }} className="text-[10px] font-black uppercase text-red hover:text-red/80 transition-colors">Retry</button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-4">
         {isLoading ? (

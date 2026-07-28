@@ -1,0 +1,201 @@
+# ==========================================================================
+# AlphaForge Helm Chart - values.yaml
+# ==========================================================================
+
+# Global settings
+global:
+  name: alphaforge
+  env: production
+  imageRegistry: ""
+  imagePullSecrets: []
+
+# Backend configuration
+backend:
+  replicaCount: 3
+  image:
+    repository: alphaforge-backend
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8000
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 20
+    targetCPUUtilization: 70
+    targetMemoryUtilization: 80
+  healthCheck:
+    enabled: true
+    path: /health
+    readinessPath: /ready
+    initialDelaySeconds: 15
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+# Frontend configuration
+frontend:
+  replicaCount: 2
+  image:
+    repository: alphaforge-frontend
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 3000
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: alb
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+    alb.ingress.kubernetes.io/certificate-arn: ""
+  hosts:
+    - host: api.alphaforge.app
+      paths:
+        - path: /
+          pathType: Prefix
+          serviceName: alphaforge-backend
+          servicePort: 80
+    - host: alphaforge.app
+      paths:
+        - path: /
+          pathType: Prefix
+          serviceName: alphaforge-frontend
+          servicePort: 80
+  tls: []
+
+# PostgreSQL
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: alphaforge
+    username: alphaforge
+    password: alphaforge
+    database: alphaforge
+  primary:
+    persistence:
+      enabled: true
+      size: 50Gi
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: 2000m
+        memory: 4Gi
+  readReplicas:
+    replicaCount: 2
+    persistence:
+      enabled: true
+      size: 50Gi
+
+# Redis
+redis:
+  enabled: true
+  architecture: standalone
+  auth:
+    enabled: false
+  master:
+    persistence:
+      enabled: true
+      size: 10Gi
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+
+# Kafka
+kafka:
+  enabled: true
+  controller:
+    replicaCount: 3
+    persistence:
+      enabled: true
+      size: 20Gi
+  broker:
+    replicaCount: 3
+    persistence:
+      enabled: true
+      size: 20Gi
+
+# ClickHouse
+clickhouse:
+  enabled: true
+  replicaCount: 3
+  persistence:
+    enabled: true
+    size: 100Gi
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+
+# Monitoring
+monitoring:
+  enabled: true
+  prometheus:
+    enabled: true
+    retention: 30d
+    storageSize: 50Gi
+  grafana:
+    enabled: true
+    adminPassword: alphaforge
+  jaeger:
+    enabled: true
+
+# Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  backend:
+    minAvailable: 2
+  frontend:
+    minAvailable: 1
+
+# Network Policies
+networkPolicy:
+  enabled: true
+
+# Service Account
+serviceAccount:
+  create: true
+  name: alphaforge-backend
+
+# Pod Security
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL

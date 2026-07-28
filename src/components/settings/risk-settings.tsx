@@ -4,7 +4,8 @@ import { SpotlightCard } from '@/components/shared/spotlight-card';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Slider } from '@/components/ui/slider';
-import { AlertTriangle, ShieldAlert, Zap, TrendingUp, Info } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { AlertTriangle, ShieldAlert, ShieldCheck, Zap, TrendingUp, Info, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
 import { RiskScore } from '@/lib/types';
@@ -22,13 +23,45 @@ export function RiskSettings() {
   const [positionSize, setPositionSize] = useState(2.5);
   const [maxLeverage, setMaxLeverage] = useState(5);
   const [riskScore, setRiskScore] = useState<RiskScore | null>(null);
+  const [riskScoreError, setRiskScoreError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  const handleSave = () => {
+    setIsSaving(true);
+    setSaveSuccess(false);
+    api.settings.saveRisk({
+      risk_level: riskLevel,
+      position_size: positionSize,
+      max_leverage: maxLeverage,
+    }).then(() => {
+      setSaveSuccess(true);
+      setIsSaving(false);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    }).catch(err => {
+      setRiskScoreError(err.message || 'Failed to save risk settings');
+      setIsSaving(false);
+    });
+  };
 
   useEffect(() => {
-    api.user.getRiskScore('current').then(setRiskScore);
+    api.user.getRiskScore('current').then(setRiskScore).catch(err => {
+      setRiskScoreError(err.message || 'Failed to load risk score');
+    });
   }, []);
 
   return (
     <div className="space-y-8">
+      {riskScoreError && (
+        <div className="p-4 rounded-xl bg-red/10 border border-red/20 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <AlertCircle size={16} className="text-red shrink-0" />
+            <span className="text-xs font-bold text-red">{riskScoreError}</span>
+          </div>
+          <button onClick={() => { setRiskScoreError(null); api.user.getRiskScore('current').then(setRiskScore).catch(err => { setRiskScoreError(err.message || 'Failed to load'); }); }} className="text-[10px] font-black uppercase text-red hover:text-red/80 transition-colors">Retry</button>
+        </div>
+      )}
+
       {/* Risk Score Display */}
       <SpotlightCard className="p-8 border-primary/10 bg-primary/5">
         <div className="flex items-center justify-between mb-8">
@@ -200,6 +233,21 @@ export function RiskSettings() {
             </div>
           </div>
         </SpotlightCard>
+      </div>
+
+      <div className="flex items-center justify-end gap-3">
+        {saveSuccess && (
+          <div className="flex items-center gap-2 text-green text-xs font-bold">
+            <CheckCircle2 size={14} /> Settings saved
+          </div>
+        )}
+        <Button 
+          onClick={handleSave} 
+          disabled={isSaving}
+          className="h-12 px-8 bg-primary text-primary-foreground font-black uppercase text-xs rounded-xl"
+        >
+          {isSaving ? <Loader2 className="animate-spin" size={16} /> : 'Save Risk Configuration'}
+        </Button>
       </div>
     </div>
   );

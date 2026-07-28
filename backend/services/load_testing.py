@@ -1,18 +1,46 @@
 """
-Load Testing Suite
-Comprehensive load and stress testing tools for system validation
+Load Testing Suite - §19.2 Architecture Doc
+Real HTTP load testing with aiohttp against actual endpoints.
+Supports k6/Gatling-style scenarios with configurable concurrency.
 """
 
 import logging
 import asyncio
 import time
-from typing import Dict, List, Any, Callable
+from typing import Dict, List, Any, Callable, Optional
 from dataclasses import dataclass
 from datetime import datetime
-import numpy as np
 import random
 
 logger = logging.getLogger(__name__)
+
+try:
+    import aiohttp
+    AIOHTTP_AVAILABLE = True
+except ImportError:
+    AIOHTTP_AVAILABLE = False
+
+try:
+    import numpy as np
+    NUMPY_AVAILABLE = True
+except ImportError:
+    NUMPY_AVAILABLE = False
+
+
+def _percentile(data: List[float], pct: float) -> float:
+    """Calculate percentile without numpy dependency."""
+    if not data:
+        return 0.0
+    if NUMPY_AVAILABLE:
+        return float(np.percentile(data, pct))
+    sorted_data = sorted(data)
+    k = (len(sorted_data) - 1) * (pct / 100)
+    f = int(k)
+    c = f + 1
+    if c >= len(sorted_data):
+        return sorted_data[-1]
+    d = k - f
+    return sorted_data[f] + d * (sorted_data[c] - sorted_data[f])
 
 
 @dataclass
@@ -36,7 +64,7 @@ class LoadTestResult:
 
 
 class LoadTestRunner:
-    """Execute load tests against endpoints"""
+    """Execute real HTTP load tests against endpoints (§19.2)."""
     
     def __init__(self, base_url: str = "http://localhost:8000"):
         self.base_url = base_url
@@ -49,9 +77,11 @@ class LoadTestRunner:
         num_requests: int = 100,
         concurrent_requests: int = 10,
         payload: Dict[str, Any] = None,
-        test_name: str = None
+        headers: Dict[str, str] = None,
+        test_name: str = None,
+        timeout_seconds: float = 10.0,
     ) -> LoadTestResult:
-        """Execute load test against endpoint"""
+        """Execute load test against endpoint using real HTTP requests."""
         
         if test_name is None:
             test_name = f"{method} {endpoint}"
@@ -62,30 +92,52 @@ class LoadTestRunner:
         response_times = []
         successful = 0
         failed = 0
+        status_codes = {}
         
         start_time = time.time()
         
-        # Create batches of requests
-        batches = [
-            num_requests // concurrent_requests
-            for _ in range(concurrent_requests - 1)
-        ]
-        batches.append(num_requests - sum(batches))
-        
-        for batch_size in batches:
-            tasks = [
-                self._simulate_request(endpoint, method, payload)
-                for _ in range(batch_size)
-            ]
+        if AIOHTTP_AVAILABLE:
+            # Real HTTP requests
+            connector = aiohttp.TCPConnector(limit=concurrent_requests, force_close=True)
+            timeout = aiohttp.ClientTimeout(total=timeout_seconds)
             
-            batch_results = await asyncio.gather(*tasks, return_exceptions=True)
-            
-            for result in batch_results:
-                if isinstance(result, Exception):
-                    failed += 1
-                else:
-                    response_times.append(result)
-                    successful += 1
+            async with aiohttp.ClientSession(connector=connector, timeout=timeout) as session:
+                # Create batches of requests
+                batches = [
+                    num_requests // concurrent_requests
+                    for _ in range(concurrent_requests - 1)
+                ]
+                batches.append(num_requests - sum(batches))
+                
+                for batch_size in batches:
+                    tasks = [
+                        self._make_real_request(session, endpoint, method, payload, headers)
+                        for _ in range(batch_size)
+                    ]
+                    
+                    batch_results = await asyncio.gather(*tasks, return_exceptions=True)
+                    
+                    for result in batch_results:
+                        if isinstance(result, Exception):
+                            failed += 1
+                            response_times.append(timeout_seconds * 1000)
+                        elif isinstance(result, dict):
+                            response_times.append(result["time_ms"])
+                            if result["success"]:
+                                successful += 1
+                            else:
+                                failed += 1
+                            status = result.get("status_code", 0)
+                            status_codes[status] = status_codes.get(status, 0) + 1
+                        else:
+                            failed += 1
+        else:
+            # Fallback: simulated requests
+            logger.warning("⚠️ aiohttp not installed — using simulated requests")
+            for _ in range(num_requests):
+                result = await self._simulate_request(endpoint, method, payload)
+                response_times.append(result)
+                successful += 1
         
         end_time = time.time()
         test_duration = end_time - start_time
@@ -99,13 +151,13 @@ class LoadTestRunner:
             total_requests=num_requests,
             successful_requests=successful,
             failed_requests=failed,
-            avg_response_time_ms=np.mean(response_times_sorted) if response_times_sorted else 0,
-            min_response_time_ms=np.percentile(response_times_sorted, 0),
-            max_response_time_ms=np.percentile(response_times_sorted, 100),
-            p50_response_time_ms=np.percentile(response_times_sorted, 50),
-            p95_response_time_ms=np.percentile(response_times_sorted, 95),
-            p99_response_time_ms=np.percentile(response_times_sorted, 99),
-            throughput_req_per_sec=num_requests / test_duration,
+            avg_response_time_ms=_percentile(response_times_sorted, 50) if NUMPY_AVAILABLE else (sum(response_times_sorted) / len(response_times_sorted)),
+            min_response_time_ms=response_times_sorted[0] if response_times_sorted else 0,
+            max_response_time_ms=response_times_sorted[-1] if response_times_sorted else 0,
+            p50_response_time_ms=_percentile(response_times_sorted, 50),
+            p95_response_time_ms=_percentile(response_times_sorted, 95),
+            p99_response_time_ms=_percentile(response_times_sorted, 99),
+            throughput_req_per_sec=num_requests / test_duration if test_duration > 0 else 0,
             error_rate_pct=(failed / num_requests * 100) if num_requests > 0 else 0,
             test_duration_seconds=test_duration,
             timestamp=datetime.utcnow().isoformat()
@@ -116,8 +168,59 @@ class LoadTestRunner:
         logger.info(f"✅ Load test completed: {test_name}")
         logger.info(f"   Success: {successful}/{num_requests}, Error rate: {result.error_rate_pct:.2f}%")
         logger.info(f"   Avg response: {result.avg_response_time_ms:.2f}ms, P95: {result.p95_response_time_ms:.2f}ms")
+        logger.info(f"   Status codes: {status_codes}")
         
         return result
+    
+    async def _make_real_request(
+        self,
+        session: "aiohttp.ClientSession",
+        endpoint: str,
+        method: str,
+        payload: Dict[str, Any] = None,
+        headers: Dict[str, str] = None,
+    ) -> Dict[str, Any]:
+        """Make a real HTTP request and measure latency."""
+        url = f"{self.base_url}{endpoint}"
+        req_headers = headers or {}
+        start = time.time()
+        
+        try:
+            if method.upper() == "GET":
+                async with session.get(url, headers=req_headers) as resp:
+                    await resp.read()
+                    elapsed_ms = (time.time() - start) * 1000
+                    return {
+                        "success": resp.status < 400,
+                        "status_code": resp.status,
+                        "time_ms": elapsed_ms,
+                    }
+            elif method.upper() == "POST":
+                async with session.post(url, json=payload, headers=req_headers) as resp:
+                    await resp.read()
+                    elapsed_ms = (time.time() - start) * 1000
+                    return {
+                        "success": resp.status < 400,
+                        "status_code": resp.status,
+                        "time_ms": elapsed_ms,
+                    }
+            else:
+                async with session.request(method, url, json=payload, headers=req_headers) as resp:
+                    await resp.read()
+                    elapsed_ms = (time.time() - start) * 1000
+                    return {
+                        "success": resp.status < 400,
+                        "status_code": resp.status,
+                        "time_ms": elapsed_ms,
+                    }
+        except Exception as e:
+            elapsed_ms = (time.time() - start) * 1000
+            return {
+                "success": False,
+                "status_code": 0,
+                "time_ms": elapsed_ms,
+                "error": str(e),
+            }
     
     async def _simulate_request(
         self,
@@ -125,17 +228,12 @@ class LoadTestRunner:
         method: str,
         payload: Dict[str, Any]
     ) -> float:
-        """Simulate HTTP request (mock)"""
-        # In production, use aiohttp or httpx for real requests
-        # For now, simulate with Poisson-distributed latency
+        """Simulate HTTP request (fallback when aiohttp unavailable)"""
+        base_latency = random.uniform(10, 50)
         
-        base_latency = random.uniform(10, 50)  # 10-50ms base
-        
-        # Add occasional slow requests (5% chance of 200-500ms)
         if random.random() < 0.05:
             base_latency += random.uniform(200, 500)
         
-        # Add occasional errors (2% chance)
         if random.random() < 0.02:
             raise Exception("Simulated request failure")
         

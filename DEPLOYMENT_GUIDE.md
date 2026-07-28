@@ -42,7 +42,7 @@ git clone https://github.com/YOUR_ORG/alphaforge-backend.git
 cd alphaforge-backend
 
 # Copy backend files
-cp -r /home/devmahnx/Dev/alphaforge/backend/* .
+cp -r ../backend/* .
 
 # Commit
 git add .
@@ -135,13 +135,13 @@ git clone https://github.com/YOUR_ORG/alphaforge-frontend.git
 cd alphaforge-frontend
 
 # Copy frontend files
-cp -r /home/devmahnx/Dev/alphaforge/src .
-cp -r /home/devmahnx/Dev/alphaforge/public .
-cp /home/devmahnx/Dev/alphaforge/package.json .
-cp /home/devmahnx/Dev/alphaforge/tsconfig.json .
-cp /home/devmahnx/Dev/alphaforge/next.config.ts .
-cp /home/devmahnx/Dev/alphaforge/tailwind.config.ts .
-cp /home/devmahnx/Dev/alphaforge/postcss.config.mjs .
+cp -r ../src .
+cp -r ../public .
+cp ../package.json .
+cp ../tsconfig.json .
+cp ../next.config.ts .
+cp ../tailwind.config.ts .
+cp ../postcss.config.mjs .
 
 # Commit
 git add .
@@ -221,7 +221,7 @@ The database schema needs to be initialized in **production** Supabase:
 # Connect to production Supabase
 export DATABASE_URL="postgresql://postgres.YOUR_PROJECT_ID:YOUR_PASSWORD@aws-0-us-east-1.pooler.supabase.com:6543/postgres"
 
-cd /home/devmahnx/Dev/alphaforge/backend
+cd backend
 python scripts/init_supabase_db.py
 ```
 
@@ -260,7 +260,7 @@ curl https://alphaforge-backend-XXXXXX.onrender.com/ready
 ### Step 4.1: Run Integration Tests Against Production
 
 ```bash
-cd /home/devmahnx/Dev/alphaforge/backend
+cd backend
 
 # Point tests to production
 export API_BASE_URL=https://alphaforge-backend-XXXXXX.onrender.com
@@ -468,7 +468,7 @@ git push
 - Plan KYC verification flow
 - Plan ML signal scoring
 
-**Week 3+: Phase 2 Implementation** (See RoadMap.md for details)
+**Week 3+: Phase 2 Implementation** (See [IMPLEMENTATION_FINAL_SUMMARY.md](./IMPLEMENTATION_FINAL_SUMMARY.md) for details)
 
 ---
 

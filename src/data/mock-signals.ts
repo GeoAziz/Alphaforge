@@ -15,8 +15,8 @@ export const mockSignals: Signal[] = [
     status: 'active',
     riskRewardRatio: 1.83,
     createdAt: subHours(new Date(), 2).toISOString(),
-    closedAt: null,
-    pnlPercent: null,
+    closedAt: undefined,
+    pnlPercent: undefined,
     drivers: [
       { label: 'Bullish engulfing on 4H', weight: 0.8, active: true },
       { label: 'RSI divergence', weight: 0.6, active: true },
@@ -36,8 +36,8 @@ export const mockSignals: Signal[] = [
     status: 'active',
     riskRewardRatio: 2.01,
     createdAt: subHours(new Date(), 5).toISOString(),
-    closedAt: null,
-    pnlPercent: null,
+    closedAt: undefined,
+    pnlPercent: undefined,
     drivers: [
       { label: 'Overbought on daily', weight: 0.7, active: true },
       { label: 'Bearish divergence', weight: 0.5, active: true }
@@ -56,8 +56,8 @@ export const mockSignals: Signal[] = [
     status: 'active',
     riskRewardRatio: 3.34,
     createdAt: subDays(new Date(), 1).toISOString(),
-    closedAt: null,
-    pnlPercent: null,
+    closedAt: undefined,
+    pnlPercent: undefined,
     drivers: [
       { label: 'Bollinger Band squeeze', weight: 0.9, active: true },
       { label: 'Moving Average crossover', weight: 0.4, active: true }

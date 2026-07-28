@@ -1,14 +1,19 @@
 """
-Portfolio Service - Maintains open positions and calculates portfolio state.
-Tracks positions, unrealized PnL, exposure limits, and risk metrics.
+Portfolio Service - §10 Architecture Doc
+Maintains open positions and calculates portfolio state.
+Tracks positions, unrealized PnL, exposure limits, Sharpe ratio,
+win rate, max drawdown, profit factor, and margin usage.
 """
 
 import logging
-from datetime import datetime
+import math
+from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional, Tuple
 from decimal import Decimal
 
 logger = logging.getLogger(__name__)
+
+import numpy as np
 
 
 class PortfolioService:
@@ -134,9 +139,9 @@ class PortfolioService:
             positions = response.data or []
             
             # Calculate unrealized PnL for each position
-            for position in positions:
-                position = self._calculate_position_pnl(position)
-            
+            for i, position in enumerate(positions):
+                positions[i] = self._calculate_position_pnl(position)
+
             return positions
         
         except Exception as e:
@@ -260,3 +265,212 @@ class PortfolioService:
             return False, f"Total {ticker} exposure ({exposure_pct:.2f}%) exceeds 20% limit"
         
         return True, "Position size valid"
+
+    # ====================================================================
+    # §10 PORTFOLIO METRICS: Sharpe, Win Rate, Max Drawdown, Profit Factor
+    # ====================================================================
+
+    async def get_performance_metrics(
+        self, user_id: str, period_days: int = 30
+    ) -> Dict[str, Any]:
+        """
+        Calculate comprehensive portfolio performance metrics (§10).
+        Includes: Sharpe ratio (rolling), win rate, max drawdown, profit factor.
+        """
+        try:
+            # Fetch closed trades for the period
+            cutoff = (datetime.utcnow() - timedelta(days=period_days)).isoformat()
+            response = (
+                self.db.supabase.table("paper_trades")
+                .select("*")
+                .eq("user_id", user_id)
+                .eq("status", "CLOSED")
+                .gte("exit_time", cutoff)
+                .order("exit_time", desc=True)
+                .execute()
+            )
+            trades = response.data or []
+
+            if not trades:
+                return {
+                    "success": True,
+                    "period_days": period_days,
+                    "total_trades": 0,
+                    "sharpe_ratio": 0.0,
+                    "win_rate": 0.0,
+                    "max_drawdown_pct": 0.0,
+                    "profit_factor": 0.0,
+                    "total_pnl": 0.0,
+                    "avg_pnl": 0.0,
+                    "best_trade": 0.0,
+                    "worst_trade": 0.0,
+                }
+
+            pnls = [float(t.get("pnl", 0)) for t in trades]
+            wins = [p for p in pnls if p > 0]
+            losses = [abs(p) for p in pnls if p < 0]
+
+            # Win rate
+            win_rate = len(wins) / len(pnls) if pnls else 0.0
+
+            # Sharpe ratio (annualized from daily returns)
+            if len(pnls) > 1:
+                avg_return = np.mean(pnls)
+                std_return = np.std(pnls)
+                sharpe = (avg_return / std_return * np.sqrt(252)) if std_return > 0 else 0.0
+            else:
+                sharpe = 0.0
+
+            # Max drawdown
+            cumulative = np.cumsum(pnls)
+            peak = np.maximum.accumulate(cumulative)
+            drawdowns = (cumulative - peak)
+            max_drawdown = float(np.min(drawdowns)) if len(drawdowns) > 0 else 0.0
+            max_drawdown_pct = abs(max_drawdown) / max(float(peak.max()), 1) * 100 if peak.max() > 0 else 0.0
+
+            # Profit factor
+            total_wins = sum(wins)
+            total_losses = sum(losses)
+            profit_factor = total_wins / total_losses if total_losses > 0 else float("inf") if total_wins > 0 else 0.0
+
+            return {
+                "success": True,
+                "period_days": period_days,
+                "total_trades": len(trades),
+                "sharpe_ratio": round(float(sharpe), 4),
+                "win_rate": round(win_rate, 4),
+                "max_drawdown_pct": round(float(max_drawdown_pct), 2),
+                "profit_factor": round(float(profit_factor), 4) if profit_factor != float("inf") else 999.0,
+                "total_pnl": round(sum(pnls), 2),
+                "avg_pnl": round(float(np.mean(pnls)), 2),
+                "best_trade": round(max(pnls), 2) if pnls else 0.0,
+                "worst_trade": round(min(pnls), 2) if pnls else 0.0,
+                "total_wins": len(wins),
+                "total_losses": len(losses),
+            }
+
+        except Exception as e:
+            logger.error(f"❌ Performance metrics calculation failed: {e}")
+            return {"success": False, "error": str(e)}
+
+    async def get_benchmark_comparison(
+        self,
+        user_id: str,
+        market_data_service,
+        period_days: int = 30,
+        benchmarks: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Compare portfolio return against BTC/ETH (or custom tickers) over a period (§10).
+        """
+        benchmarks = benchmarks or ["BTC", "ETH"]
+
+        try:
+            summary = await self.get_portfolio_summary(user_id)
+            starting_balance = float(summary.get("starting_balance", 100000)) or 100000
+
+            perf = await self.get_performance_metrics(user_id, period_days=period_days)
+            portfolio_return_pct = (float(perf.get("total_pnl", 0)) / starting_balance) * 100
+
+            benchmark_results = {}
+            for ticker in benchmarks:
+                symbol = f"{ticker.upper()}USDT"
+                candles = await market_data_service.fetch_ohlcv(symbol, interval="1d", limit=period_days + 1)
+
+                if not candles or len(candles) < 2:
+                    benchmark_results[ticker] = {
+                        "return_pct": None,
+                        "error": "insufficient historical data",
+                    }
+                    continue
+
+                first_close = float(candles[0]["close"])
+                last_close = float(candles[-1]["close"])
+                benchmark_return_pct = ((last_close - first_close) / first_close * 100) if first_close else 0.0
+
+                benchmark_results[ticker] = {
+                    "return_pct": round(benchmark_return_pct, 4),
+                    "alpha_pct": round(portfolio_return_pct - benchmark_return_pct, 4),
+                    "outperformed": portfolio_return_pct > benchmark_return_pct,
+                }
+
+            return {
+                "success": True,
+                "user_id": user_id,
+                "period_days": period_days,
+                "portfolio_return_pct": round(portfolio_return_pct, 4),
+                "benchmarks": benchmark_results,
+            }
+
+        except Exception as e:
+            logger.error(f"❌ Benchmark comparison failed: {e}")
+            return {"success": False, "error": str(e)}
+
+    async def get_portfolio_summary_enhanced(self, user_id: str) -> Dict[str, Any]:
+        """
+        Enhanced portfolio summary with all §10 metrics.
+        Combines basic summary with performance metrics.
+        """
+        basic = await self.get_portfolio_summary(user_id)
+        metrics_30d = await self.get_performance_metrics(user_id, period_days=30)
+        metrics_90d = await self.get_performance_metrics(user_id, period_days=90)
+        all_time = await self.get_performance_metrics(user_id, period_days=3650)
+
+        basic["performance"] = {
+            "rolling_30d": {
+                "sharpe_ratio": metrics_30d.get("sharpe_ratio", 0),
+                "win_rate": metrics_30d.get("win_rate", 0),
+                "max_drawdown_pct": metrics_30d.get("max_drawdown_pct", 0),
+                "profit_factor": metrics_30d.get("profit_factor", 0),
+            },
+            "rolling_90d": {
+                "sharpe_ratio": metrics_90d.get("sharpe_ratio", 0),
+                "win_rate": metrics_90d.get("win_rate", 0),
+                "max_drawdown_pct": metrics_90d.get("max_drawdown_pct", 0),
+                "profit_factor": metrics_90d.get("profit_factor", 0),
+            },
+            "all_time": {
+                "sharpe_ratio": all_time.get("sharpe_ratio", 0),
+                "win_rate": all_time.get("win_rate", 0),
+                "max_drawdown_pct": all_time.get("max_drawdown_pct", 0),
+                "profit_factor": all_time.get("profit_factor", 0),
+            },
+        }
+
+        return basic
+
+    async def calculate_margin_usage(self, user_id: str) -> Dict[str, Any]:
+        """
+        Calculate margin usage for perpetuals positions (§10).
+        """
+        try:
+            positions = await self.get_open_positions(user_id)
+            perps = [p for p in positions if p.get("trade_type") == "perpetuals"]
+
+            total_margin = 0.0
+            total_unrealised = 0.0
+            for p in perps:
+                entry = float(p.get("entry_price", 0))
+                qty = float(p.get("quantity", 0))
+                leverage = float(p.get("leverage", 1))
+                margin = (entry * qty) / leverage if leverage > 0 else entry * qty
+                total_margin += margin
+                total_unrealised += p.get("unrealized_pnl", 0)
+
+            portfolio_response = self.db.supabase.table("portfolios").select("*").eq("user_id", user_id).execute()
+            portfolio = portfolio_response.data[0] if portfolio_response.data else {}
+            balance = float(portfolio.get("current_balance", 100000))
+
+            margin_used_pct = (total_margin / balance * 100) if balance > 0 else 0
+
+            return {
+                "total_margin_used": round(total_margin, 2),
+                "total_unrealised_pnl": round(total_unrealised, 2),
+                "margin_used_pct": round(margin_used_pct, 2),
+                "available_margin": round(balance - total_margin, 2),
+                "perps_position_count": len(perps),
+            }
+
+        except Exception as e:
+            logger.error(f"❌ Margin usage calculation failed: {e}")
+            return {"success": False, "error": str(e)}

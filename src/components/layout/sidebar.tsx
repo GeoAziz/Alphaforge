@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import { 
-  LayoutDashboard, Zap, BarChart3, Wallet, Target, 
-  FlaskConical, Store, TrendingUp, Settings, ChevronLeft, ChevronRight, Activity, ShieldCheck, UserCircle, MessageSquare, Cpu, Share2
+import {
+  LayoutDashboard, Zap, BarChart3, Wallet, Target,
+  FlaskConical, Store, TrendingUp, Settings, ChevronLeft, ChevronRight, Activity, ShieldCheck, UserCircle, MessageSquare, Cpu, Share2, GraduationCap, Trophy, Users
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -34,6 +34,9 @@ const navItems = [
   { name: "Backtesting", href: "/backtesting", icon: FlaskConical },
   { name: "Marketplace", href: "/marketplace", icon: Store },
   { name: "Analytics", href: "/analytics", icon: TrendingUp },
+  { name: "Academy", href: "/academy", icon: GraduationCap },
+  { name: "Tournaments", href: "/tournaments", icon: Trophy },
+  { name: "Community", href: "/community", icon: Users },
 ];
 
 const advancedItems = [

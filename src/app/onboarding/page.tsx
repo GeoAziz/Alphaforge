@@ -3,13 +3,10 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/firebase';
-// Firebase hooks removed in MVP mock mode:
-// import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-// import { doc } from 'firebase/firestore';
-// import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { api } from '@/lib/api';
 import { SpotlightCard } from '@/components/shared/spotlight-card';
 import { Button } from '@/components/ui/button';
-import { Loader2, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowRight, ArrowLeft, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Step Components
@@ -32,6 +29,7 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(1);
   const [direction, setDirection] = useState<'next' | 'back'>('next');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [onboardingError, setOnboardingError] = useState<string | null>(null);
 
   // State for aggregate onboarding data
   const [formData, setFormData] = useState({
@@ -55,12 +53,31 @@ export default function OnboardingPage() {
 
   function handleComplete() {
     setIsSubmitting(true);
-    // Mock mode: Firebase write disabled — navigate directly
-    // When upgrading to Blaze: restore setDocumentNonBlocking to persist onboarding profile
-    console.info('[Mock] Onboarding complete for:', user?.uid, formData);
-    setTimeout(() => {
+    setOnboardingError(null);
+
+    const userId = user?.uid || 'mock-user-001';
+    const email = user?.email || 'user@alphaforge.io';
+
+    api.user.register({
+      firebase_uid: userId,
+      email: email,
+      display_name: formData.name,
+    }).then(async () => {
+      // Persist the risk/GDPR/CCPA acknowledgments the user just checked —
+      // this is the auditable record PRD Decision 7 requires; without it,
+      // acceptance only ever existed as throwaway client-side UI state.
+      if (user?.uid) {
+        try {
+          await api.compliance.acceptAllDisclaimers(user.uid);
+        } catch (err) {
+          console.error('Failed to record disclaimer acceptance:', err);
+        }
+      }
       router.push('/');
-    }, 1000);
+    }).catch(err => {
+      setOnboardingError(err.message || 'Failed to complete onboarding');
+      setIsSubmitting(false);
+    });
   }
 
   if (isUserLoading || isProfileLoading) {
@@ -121,6 +138,13 @@ export default function OnboardingPage() {
                 />
               )}
             </div>
+
+            {onboardingError && (
+              <div className="p-4 rounded-xl bg-red/10 border border-red/20 flex items-center gap-3">
+                <AlertCircle size={16} className="text-red shrink-0" />
+                <span className="text-xs font-bold text-red">{onboardingError}</span>
+              </div>
+            )}
 
             <div className="flex gap-4 pt-6 border-t border-border-subtle">
               {step > 1 && (

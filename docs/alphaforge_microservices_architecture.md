@@ -2,6 +2,8 @@
 
 Version: 1.0
 
+> **Note:** This document describes the **target architecture** for a fully scaled platform. The current implementation is a monolithic FastAPI application on Render with Supabase PostgreSQL. See [alphaforge_system_design.md](alphaforge_system_design.md) for the current system design.
+
 ---
 
 # 1. Document Overview
@@ -195,13 +197,7 @@ disclaimer_acknowledgments:
 
 ---
 
-  
-Subscriptions  
-Settings  
-
----
-
-# 6. Authentication Service
+# 7. Authentication Service
 
 Handles platform security.
 

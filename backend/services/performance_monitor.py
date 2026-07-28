@@ -48,7 +48,9 @@ class PerformanceMonitor:
     
     def get_endpoint_stats(self, endpoint: str) -> Dict[str, Any]:
         """Get stats for a specific endpoint"""
-        metric = self.metrics.get(endpoint, {})
+        if endpoint not in self.metrics:
+            return {"error": "No data for endpoint"}
+        metric = self.metrics[endpoint]
         if metric["total_calls"] == 0:
             return {"error": "No data for endpoint"}
         
@@ -142,9 +144,10 @@ def get_performance_stats() -> Dict[str, Any]:
 
 class PerformanceMonitoringMiddleware:
     """ASGI middleware for automated performance monitoring"""
-    
-    def __init__(self, app, paths_to_monitor: Optional[list] = None):
+
+    def __init__(self, app, monitor: Optional["PerformanceMonitor"] = None, paths_to_monitor: Optional[list] = None):
         self.app = app
+        self.monitor = monitor or get_performance_monitor()
         self.paths_to_monitor = paths_to_monitor or [
             "/api/signals",
             "/api/external-signals",
@@ -186,10 +189,10 @@ class PerformanceMonitoringMiddleware:
             success = response_status and 200 <= response_status < 300
             
             endpoint = f"{scope['method']} {path}"
-            record_endpoint_performance(endpoint, elapsed_ms, success)
-            
+            self.monitor.record_call(endpoint, elapsed_ms, success)
+
         except Exception as e:
             elapsed_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
             endpoint = f"{scope['method']} {path}"
-            record_endpoint_performance(endpoint, elapsed_ms, False, str(e))
+            self.monitor.record_call(endpoint, elapsed_ms, False, str(e))
             raise

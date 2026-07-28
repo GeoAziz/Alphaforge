@@ -34,6 +34,8 @@ class MockDatabase:
             "positions": [],
             "portfolios": [],
             "external_signals": [],
+            "user_strategies": [],
+            "strategy_templates": [],
         }
         
         # Load from file if exists
@@ -44,6 +46,62 @@ class MockDatabase:
                 logger.info(f"✅ Mock database loaded from {self.data_file}")
             except Exception as e:
                 logger.warning(f"⚠️ Could not load mock data: {e}")
+
+        # Seed default strategy templates if empty
+        if not self.tables.get("strategy_templates"):
+            self.tables["strategy_templates"] = [
+                {
+                    "id": str(uuid.uuid4()),
+                    "name": "Conservative Trend Follower",
+                    "description": "Follows established trends with tight risk controls. Suitable for beginners.",
+                    "category": "trend_following",
+                    "difficulty": "beginner",
+                    "rules": {
+                        "signal_filters": {
+                            "min_confidence": 0.70,
+                            "max_volatility": "medium",
+                            "preferred_time_windows": ["09:00-16:00 UTC"],
+                        },
+                        "position_sizing": {"method": "fixed", "base_allocation": 0.01, "max_per_position": 200},
+                        "risk_controls": {"max_loss_per_trade": 100, "max_daily_loss": 500, "max_open_positions": 3},
+                    },
+                    "created_at": datetime.utcnow().isoformat(),
+                },
+                {
+                    "id": str(uuid.uuid4()),
+                    "name": "Momentum Scalper",
+                    "description": "High-frequency momentum-based entries with quick exits.",
+                    "category": "momentum",
+                    "difficulty": "advanced",
+                    "rules": {
+                        "signal_filters": {
+                            "min_confidence": 0.85,
+                            "max_volatility": "high",
+                            "preferred_time_windows": ["14:00-22:00 UTC"],
+                        },
+                        "position_sizing": {"method": "kelly", "base_allocation": 0.02, "max_per_position": 500},
+                        "risk_controls": {"max_loss_per_trade": 200, "max_daily_loss": 1000, "max_open_positions": 5},
+                    },
+                    "created_at": datetime.utcnow().isoformat(),
+                },
+                {
+                    "id": str(uuid.uuid4()),
+                    "name": "Mean Reversion Bot",
+                    "description": "Buys oversold assets and sells overbought using Bollinger Bands.",
+                    "category": "mean_reversion",
+                    "difficulty": "intermediate",
+                    "rules": {
+                        "signal_filters": {
+                            "min_confidence": 0.60,
+                            "max_volatility": "low",
+                            "preferred_time_windows": ["08:00-20:00 UTC"],
+                        },
+                        "position_sizing": {"method": "equal_weight", "base_allocation": 0.015, "max_per_position": 300},
+                        "risk_controls": {"max_loss_per_trade": 150, "max_daily_loss": 750, "max_open_positions": 4},
+                    },
+                    "created_at": datetime.utcnow().isoformat(),
+                },
+            ]
     
     def save(self):
         """Persist mock data to JSON file."""

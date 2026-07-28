@@ -28,13 +28,13 @@ from fastapi.responses import JSONResponse
 
 from models.schemas import *
 from database.db import get_db
-from firebase_config import verify_firebase_token, FirebaseTokenVerifier
-from services.signal_aggregator_v2 import SignalAggregator
+from firebase_config import verify_firebase_token, verify_admin_token, FirebaseTokenVerifier, require_self_or_admin
+from services.signal_aggregator import SignalAggregator
 from services.signal_processor import SignalProcessor
 from services.paper_trading import PaperTradingEngine
 from services.portfolio import PortfolioService
 from services.risk_manager import RiskManager
-from services.market_data_v2 import MarketDataService
+from services.market_data import MarketDataService
 from services.chat_service import ChatService
 from services.creator_service import CreatorVerificationService
 from services.user_service import UserManagementService
@@ -43,6 +43,8 @@ from services.strategy_service import StrategyService
 from services.ml_signal_scorer import MLSignalScorer
 from services.creator_marketplace import CreatorMarketplaceService
 from services.kyc_service import KYCService
+from services.compliance_service import ComplianceService
+from services.billing_service import BillingService
 from services.signal_performance_tracker import SignalPerformanceTracker
 from services.external_signal_validator import ExternalSignalPerformanceValidator
 from services.market_correlation_analyzer import MarketCorrelationAnalyzer
@@ -53,54 +55,38 @@ from services.ml_retraining import MLModelRetrainingPipeline
 from services.alert_system import AlertManager, LogAlertChannel, AlertSeverity
 from services.strategy_manager import StrategyManagementService, StrategyType, StrategyStatus
 from services.portfolio_risk_analyzer import PortfolioRiskAnalyzer, RiskLimitEnforcer
+from services.strategy_configurator import StrategyConfiguratorService
+from services.education_service import EducationService
+from services.tournament_service import TournamentService
+from services.community_service import CommunityService
+from services.strategy_personality import StrategyPersonalityService
+from services.trailing_orders import TrailingOrdersService
+from services.onchain_tracker import OnchainTrackerService
 from tests.load_test_suite import LoadTestRunner
 from utils.redis_manager import redis_manager
 from services.startup_orchestrator import get_orchestrator
+from services.execution_service import (
+    IdempotencyKeyManager, OrderConfirmationMonitor,
+    ExchangeAbstractionLayer, get_idempotency_manager,
+    get_order_monitor, get_exchange_layer,
+)
+from services.data_validation_service import DataValidationPipeline, BackupMarketDataProvider
+from services.notification_service import NotificationService
+from services.sentiment_analysis_service import SentimentAnalysisService
+from services.strategy_marketplace_service import StrategyMarketplaceService
+from services.audit_log_service import AuditLogService
+from services.explainability_proofs import ExplainabilityProofsService
+from services.backtesting_integrity import BacktestingIntegrityService
+from services.overfitting_prevention import OverfittingPreventionService
+from services.ensemble_predictor import EnsemblePredictor
+from services.gpu_inference import ModelConfig, QuantizationPrecision, InferenceBackend
+from routes import gap_features
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# ============================================================================
-# WEBSOCKET MANAGER
-# ============================================================================
-
-class WebSocketManager:
-    """Manages WebSocket connections and broadcasting."""
-    
-    def __init__(self):
-        self.active_connections: Dict[str, Set[WebSocket]] = {}
-    
-    async def connect(self, websocket: WebSocket, group: str):
-        """Accept and register connection."""
-        await websocket.accept()
-        if group not in self.active_connections:
-            self.active_connections[group] = set()
-        self.active_connections[group].add(websocket)
-        logger.info(f"WebSocket connected to group: {group}")
-    
-    def disconnect(self, websocket: WebSocket, group: str):
-        """Remove connection."""
-        if group in self.active_connections:
-            self.active_connections[group].discard(websocket)
-    
-    async def broadcast_to_group(self, group: str, message: Dict[str, Any]):
-        """Broadcast to all connections in group."""
-        if group not in self.active_connections:
-            return
-        
-        json_data = json.dumps(message)
-        disconnected = []
-        
-        for connection in self.active_connections[group]:
-            try:
-                await connection.send_text(json_data)
-            except Exception as e:
-                logger.error(f"Broadcast error: {e}")
-                disconnected.append(connection)
-        
-        for ws in disconnected:
-            self.disconnect(ws, group)
+from websocket_manager import WebSocketManager
 
 # Global service instances
 db = get_db()
@@ -118,6 +104,8 @@ strategy_service = None
 ml_scorer = None
 creator_marketplace = None
 kyc_service = None
+compliance_service = None
+billing_service = None
 
 # Recommendation Services (Phase 3 Enhancements)
 signal_perf_tracker = None
@@ -137,6 +125,38 @@ portfolio_risk_analyzer = None
 risk_enforcer = None
 load_test_runner = None
 
+# Phase 3 Enhancement Services
+tournament_service = None
+community_service = None
+strategy_personality_service = None
+trailing_orders_service = None
+onchain_tracker_service = None
+strategy_configurator = None
+education_service = None
+
+# Architecture Doc Gap Services
+idempotency_manager = None
+order_monitor = None
+exchange_layer = None
+data_validation_pipeline = None
+backup_data_provider = None
+notification_svc = None
+sentiment_svc = None
+strategy_marketplace_svc = None
+audit_log_svc = None
+
+# §13.3 Feature Store, §16.2 IP Whitelist, §6.1 Regime Detection, §6.4 GPU Inference
+feature_store_svc = None
+ip_whitelist_svc = None
+regime_detector_svc = None
+gpu_inference_svc = None
+
+# Moat Services (Differentiators)
+explainability_proofs_svc = None
+backtesting_integrity_svc = None
+overfitting_prevention_svc = None
+ensemble_predictor_svc = None
+
 # WebSocket and Analytics
 ws_manager = WebSocketManager()
 ph = None  # PostHog client
@@ -151,9 +171,12 @@ async def lifespan(app: FastAPI):
     """Startup and shutdown events."""
     global signal_aggregator, signal_processor, paper_trading, portfolio_service, risk_manager, market_data_service
     global chat_service, creator_service, user_service, backtest_service, strategy_service
-    global ml_scorer, creator_marketplace, kyc_service, ph
+    global ml_scorer, creator_marketplace, kyc_service, compliance_service, billing_service, ph
     global signal_perf_tracker, external_signal_validator, market_correlation_analyzer, binance_ws_manager
     global rate_limiter, perf_monitor
+    global automation_engine
+    global education_service
+    global explainability_proofs_svc, backtesting_integrity_svc, overfitting_prevention_svc, ensemble_predictor_svc
     
     # Startup
     logger.info("🚀 Starting AlphaForge Backend API")
@@ -229,6 +252,8 @@ async def lifespan(app: FastAPI):
     ml_scorer = MLSignalScorer(db)
     creator_marketplace = CreatorMarketplaceService(db)
     kyc_service = KYCService(db)
+    compliance_service = ComplianceService(db)
+    billing_service = BillingService(db)
     
     # ========================================================================
     # INITIALIZE RECOMMENDATION SERVICES (Phase 3 Enhancements)
@@ -270,6 +295,195 @@ async def lifespan(app: FastAPI):
     
     logger.info("✅ All recommendation services initialized")
     
+    # ========================================================================
+    # INITIALIZE AUTOMATION ENGINE (Grid Bot + DCA Bot)
+    # ========================================================================
+    
+    from config import AutomationConfig
+    if AutomationConfig.ENABLED:
+        try:
+            automation_engine = AutomationEngine(db)
+            logger.info("✅ Automation engine initialized (Grid Bot + DCA Bot)")
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize automation engine: {e}")
+    else:
+        logger.info("ℹ️  Automation engine disabled (AUTOMATION_ENABLED=false)")
+    
+    # ========================================================================
+    # INITIALIZE EDUCATION SERVICE (AlphaAcademy)
+    # ========================================================================
+    
+    from config import EducationConfig
+    if EducationConfig.ENABLED:
+        try:
+            education_service = EducationService(db)
+            logger.info("✅ AlphaAcademy education service initialized")
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize education service: {e}")
+    else:
+        logger.info("ℹ️  AlphaAcademy disabled (ALPHAACADEMY_ENABLED=false)")
+    
+    # ========================================================================
+    # INITIALIZE PHASE 3 ENHANCEMENT SERVICES
+    # ========================================================================
+    
+    from config import TournamentConfig, CommunityConfig, StrategyPersonalityConfig, TrailingOrderConfig, OnchainConfig
+
+    if TournamentConfig.ENABLED:
+        try:
+            tournament_service = TournamentService(db)
+            logger.info("✅ Tournament service initialized")
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize tournament service: {e}")
+
+    if CommunityConfig.ENABLED:
+        try:
+            community_service = CommunityService(db)
+            logger.info("✅ Community service initialized")
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize community service: {e}")
+    
+    if StrategyPersonalityConfig.ENABLED:
+        try:
+            strategy_personality_service = StrategyPersonalityService(db)
+            logger.info("✅ Strategy personality service initialized")
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize strategy personality service: {e}")
+    
+    if TrailingOrderConfig.ENABLED:
+        try:
+            trailing_orders_service = TrailingOrdersService(db)
+            logger.info("✅ Trailing orders service initialized")
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize trailing orders service: {e}")
+    
+    if OnchainConfig.ENABLED:
+        try:
+            onchain_tracker_service = OnchainTrackerService(db, use_mock=OnchainConfig.USE_MOCK_DATA)
+            logger.info("✅ Onchain tracker service initialized")
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize onchain tracker service: {e}")
+    
+    logger.info("✅ All Phase 3 enhancement services initialized")
+
+    # ========================================================================
+    # INITIALIZE ARCHITECTURE DOC GAP SERVICES
+    # ========================================================================
+
+    global idempotency_manager, order_monitor, exchange_layer
+    global data_validation_pipeline, backup_data_provider
+    global notification_svc, sentiment_svc, strategy_marketplace_svc, audit_log_svc
+
+    from utils.redis_manager import redis_manager as rm
+    idempotency_manager = get_idempotency_manager(rm._client if rm.enabled else None)
+    logger.info("✅ Idempotency key manager initialized")
+
+    order_monitor = get_order_monitor(db)
+    await order_monitor.start_watchdog()
+    logger.info("✅ Order confirmation monitor initialized")
+
+    exchange_layer = get_exchange_layer(db)
+    logger.info("✅ Exchange abstraction layer initialized")
+
+    data_validation_pipeline = DataValidationPipeline()
+    backup_data_provider = BackupMarketDataProvider()
+    logger.info("✅ Data validation pipeline initialized")
+
+    notification_svc = NotificationService(db)
+    logger.info("✅ Notification service initialized")
+
+    sentiment_svc = SentimentAnalysisService(db)
+    logger.info("✅ Sentiment analysis service initialized")
+
+    strategy_marketplace_svc = StrategyMarketplaceService(db)
+    logger.info("✅ Strategy marketplace service initialized")
+
+    audit_log_svc = AuditLogService(db)
+    logger.info("✅ Audit log service initialized")
+
+    # ========================================================================
+    # INITIALIZE MOAT SERVICES (Differentiators: Explainability, Backtesting)
+    # ========================================================================
+
+    try:
+        explainability_proofs_svc = ExplainabilityProofsService(db)
+        logger.info("✅ Explainability proofs service initialized (MOAT)")
+    except Exception as e:
+        logger.error(f"❌ Failed to initialize explainability proofs: {e}")
+
+    try:
+        backtesting_integrity_svc = BacktestingIntegrityService(db)
+        logger.info("✅ Backtesting integrity service initialized (MOAT)")
+    except Exception as e:
+        logger.error(f"❌ Failed to initialize backtesting integrity: {e}")
+
+    try:
+        overfitting_prevention_svc = OverfittingPreventionService(db)
+        logger.info("✅ Overfitting prevention service initialized (MOAT)")
+    except Exception as e:
+        logger.error(f"❌ Failed to initialize overfitting prevention: {e}")
+
+    try:
+        ensemble_predictor_svc = EnsemblePredictor(db)
+        logger.info("✅ Ensemble predictor service initialized (MOAT)")
+    except Exception as e:
+        logger.error(f"❌ Failed to initialize ensemble predictor: {e}")
+
+    # ========================================================================
+    # INITIALIZE GAP FEATURE SERVICES (Live Trading, AI Signals, Mobile App)
+    # ========================================================================
+
+    from config import FeatureFlags
+    from services.live_trading_engine import LiveTradingEngine
+    from services.llm_signal_generator import LLMSignalGenerator
+
+    gap_services: Dict[str, Any] = {"compliance_service": compliance_service}
+
+    if FeatureFlags.LIVE_TRADING:
+        try:
+            gap_services["live_trading_engine"] = LiveTradingEngine()
+            logger.info("✅ Live trading engine initialized")
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize live trading engine: {e}")
+
+    if FeatureFlags.AI_SIGNALS:
+        try:
+            gap_services["llm_signal_generator"] = LLMSignalGenerator()
+            logger.info("✅ LLM signal generator initialized")
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize LLM signal generator: {e}")
+
+    gap_features.initialize_services(db, gap_services)
+
+    # ========================================================================
+    # INITIALIZE NEW GAP SERVICES (§13.3, §16.2, §6.1, §6.4)
+    # ========================================================================
+
+    global feature_store_svc, ip_whitelist_svc, regime_detector_svc, gpu_inference_svc
+
+    from services.feature_store import get_feature_store
+    from services.ip_whitelist_service import get_ip_whitelist_service
+    from services.regime_detector import get_regime_detector
+    from services.gpu_inference import get_gpu_inference_service
+
+    feature_store_svc = get_feature_store(db, rm._client if rm.enabled else None)
+    logger.info("✅ Feature store initialized (§13.3)")
+
+    ip_whitelist_svc = get_ip_whitelist_service(db, notification_svc, audit_log_svc)
+    logger.info("✅ IP whitelist service initialized (§16.2)")
+
+    regime_detector_svc = get_regime_detector()
+    logger.info("✅ Market regime detector initialized (§6.1)")
+
+    gpu_inference_svc = get_gpu_inference_service()
+    logger.info("✅ GPU inference service initialized (§6.4)")
+
+    # Initialize Redis PubSub for WebSocket fan-out (§19.1)
+    redis_url = os.getenv("REDIS_URL", "")
+    if redis_url:
+        await ws_manager.initialize_redis(redis_url)
+        logger.info("✅ WebSocket Redis PubSub initialized (§19.1)")
+    
     # Initialize PostHog
     try:
         from posthog import Posthog
@@ -291,6 +505,15 @@ async def lifespan(app: FastAPI):
     logger.info("✅ Rate limiter and performance monitor attached to middleware")
     
     logger.info("✅ All services initialized and middleware configured")
+    
+    # ========================================================================
+    # INITIALIZE ENHANCED SERVICES (Chat + External Signal Ingestion)
+    # ========================================================================
+    
+    from services.external_signal_ingestion import ExternalSignalIngestionService
+    global external_signal_ingestion
+    external_signal_ingestion = ExternalSignalIngestionService(db)
+    logger.info("✅ External signal ingestion service initialized")
     
     logger.info("✅ All services initialized")
     
@@ -337,51 +560,98 @@ IS_PRODUCTION = API_ENV == "production"
 REQUIRE_REAL_DB = os.getenv("REQUIRE_REAL_DB", "true" if IS_PRODUCTION else "false").lower() == "true"
 SECURITY_HEADERS_ENABLED = os.getenv("SECURITY_HEADERS_ENABLED", "true").lower() == "true"
 
-# CORS configuration - allow development frontends and ngrok tunnels
+# ---------------------------------------------------------------------------
+# CORS configuration
+#
+# Production: CORS_ALLOW_ORIGINS must be explicitly set. No wildcards.
+# Development: defaults to localhost dev ports + any configured ngrok tunnel.
+# ---------------------------------------------------------------------------
 DEV_URLS = [
     "http://localhost:3000",
     "http://localhost:9002",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:9002",
 ]
+
 # Parse ngrok URL from environment (format: https://xxxx.ngrok-free.app)
 ngrok_url = os.getenv("NGROK_TUNNEL_URL", "").strip()
 if not ngrok_url:
-    # Auto-extract from NEXT_PUBLIC_API_URL if it's an ngrok URL
     api_url = os.getenv("NEXT_PUBLIC_API_URL", "")
     if "ngrok" in api_url:
         ngrok_url = api_url
 if ngrok_url and not ngrok_url.endswith("/"):
     DEV_URLS.append(ngrok_url)
 
-CORS_ALLOW_ORIGINS = os.getenv("CORS_ALLOW_ORIGINS", ",".join(DEV_URLS) if not IS_PRODUCTION else "")
-ALLOWED_ORIGINS = [origin.strip() for origin in CORS_ALLOW_ORIGINS.split(",") if origin.strip()] or ["*"]
+CORS_ALLOW_ORIGINS_RAW = os.getenv("CORS_ALLOW_ORIGINS", "").strip()
 
-# Debug: Log CORS configuration
-logger.info(f"🔐 CORS Configuration (IS_PRODUCTION={IS_PRODUCTION})")
-logger.info(f"📍 Allowed Origins: {ALLOWED_ORIGINS}")
+if CORS_ALLOW_ORIGINS_RAW:
+    ALLOWED_ORIGINS = [o.strip() for o in CORS_ALLOW_ORIGINS_RAW.split(",") if o.strip()]
+else:
+    # No explicit config — use safe defaults per environment
+    ALLOWED_ORIGINS = [] if IS_PRODUCTION else DEV_URLS
+
+# Safety checks — never allow wildcards with credentials
+HAS_WILDCARD = "*" in ALLOWED_ORIGINS
+
+if IS_PRODUCTION:
+    if HAS_WILDCARD:
+        raise RuntimeError(
+            "CORS_ALLOW_ORIGINS cannot include '*' in production. "
+            "Set CORS_ALLOW_ORIGINS to your actual frontend domain(s)."
+        )
+    if not ALLOWED_ORIGINS:
+        raise RuntimeError(
+            "CORS_ALLOW_ORIGINS is empty in production. "
+            "Set it to your frontend domain(s), e.g. https://alphaforge.app"
+        )
+
+logger.info("CORS Configuration (IS_PRODUCTION=%s)", IS_PRODUCTION)
+logger.info("Allowed Origins: %s", ALLOWED_ORIGINS)
 if ngrok_url:
-    logger.info(f"🌐 ngrok URL detected: {ngrok_url}")
+    logger.info("ngrok URL detected: %s", ngrok_url)
 
-if IS_PRODUCTION and "*" in ALLOWED_ORIGINS:
-    raise RuntimeError("CORS_ALLOW_ORIGINS cannot include '*' in production")
+# Only send credentials when origins are explicitly enumerated (not wildcard)
+allow_credentials = not HAS_WILDCARD and len(ALLOWED_ORIGINS) > 0
 
-TRUSTED_HOSTS_RAW = os.getenv("TRUSTED_HOSTS", "*")
-TRUSTED_HOSTS = [host.strip() for host in TRUSTED_HOSTS_RAW.split(",") if host.strip()] or ["*"]
+# Restrict methods and headers to what the app actually uses
+CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
+CORS_ALLOW_HEADERS = [
+    "Authorization",
+    "Content-Type",
+    "Accept",
+    "Origin",
+    "X-Requested-With",
+    "X-User-Id",
+]
 
-if IS_PRODUCTION and "*" in TRUSTED_HOSTS:
-    raise RuntimeError("TRUSTED_HOSTS cannot include '*' in production")
-
-# Standard CORS middleware (more reliable than custom)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_credentials=allow_credentials,
+    allow_methods=CORS_ALLOW_METHODS,
+    allow_headers=CORS_ALLOW_HEADERS,
+    expose_headers=["X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset"],
 )
 
-# Host header hardening
+# ---------------------------------------------------------------------------
+# Trusted Hosts
+# ---------------------------------------------------------------------------
+TRUSTED_HOSTS_RAW = os.getenv("TRUSTED_HOSTS", "").strip()
+
+if TRUSTED_HOSTS_RAW:
+    TRUSTED_HOSTS = [h.strip() for h in TRUSTED_HOSTS_RAW.split(",") if h.strip()]
+else:
+    # Safe defaults: localhost in dev, must be explicit in production
+    TRUSTED_HOSTS = ["localhost", "127.0.0.1"] if not IS_PRODUCTION else []
+
+if IS_PRODUCTION and "*" in TRUSTED_HOSTS:
+    raise RuntimeError("TRUSTED_HOSTS cannot include '*' in production")
+if IS_PRODUCTION and not TRUSTED_HOSTS:
+    raise RuntimeError(
+        "TRUSTED_HOSTS is empty in production. "
+        "Set it to your actual hostnames, e.g. api.alphaforge.app,alphaforge.app"
+    )
+
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=TRUSTED_HOSTS)
 
 # Add performance monitoring middleware
@@ -392,6 +662,9 @@ app.add_middleware(PerformanceMonitoringMiddleware, monitor=perf_monitor)
 rate_limiter = AdaptiveRateLimiter()
 app.add_middleware(RateLimitingMiddleware, rate_limiter=rate_limiter)
 
+# Gap feature routes (live trading, AI signal generation, mobile app, compliance)
+app.include_router(gap_features.router)
+
 # Initialize advanced services
 ml_retraining_pipeline = MLModelRetrainingPipeline(retraining_interval_days=7)
 alert_manager = AlertManager()
@@ -400,6 +673,7 @@ strategy_manager = StrategyManagementService()
 portfolio_risk_analyzer = PortfolioRiskAnalyzer()
 risk_enforcer = RiskLimitEnforcer()
 load_test_runner = LoadTestRunner(base_url=os.getenv("API_URL", "http://localhost:8000"))
+strategy_configurator = StrategyConfiguratorService(db)
 
 # Optional in-memory rate limiter for production hardening
 RATE_LIMIT_ENABLED = os.getenv("RATE_LIMIT_ENABLED", "true").lower() == "true"
@@ -472,7 +746,7 @@ async def readiness_check():
 
         required_tables_raw = os.getenv(
             "REQUIRED_DB_TABLES",
-            "users,signals,paper_trades,positions,portfolios,creator_profiles,kyc_verifications,audit_logs,external_signals,api_keys,strategies,creator_strategies,strategy_subscriptions,strategy_paper_trades,backtests,chat_messages,notifications,user_risk_settings,external_signal_rules",
+            "users,signals,paper_trades,positions,portfolios,creator_profiles,kyc_verifications,audit_logs,external_signals,api_keys,strategies,creator_strategies,strategy_subscriptions,strategy_paper_trades,backtests,chat_messages,notifications,user_risk_settings,external_signal_rules,user_strategies,strategy_templates",
         )
         required_tables = [table.strip() for table in required_tables_raw.split(",") if table.strip()]
         table_check = db.verify_required_tables(required_tables) if required_tables else {"ok": True, "missing_tables": []}
@@ -507,8 +781,87 @@ async def readiness_check():
             "missing_tables": table_check.get("missing_tables", []),
             "timestamp": datetime.utcnow().isoformat(),
         }
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Service not ready: {e}")
+
+
+# ============================================================================
+# PROMETHEUS METRICS
+# ============================================================================
+
+@app.get("/metrics", tags=["Monitoring"])
+async def metrics():
+    """Prometheus metrics endpoint."""
+    from fastapi.responses import PlainTextResponse
+    from services.prometheus_metrics import get_prometheus_metrics
+    metrics_data = get_prometheus_metrics().get_metrics()
+    return PlainTextResponse(content=metrics_data, media_type="text/plain")
+
+
+# ============================================================================
+# INFRASTRUCTURE HEALTH
+# ============================================================================
+
+@app.get("/api/health/infrastructure", tags=["Health"])
+async def infrastructure_health():
+    """Comprehensive infrastructure health check."""
+    health = {
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat(),
+        "services": {}
+    }
+    overall_healthy = True
+
+    # Database
+    try:
+        db_ok = not (REQUIRE_REAL_DB and db.is_mock_mode)
+        health["services"]["database"] = {
+            "status": "healthy" if db_ok else "degraded",
+            "mode": "mock" if db.is_mock_mode else "supabase"
+        }
+        if not db_ok:
+            overall_healthy = False
+    except Exception as e:
+        health["services"]["database"] = {"status": "unhealthy", "error": str(e)}
+        overall_healthy = False
+
+    # Redis
+    try:
+        redis_health = await redis_manager.health_check()
+        health["services"]["redis"] = redis_health
+        if redis_health.get("status") != "healthy":
+            overall_healthy = False
+    except Exception as e:
+        health["services"]["redis"] = {"status": "unhealthy", "error": str(e)}
+
+    # Kafka (optional)
+    try:
+        from services.kafka_service import get_kafka_service
+        kafka_svc = await get_kafka_service()
+        health["services"]["kafka"] = kafka_svc.health_check()
+    except Exception as e:
+        health["services"]["kafka"] = {"status": "unavailable", "error": str(e)}
+
+    # ClickHouse (optional)
+    try:
+        from services.clickhouse_service import get_clickhouse_service
+        ch_svc = await get_clickhouse_service()
+        health["services"]["clickhouse"] = ch_svc.health_check()
+    except Exception as e:
+        health["services"]["clickhouse"] = {"status": "unavailable", "error": str(e)}
+
+    # Exchange failover
+    try:
+        from services.circuit_breaker import get_multi_exchange_failover
+        failover = get_multi_exchange_failover()
+        health["services"]["exchanges"] = failover.get_health_status()
+    except Exception as e:
+        health["services"]["exchanges"] = {"status": "unavailable", "error": str(e)}
+
+    health["status"] = "healthy" if overall_healthy else "degraded"
+    return health
 
 
 def _iso(value: Any) -> str:
@@ -939,9 +1292,11 @@ async def validate_signal_trade(signal_id: str, user_id: str = Query(...), fireb
         )
         
         logger.info(f"✅ Signal validation: {signal_id} - Risk Score: {validation['risk_score']:.1f}")
-        
+
         return validation
-    
+
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"❌ Signal validation failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -1001,7 +1356,9 @@ async def create_paper_trade(trade: PaperTradeCreate, firebase_uid: str = Depend
             return {"success": True, "trade_id": result["trade_id"], "data": result}
         else:
             raise HTTPException(status_code=400, detail=result["error"])
-    
+
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"❌ Paper trade creation failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -1047,7 +1404,9 @@ async def close_paper_trade(trade_id: str, exit_price: float = Query(...), fireb
             return {"success": True, "data": result}
         else:
             raise HTTPException(status_code=400, detail=result["error"])
-    
+
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"❌ Paper trade close failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -1076,15 +1435,18 @@ async def get_paper_trades(user_id: str = Query(...), firebase_uid: str = Depend
 @app.get("/api/portfolio/{user_id}", tags=["Portfolio"])
 async def get_portfolio(user_id: str, firebase_uid: str = Depends(verify_firebase_token)):
     """Get portfolio summary (requires Firebase authentication)."""
+    require_self_or_admin(user_id, firebase_uid)
     try:
         summary = await portfolio_service.get_portfolio_summary(user_id)
-        
+
         if not summary:
             raise HTTPException(status_code=404, detail="Portfolio not found")
-        
+
         logger.info(f"✅ Portfolio retrieved for {user_id}")
         return summary
-    
+
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"❌ Portfolio fetch failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -1093,36 +1455,69 @@ async def get_portfolio(user_id: str, firebase_uid: str = Depends(verify_firebas
 @app.get("/api/portfolio/{user_id}/metrics", tags=["Portfolio"])
 async def get_portfolio_metrics(user_id: str, firebase_uid: str = Depends(verify_firebase_token)):
     """Get detailed portfolio metrics (performance stats) (requires Firebase authentication)."""
+    require_self_or_admin(user_id, firebase_uid)
     try:
         metrics = await paper_trading.get_portfolio_metrics(user_id)
-        
+
         if not metrics:
             raise HTTPException(status_code=404, detail="Portfolio metrics not found")
-        
+
         return metrics
-    
+
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"❌ Metrics fetch failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/portfolio/{user_id}/benchmark", tags=["Portfolio"])
+async def get_portfolio_benchmark(
+    user_id: str,
+    period_days: int = Query(30, ge=1, le=3650),
+    benchmarks: str = Query("BTC,ETH", description="Comma-separated tickers to compare against"),
+    firebase_uid: str = Depends(verify_firebase_token),
+):
+    """Compare portfolio return against BTC/ETH or custom benchmarks over a period."""
+    require_self_or_admin(user_id, firebase_uid)
+    try:
+        benchmark_list = [b.strip().upper() for b in benchmarks.split(",") if b.strip()]
+        result = await portfolio_service.get_benchmark_comparison(
+            user_id, market_data_service, period_days=period_days, benchmarks=benchmark_list
+        )
+
+        if not result.get("success"):
+            raise HTTPException(status_code=500, detail=result.get("error", "Benchmark comparison failed"))
+
+        return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Benchmark comparison failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/positions/{user_id}", tags=["Portfolio"])
-async def get_positions(user_id: str):
+async def get_positions(user_id: str, firebase_uid: str = Depends(verify_firebase_token)):
     """Get all open positions."""
+    require_self_or_admin(user_id, firebase_uid)
     try:
         positions = await portfolio_service.get_open_positions(user_id)
-        
+
         return {"positions": positions, "count": len(positions)}
-    
+
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"❌ Positions fetch failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/api/portfolio/{user_id}/positions", tags=["Portfolio"])
-async def get_portfolio_positions(user_id: str):
+async def get_portfolio_positions(user_id: str, firebase_uid: str = Depends(verify_firebase_token)):
     """Compatibility alias for frontend contract."""
-    return await get_positions(user_id)
+    return await get_positions(user_id, firebase_uid)
 
 
 # ============================================================================
@@ -1222,6 +1617,100 @@ async def get_open_interest():
 
 
 # ============================================================================
+# FOREX ENDPOINTS
+# ============================================================================
+
+@app.get("/api/forex/pairs", tags=["Forex"])
+async def get_forex_pairs():
+    """Get list of supported forex pairs."""
+    try:
+        pairs = market_data_service.get_supported_forex_pairs()
+        logger.info(f"✅ Fetched {len(pairs)} supported forex pairs")
+
+        return {
+            "success": True,
+            "pairs": pairs,
+            "count": len(pairs),
+            "timestamp": datetime.utcnow()
+        }
+
+    except Exception as e:
+        logger.error(f"❌ Forex pairs fetch failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/forex/tickers", tags=["Forex"])
+async def get_forex_tickers(pairs: str = Query("EUR/USD,GBP/USD,USD/JPY")):
+    """Get forex pair tickers."""
+    try:
+        pair_list = [p.strip() for p in pairs.split(",")]
+        tickers = await market_data_service.fetch_forex_tickers(pair_list)
+
+        logger.info(f"✅ Fetched {len(tickers)} forex tickers")
+
+        return {
+            "success": True,
+            "tickers": tickers,
+            "timestamp": datetime.utcnow()
+        }
+
+    except Exception as e:
+        logger.error(f"❌ Forex tickers fetch failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/forex/ticker/{pair}", tags=["Forex"])
+async def get_forex_ticker(pair: str = Path(...)):
+    """Get ticker for specific forex pair."""
+    try:
+        ticker = await market_data_service.fetch_forex_ticker(pair)
+
+        if not ticker:
+            raise HTTPException(status_code=404, detail=f"Forex pair {pair} not found")
+
+        logger.info(f"✅ Fetched ticker for {pair}")
+
+        return {
+            "success": True,
+            "ticker": ticker,
+            "timestamp": datetime.utcnow()
+        }
+
+    except Exception as e:
+        logger.error(f"❌ Forex ticker fetch failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/forex/ohlcv/{pair}", tags=["Forex"])
+async def get_forex_ohlcv(
+    pair: str = Path(...),
+    interval: str = Query("1h"),
+    limit: int = Query(100)
+):
+    """Get OHLCV data for forex pair."""
+    try:
+        ohlcv = await market_data_service.fetch_forex_ohlcv(pair, interval, limit)
+
+        if not ohlcv:
+            raise HTTPException(status_code=404, detail=f"OHLCV data for {pair} not found")
+
+        logger.info(f"✅ Fetched OHLCV for {pair} ({interval}) - {len(ohlcv)} candles")
+
+        return {
+            "success": True,
+            "pair": pair,
+            "interval": interval,
+            "ohlcv": ohlcv,
+            "count": len(ohlcv),
+            "timestamp": datetime.utcnow()
+        }
+
+    except Exception as e:
+        logger.error(f"❌ Forex OHLCV fetch failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
 # WEBHOOK ENDPOINTS (External Signal Ingestion)
 # ============================================================================
 
@@ -1294,54 +1783,6 @@ async def tradingview_webhook(
 # CHAT & AI ENDPOINTS
 # ============================================================================
 
-@app.post("/api/chat/message", tags=["Chat"])
-async def send_chat_message(user_id: str = Query(...), message: str = Query(...)):
-    """Send a message and get AI response."""
-    try:
-        # Get context
-        context = await chat_service.get_context_for_response(
-            user_id, portfolio_service, signal_processor
-        )
-        
-        # Generate response
-        response_text = await chat_service._generate_ai_response(message, context)
-        
-        # Save messages
-        await chat_service.save_message(user_id, message, "user")
-        await chat_service.save_message(user_id, response_text, "assistant")
-        
-        logger.info(f"✅ Chat message processed for {user_id}")
-        
-        return {
-            "success": True,
-            "user_message": message,
-            "ai_response": response_text,
-            "timestamp": datetime.utcnow().isoformat()
-        }
-    
-    except Exception as e:
-        logger.error(f"❌ Chat processing failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.get("/api/chat/history", tags=["Chat"])
-async def get_chat_history(user_id: str = Query(...), limit: int = Query(50, le=100)):
-    """Get chat history for a user."""
-    try:
-        history = await chat_service.get_chat_history(user_id, limit)
-        
-        return {
-            "success": True,
-            "user_id": user_id,
-            "messages": history,
-            "count": len(history)
-        }
-    
-    except Exception as e:
-        logger.error(f"❌ Failed to fetch chat history: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
 # ============================================================================
 # CREATOR VERIFICATION ENDPOINTS
 # ============================================================================
@@ -1351,12 +1792,14 @@ async def get_creator_verification(user_id: str = Query(...)):
     """Get creator verification status and pipeline."""
     try:
         result = await creator_service.get_verification_status(user_id)
-        
+
         if result.get("success"):
             return result
         else:
             raise HTTPException(status_code=404, detail=result.get("error"))
-    
+
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"❌ Failed to get verification status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -1388,7 +1831,9 @@ async def submit_strategy_for_verification(user_id: str = Query(...)):
             return result
         else:
             raise HTTPException(status_code=400, detail=result.get("error"))
-    
+
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"❌ Failed to submit strategy: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -1591,131 +2036,47 @@ async def copy_creator_strategy(strategy_id: str, user_id: str = Query(...)):
 # ============================================================================
 
 @app.get("/api/user/kyc", tags=["KYC"])
-async def get_kyc_status(user_id: str = Query(...)):
-    """Get user's KYC verification status."""
+async def get_kyc_status(user_id: str = Query(...), firebase_uid: str = Depends(verify_firebase_token)):
+    """Get user's KYC verification status. User can only access their own KYC status."""
     try:
+        if firebase_uid != user_id:
+            raise HTTPException(status_code=403, detail="Cannot access other users' KYC status")
+
         result = await user_service.get_kyc_status(user_id)
-        
+
         if result.get("success"):
             return result
         else:
             raise HTTPException(status_code=404, detail=result.get("error"))
-    
+
     except HTTPException:
         raise
-
     except Exception as e:
-        logger.error(f"❌ Failed to get KYC status: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Failed to get KYC status: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get KYC status")
 
 
 @app.post("/api/user/kyc", tags=["KYC"])
-async def submit_kyc(user_id: str = Query(...)):
-    """Submit KYC documents for verification."""
+async def submit_kyc(user_id: str = Query(...), firebase_uid: str = Depends(verify_firebase_token)):
+    """Submit KYC documents for verification. User can only submit their own KYC."""
     try:
-        # In production, receive file uploads
+        if firebase_uid != user_id:
+            raise HTTPException(status_code=403, detail="Cannot submit KYC for other users")
+
         kyc_data = {
             "documents": [],
             "submitted_by_user": True
         }
-        
+
         result = await user_service.submit_kyc(user_id, kyc_data)
-        
+
         if result.get("success"):
             return result
         else:
             raise HTTPException(status_code=400, detail=result.get("error"))
-    
+
     except HTTPException:
         raise
-
-
-@app.post("/api/kyc/start", tags=["KYC"])
-async def kyc_start(user_id: str = Query(...)):
-    """Roadmap compatibility endpoint to initiate KYC."""
-    result = await user_service.submit_kyc(user_id, {"documents": [], "status": "started"})
-    if not result.get("success"):
-        raise HTTPException(status_code=400, detail=result.get("error", "Failed to start KYC"))
-    return {"success": True, "user_id": user_id, "kyc_id": result.get("kyc_id")}
-
-
-@app.post("/api/kyc/upload", tags=["KYC"])
-async def kyc_upload(user_id: str = Query(...), doc_type: str = Query(...), file_url: str = Query(...)):
-    """Roadmap compatibility endpoint to attach KYC document metadata."""
-    try:
-        current = await user_service.get_kyc_status(user_id)
-        if not current.get("success"):
-            raise HTTPException(status_code=404, detail=current.get("error", "KYC record not found"))
-
-        existing = current.get("kyc_details") or {}
-        documents = existing.get("documents") or []
-        documents.append({"doc_type": doc_type, "file_url": file_url, "uploaded_at": datetime.utcnow().isoformat()})
-
-        update_data = {
-            "documents": documents,
-            "status": "SUBMITTED",
-            "created_at": existing.get("created_at") or datetime.utcnow().isoformat(),
-        }
-
-        db.supabase.table("kyc_verifications").upsert({"user_id": user_id, **update_data}).execute()
-        db.supabase.table("users").update({"kyc_status": "SUBMITTED"}).eq("id", user_id).execute()
-
-        return {"success": True, "user_id": user_id, "document_count": len(documents)}
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"❌ Failed to upload KYC document metadata: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.get("/api/kyc/status", tags=["KYC"])
-async def kyc_status(user_id: str = Query(...)):
-    """Roadmap compatibility endpoint for KYC status checks."""
-    result = await user_service.get_kyc_status(user_id)
-    if not result.get("success"):
-        raise HTTPException(status_code=404, detail=result.get("error", "KYC status not found"))
-    return result
-
-
-@app.post("/api/kyc/submit", tags=["KYC"])
-async def kyc_submit(user_id: str = Query(...), payload: Dict[str, Any] = None):
-    """Roadmap compatibility endpoint for final KYC submission."""
-    result = await user_service.submit_kyc(user_id, payload or {"submitted": True})
-    if not result.get("success"):
-        raise HTTPException(status_code=400, detail=result.get("error", "Failed to submit KYC"))
-    return {"success": True, "user_id": user_id, "kyc_id": result.get("kyc_id")}
-
-
-@app.post("/api/kyc/admin/approve", tags=["KYC"])
-async def kyc_admin_approve(user_id: str = Query(...)):
-    """Admin endpoint to approve KYC."""
-    try:
-        db.supabase.table("kyc_verifications").update(
-            {"status": "APPROVED", "completed_at": datetime.utcnow().isoformat()}
-        ).eq("user_id", user_id).execute()
-        db.supabase.table("users").update({"kyc_status": "APPROVED"}).eq("id", user_id).execute()
-        return {"success": True, "user_id": user_id, "status": "APPROVED"}
-    except Exception as e:
-        logger.error(f"❌ Failed to approve KYC: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.post("/api/kyc/admin/reject", tags=["KYC"])
-async def kyc_admin_reject(user_id: str = Query(...), reason: str = Query("manual_review_failed")):
-    """Admin endpoint to reject KYC."""
-    try:
-        db.supabase.table("kyc_verifications").update(
-            {
-                "status": "REJECTED",
-                "aml_reason": reason,
-                "completed_at": datetime.utcnow().isoformat(),
-            }
-        ).eq("user_id", user_id).execute()
-        db.supabase.table("users").update({"kyc_status": "REJECTED"}).eq("id", user_id).execute()
-        return {"success": True, "user_id": user_id, "status": "REJECTED", "reason": reason}
-    except Exception as e:
-        logger.error(f"❌ Failed to reject KYC: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ============================================================================
@@ -1820,52 +2181,76 @@ async def update_risk_settings(user_id: str = Query(...)):
 # ============================================================================
 
 @app.post("/api/exchange/connect", tags=["Exchange"])
-async def connect_exchange(user_id: str = Query(...), exchange: str = Query(...)):
-    """Connect a trading exchange API."""
+async def connect_exchange(
+    user_id: str = Query(...),
+    exchange: str = Query(...),
+    firebase_uid: str = Depends(verify_firebase_token),
+):
+    """Connect a trading exchange API. Tier gating enforced: Basic=2 exchanges, Pro=4, VIP=unlimited."""
+    if user_id != firebase_uid:
+        raise HTTPException(status_code=403, detail="Cannot connect exchanges for other users")
     try:
-        # In production, receive encrypted credentials
+        tier_info = await billing_service.get_tier_limits(user_id)
+        limits = tier_info.get("limits", {})
+        max_exchanges = limits.get("max_exchanges", 1)
+
+        current = await user_service.get_connected_exchanges(user_id)
+        num_connected = len(current.get("exchanges", []))
+
+        if num_connected >= max_exchanges:
+            raise HTTPException(
+                status_code=403,
+                detail=f"Tier {tier_info['tier']} limited to {max_exchanges} exchanges. Disconnect one first."
+            )
+
         result = await user_service.connect_exchange(
             user_id=user_id,
             exchange=exchange,
             api_key="test_key",
             api_secret="test_secret"
         )
-        
+
         if result.get("success"):
             return result
         else:
             raise HTTPException(status_code=400, detail=result.get("error"))
-    
+
     except HTTPException:
         raise
-
     except Exception as e:
         logger.error(f"❌ Failed to connect exchange: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/api/exchange/keys", tags=["Exchange"])
-async def get_connected_exchanges(user_id: str = Query(...)):
+async def get_connected_exchanges(user_id: str = Query(...), firebase_uid: str = Depends(verify_firebase_token)):
     """Get list of connected exchanges."""
+    if user_id != firebase_uid:
+        raise HTTPException(status_code=403, detail="Cannot access other users' exchanges")
     try:
         result = await user_service.get_connected_exchanges(user_id)
-        
+
         if result.get("success"):
             return result
         else:
             raise HTTPException(status_code=404, detail=result.get("error"))
-    
+
     except HTTPException:
         raise
-
     except Exception as e:
         logger.error(f"❌ Failed to get exchanges: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/api/exchange/disconnect", tags=["Exchange"])
-async def disconnect_exchange(user_id: str = Query(...), exchange: str = Query(...)):
+async def disconnect_exchange(
+    user_id: str = Query(...),
+    exchange: str = Query(...),
+    firebase_uid: str = Depends(verify_firebase_token),
+):
     """Disconnect a trading exchange."""
+    if user_id != firebase_uid:
+        raise HTTPException(status_code=403, detail="Cannot disconnect exchanges for other users")
     try:
         result = await user_service.disconnect_exchange(user_id, exchange)
         
@@ -1906,23 +2291,34 @@ async def get_external_signals(user_id: str = Query(None), limit: int = Query(50
 
 
 @app.post("/api/external-signals/rules", tags=["External Signals"])
-async def set_signal_rules(user_id: str = Query(...)):
-    """Set filtering rules for external signal ingestion."""
+async def set_signal_rules(
+    user_id: str = Query(...),
+    firebase_uid: str = Depends(verify_firebase_token),
+):
+    """Set filtering rules for external signal ingestion (VIP tier required)."""
+    if user_id != firebase_uid:
+        raise HTTPException(status_code=403, detail="Cannot set rules for another user")
+
     try:
+        # Check VIP tier
+        tier_info = await billing_service.get_tier_limits(user_id)
+        if not tier_info.get("limits", {}).get("api_access"):
+            raise HTTPException(status_code=403, detail="API access requires VIP tier subscription")
+
         # In production, parse from request body
         rules = {
             "min_confidence": 0.7,
             "enabled_sources": ["tradingview"],
             "excluded_symbols": []
         }
-        
+
         result = await user_service.set_external_signal_rules(user_id, rules)
-        
+
         if result.get("success"):
             return {"success": True, "message": "Signal rules updated"}
         else:
             raise HTTPException(status_code=400, detail=result.get("error"))
-    
+
     except HTTPException:
         raise
 
@@ -1932,16 +2328,28 @@ async def set_signal_rules(user_id: str = Query(...)):
 
 
 @app.get("/api/external-signals/history", tags=["External Signals"])
-async def get_signal_history(user_id: str = Query(...), days: int = Query(7, ge=1, le=90)):
-    """Get history of external signal webhook hits."""
+async def get_signal_history(
+    user_id: str = Query(...),
+    days: int = Query(7, ge=1, le=90),
+    firebase_uid: str = Depends(verify_firebase_token),
+):
+    """Get history of external signal webhook hits (VIP tier required)."""
+    if user_id != firebase_uid:
+        raise HTTPException(status_code=403, detail="Cannot view history for another user")
+
     try:
+        # Check VIP tier
+        tier_info = await billing_service.get_tier_limits(user_id)
+        if not tier_info.get("limits", {}).get("api_access"):
+            raise HTTPException(status_code=403, detail="API access requires VIP tier subscription")
+
         result = await user_service.get_external_signal_history(user_id, days)
-        
+
         if result.get("success"):
             return result
         else:
             raise HTTPException(status_code=404, detail=result.get("error"))
-    
+
     except HTTPException:
         raise
 
@@ -1954,9 +2362,9 @@ async def get_signal_history(user_id: str = Query(...), days: int = Query(7, ge=
 # STRATEGY ENDPOINTS
 # ============================================================================
 
-@app.get("/api/strategies", tags=["Strategy"])
+@app.get("/api/strategies/user", tags=["Strategy"])
 async def get_user_strategies(user_id: str = Query(...)):
-    """Get all strategies created by user."""
+    """Get all strategies created by a specific user."""
     try:
         result = await strategy_service.get_user_strategies(user_id)
         
@@ -1973,9 +2381,9 @@ async def get_user_strategies(user_id: str = Query(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/strategies/marketplace", tags=["Strategy"])
+@app.get("/api/strategies/browse", tags=["Strategy"])
 async def get_marketplace_strategies(limit: int = Query(50, le=100), offset: int = Query(0)):
-    """Get approved strategies on marketplace."""
+    """Browse approved strategies on marketplace."""
     try:
         result = await strategy_service.get_marketplace_strategies(limit, offset)
         
@@ -2073,24 +2481,35 @@ async def start_paper_trade_strategy(strategy_id: str, user_id: str = Query(...)
 # ============================================================================
 
 @app.post("/api/backtest/run", tags=["Backtesting"])
-async def run_backtest(user_id: str = Query(...)):
-    """Run a backtest for a strategy."""
+async def run_backtest(
+    user_id: str = Query(...),
+    strategy_config: Dict[str, Any] = Body(default={}),
+    firebase_uid: str = Depends(verify_firebase_token),
+):
+    """Run a backtest for a strategy. NOTE: current engine is a synthetic
+    demo simulation, not a real historical-price replay — see
+    backtest_service._simulate_backtest and results['data_source']."""
+    if user_id != firebase_uid:
+        raise HTTPException(status_code=403, detail="Cannot run a backtest for other users")
     try:
-        # In production, parse strategy config from request body
         strategy_config = {
-            "name": "Test Strategy",
-            "symbols": ["BTC", "ETH"],
-            "initial_capital": 100000,
-            "parameters": {}
+            "name": strategy_config.get("name", "Unnamed Strategy"),
+            "symbols": strategy_config.get("symbols", ["BTC", "ETH"]),
+            "initial_capital": strategy_config.get("initial_capital", 100000),
+            "start_date": strategy_config.get("start_date"),
+            "end_date": strategy_config.get("end_date"),
+            "parameters": strategy_config.get("parameters", {}),
         }
-        
+
         result = await backtest_service.run_backtest(user_id, strategy_config)
         
         if result.get("success"):
             return result
         else:
             raise HTTPException(status_code=400, detail=result.get("error"))
-    
+
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"❌ Failed to run backtest: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -2106,7 +2525,9 @@ async def get_backtest_results(backtest_id: str):
             return result
         else:
             raise HTTPException(status_code=404, detail=result.get("error"))
-    
+
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"❌ Failed to get backtest: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -2122,15 +2543,19 @@ async def get_equity_curve(backtest_id: str):
             return result
         else:
             raise HTTPException(status_code=404, detail=result.get("error"))
-    
+
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"❌ Failed to get equity curve: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/api/backtest/user/{user_id}", tags=["Backtesting"])
-async def list_user_backtests(user_id: str, limit: int = Query(20, le=100)):
-    """List all backtests for a user."""
+async def list_user_backtests(user_id: str, limit: int = Query(20, le=100), firebase_uid: str = Depends(verify_firebase_token)):
+    """List all backtests for a user. User can only list their own."""
+    if user_id != firebase_uid:
+        raise HTTPException(status_code=403, detail="Cannot list other users' backtests")
     try:
         result = await backtest_service.list_user_backtests(user_id, limit)
         
@@ -2138,7 +2563,9 @@ async def list_user_backtests(user_id: str, limit: int = Query(20, le=100)):
             return result
         else:
             raise HTTPException(status_code=404, detail=result.get("error"))
-    
+
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"❌ Failed to list backtests: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -2149,19 +2576,24 @@ async def list_user_backtests(user_id: str, limit: int = Query(20, le=100)):
 # ============================================================================
 
 @app.post("/api/signals/{signal_id}/execute", tags=["Signals"])
-async def execute_signal(signal_id: str, user_id: str = Query(...)):
-    """Execute a signal (convert to paper/live trade)."""
+async def execute_signal(signal_id: str, user_id: str = Query(...), firebase_uid: str = Depends(verify_firebase_token)):
+    """Execute a signal (convert to paper/live trade). User can only execute signals for themselves."""
     try:
+        if firebase_uid != user_id:
+            raise HTTPException(status_code=403, detail="Cannot execute signals for other users")
+
         result = await user_service.execute_signal(user_id, signal_id)
-        
+
         if result.get("success"):
             return result
         else:
             raise HTTPException(status_code=400, detail=result.get("error"))
-    
+
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"❌ Failed to execute signal: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Failed to execute signal: {e}")
+        raise HTTPException(status_code=500, detail="Signal execution failed")
 
 
 @app.get("/api/signals/{signal_id}/proofs", tags=["Signals"])
@@ -2174,7 +2606,9 @@ async def get_signal_proofs(signal_id: str):
             return result
         else:
             raise HTTPException(status_code=404, detail=result.get("error"))
-    
+
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"❌ Failed to get signal proof: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -2203,7 +2637,9 @@ async def get_proof_detail(signal_id: str):
             }
         else:
             raise HTTPException(status_code=404, detail=result.get("error"))
-    
+
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"❌ Failed to get proof: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -2631,48 +3067,44 @@ async def get_monitoring_stats(
                 "requests_remaining": 60,
                 "reset_time": (datetime.utcnow().timestamp() + 60)
             }
-        
-        # Mock monitoring data (would come from performance_monitor service)
+
+        real_stats = perf_monitor.get_all_stats()
+        endpoints = real_stats.get("endpoints", {})
+
+        total_requests = sum(ep["total_calls"] for ep in endpoints.values())
+        total_errors = sum(ep["error_calls"] for ep in endpoints.values())
+        error_rate_pct = round((total_errors / total_requests * 100), 2) if total_requests else 0.0
+
+        response_times = [
+            float(ep["avg_response_time_ms"]) for ep in endpoints.values() if ep.get("total_calls", 0) > 0
+        ]
+        avg_response_time_ms = round(sum(response_times) / len(response_times), 2) if response_times else 0.0
+
+        most_problematic_endpoint = None
+        if endpoints:
+            most_problematic_endpoint = max(
+                endpoints.items(),
+                key=lambda kv: kv[1]["error_calls"],
+            )[0]
+
         monitoring_data = {
             "system_stats": {
-                "total_requests": 1543,
-                "total_errors": 23,
-                "error_rate_pct": 1.49,
-                "avg_response_time_ms": 145.3,
-                "most_problematic_endpoint": "/api/market/correlations"
+                "total_requests": total_requests,
+                "total_errors": total_errors,
+                "error_rate_pct": error_rate_pct,
+                "avg_response_time_ms": avg_response_time_ms,
+                "most_problematic_endpoint": most_problematic_endpoint,
             },
-            "endpoints": {
-                "/api/signals/high-performers": {
-                    "total_calls": 342,
-                    "success_calls": 338,
-                    "error_calls": 4,
-                    "response_times": {"min_ms": 12, "max_ms": 2543, "avg_ms": 98.4},
-                    "error_rate_pct": 1.17
-                },
-                "/api/external-signals/sources": {
-                    "total_calls": 287,
-                    "success_calls": 285,
-                    "error_calls": 2,
-                    "response_times": {"min_ms": 8, "max_ms": 1200, "avg_ms": 78.2},
-                    "error_rate_pct": 0.70
-                },
-                "/api/market/correlations": {
-                    "total_calls": 156,
-                    "success_calls": 148,
-                    "error_calls": 8,
-                    "response_times": {"min_ms": 95, "max_ms": 5200, "avg_ms": 245.8},
-                    "error_rate_pct": 5.13
-                }
-            },
+            "endpoints": endpoints,
             "user_rate_limit": user_stats
         }
-        
+
         return {
             "success": True,
             "monitoring_data": monitoring_data,
             "timestamp": datetime.utcnow().isoformat()
         }
-        
+
     except Exception as e:
         logger.error(f"Monitoring stats error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -2685,34 +3117,18 @@ async def get_endpoint_stats(
 ):
     """Get detailed statistics for a specific endpoint."""
     try:
-        # Mock data for endpoint stats
-        endpoint_stats = {
-            "/api/signals/high-performers": {
-                "total_calls": 342,
-                "success_calls": 338,
-                "error_calls": 4,
-                "response_times": {"min_ms": 12, "max_ms": 2543, "avg_ms": 98.4, "p50_ms": 85, "p95_ms": 450, "p99_ms": 1200},
-                "error_rate_pct": 1.17,
-                "recent_errors": [
-                    {"error": "Database timeout", "timestamp": "2026-03-18T10:30:00Z"},
-                    {"error": "Signal not found", "timestamp": "2026-03-18T10:29:45Z"}
-                ],
-                "trend": "stable"
-            }
-        }
-        
-        stats = endpoint_stats.get(endpoint_path)
-        
-        if not stats:
+        stats = perf_monitor.get_endpoint_stats(endpoint_path)
+
+        if not stats or "error" in stats:
             raise HTTPException(status_code=404, detail="Endpoint not found in monitoring data")
-        
+
         return {
             "success": True,
             "endpoint": endpoint_path,
             "stats": stats,
             "timestamp": datetime.utcnow().isoformat()
         }
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -3425,12 +3841,12 @@ async def frontend_market_tickers(symbols: str = Query("BTC,ETH,BNB,SOL,XRP")):
         {
             "id": f"ticker-{item.get('symbol')}",
             "asset": item.get("symbol"),
-            "price": float(item.get("last_price") or 0),
+            "price": float(item.get("price") or 0),
             "change24h": float(item.get("change_24h_pct") or 0),
             "change24hAbs": float(item.get("change_24h") or 0),
             "volume24h": float(item.get("volume_24h") or 0),
-            "high24h": float(item.get("last_price") or 0) * 1.01,
-            "low24h": float(item.get("last_price") or 0) * 0.99,
+            "high24h": float(item.get("high_24h") or item.get("price") or 0),
+            "low24h": float(item.get("low_24h") or item.get("price") or 0),
         }
         for item in tickers
     ]
@@ -3495,40 +3911,71 @@ async def frontend_data_quality():
 
 
 @app.get("/api/frontend/market/on-chain-activity", tags=["Frontend"])
-async def frontend_on_chain_activity():
-    now = datetime.utcnow().isoformat()
+async def frontend_on_chain_activity(limit: int = Query(20, le=50)):
+    """Real whale-movement feed via onchain_tracker_service (respects its
+    honest mock/database toggle — see OnchainConfig.USE_MOCK_DATA)."""
+    if not onchain_tracker_service:
+        return []
+
+    result = await onchain_tracker_service.get_whale_movements(limit=limit)
+    if not result.get("success"):
+        return []
+
+    exchange_types = {"exchange_deposit", "exchange_withdrawal"}
     return [
         {
-            "id": "onchain-1",
-            "type": "whale_move",
-            "asset": "BTC",
-            "amount": 120.5,
-            "valueUsd": 120.5 * 45000,
-            "from": "0xexchange-hot-wallet",
-            "to": "0xinstitutional-cold-wallet",
-            "timestamp": now,
-        },
-        {
-            "id": "onchain-2",
-            "type": "exchange_flow",
-            "asset": "ETH",
-            "amount": 4200,
-            "valueUsd": 4200 * 3000,
-            "from": "0xunknown",
-            "to": "0xexchange",
-            "timestamp": now,
-        },
+            "id": m.get("id"),
+            "type": "exchange_flow" if m.get("movement_type") in exchange_types else "whale_move",
+            "asset": m.get("asset"),
+            "amount": m.get("amount"),
+            "valueUsd": m.get("value_usd"),
+            "from": m.get("from_address"),
+            "to": m.get("to_address"),
+            "timestamp": m.get("timestamp"),
+        }
+        for m in result.get("movements", [])
     ]
+
+
+@app.get("/api/frontend/market/on-chain-metrics", tags=["Frontend"])
+async def frontend_on_chain_metrics(assets: str = Query("BTC,ETH,SOL")):
+    """Real MVRV/SOPR-style on-chain valuation metrics per asset, flattened
+    into one row per metric (via onchain_tracker_service — respects its
+    honest mock/database toggle)."""
+    if not onchain_tracker_service:
+        return []
+
+    rows = []
+    for asset in [a.strip().upper() for a in assets.split(",") if a.strip()]:
+        result = await onchain_tracker_service.get_asset_metrics(asset)
+        if not result.get("success"):
+            continue
+        m = result["metrics"]
+        rows.append({"asset": asset, "name": "MVRV", "value": str(m.get("mvrv")), "status": m.get("mvrv_label", "Neutral"), "change24h": 0})
+        rows.append({"asset": asset, "name": "SOPR", "value": str(m.get("sopr")), "status": m.get("sopr_label", "Neutral"), "change24h": 0})
+        rows.append({"asset": asset, "name": "NVT Ratio", "value": str(m.get("nvt_ratio")), "status": "Neutral", "change24h": 0})
+        rows.append({
+            "asset": asset,
+            "name": "Exchange Balance",
+            "value": f"{m.get('exchange_balance_change_pct_24h')}%",
+            "status": "Undervalued" if (m.get("exchange_balance_change_pct_24h") or 0) < 0 else "Overvalued",
+            "change24h": m.get("exchange_balance_change_pct_24h", 0),
+        })
+    return rows
 
 
 @app.get("/api/frontend/market/liquidation-clusters", tags=["Frontend"])
 async def frontend_liquidation_clusters():
+    """Estimated long/short liquidation cluster sizing derived from real open
+    interest. The long/short split is a heuristic (12%/8% of OI), not a
+    measured liquidation-engine figure — flagged as estimated so the
+    frontend/user never mistakes this for exchange-reported liquidation data."""
     oi = await market_data_service.fetch_open_interest()
     clusters = []
     for item in oi:
         value = float(item.get("open_interest_usd") or 0)
-        clusters.append({"asset": item.get("asset"), "value": round(value * 0.12, 2), "type": "long"})
-        clusters.append({"asset": item.get("asset"), "value": round(value * 0.08, 2), "type": "short"})
+        clusters.append({"asset": item.get("asset"), "value": round(value * 0.12, 2), "type": "long", "estimated": True})
+        clusters.append({"asset": item.get("asset"), "value": round(value * 0.08, 2), "type": "short", "estimated": True})
     return clusters
 
 
@@ -3885,34 +4332,48 @@ async def frontend_audit_logs(user_id: str, limit: int = Query(200, le=500)):
 
 @app.get("/api/frontend/system/model-performance", tags=["Frontend"])
 async def frontend_model_performance():
-    response = db.supabase.table("signals").select("confidence").execute()
-    confidences = [float(item.get("confidence") or 0) for item in (response.data or [])]
+    # accuracy is real (avg confidence over actual stored signals). latency/
+    # uptime are not measured yet — no request-latency or uptime-tracking
+    # subsystem exists — so we report them as null rather than inventing
+    # plausible-looking numbers.
+    response = db.supabase.table("signals").select("confidence, created_at").execute()
+    rows = response.data or []
+    confidences = [float(item.get("confidence") or 0) for item in rows]
     average_confidence = mean(confidences) if confidences else 0.75
+    last_training = max((r.get("created_at") for r in rows if r.get("created_at")), default=None)
     return [
         {
             "id": "model-signal-core",
             "modelName": "Signal Confidence Model",
             "accuracy": round(average_confidence, 2),
-            "latency": 45,
-            "uptime": 99.9,
-            "lastTraining": datetime.utcnow().isoformat(),
+            "latency": None,
+            "uptime": None,
+            "lastTraining": last_training or datetime.utcnow().isoformat(),
         }
     ]
 
 
 @app.get("/api/frontend/system/{user_id}/notifications", tags=["Frontend"])
-async def frontend_notifications(user_id: str):
+async def frontend_notifications(user_id: str, firebase_uid: str = Depends(verify_firebase_token)):
+    if user_id != firebase_uid:
+        raise HTTPException(status_code=403, detail="Cannot access other users' notifications")
+    if not notification_svc:
+        return []
+    result = await notification_svc.get_notification_history(user_id, limit=50)
+    if not result.get("success"):
+        return []
     return [
         {
-            "id": f"notif-{user_id}-1",
+            "id": str(n.get("id", "")),
             "userId": user_id,
-            "type": "system",
-            "title": "Backend Connected",
-            "message": "Realtime backend bridge is active.",
-            "read": False,
-            "critical": False,
-            "createdAt": datetime.utcnow().isoformat(),
+            "type": n.get("notification_type", "system"),
+            "title": n.get("title", ""),
+            "message": n.get("message", ""),
+            "read": bool(n.get("read", False)),
+            "critical": bool(n.get("critical", False)),
+            "createdAt": n.get("sent_at", ""),
         }
+        for n in result.get("notifications", [])
     ]
 
 
@@ -4070,9 +4531,12 @@ async def check_paper_trading_gate(strategy_id: str = Path(...)):
 @app.post("/api/kyc/start", tags=["KYC"])
 async def start_kyc(
     user_id: str = Query(...),
-    kyc_level: str = Query("enhanced")
+    kyc_level: str = Query("enhanced"),
+    firebase_uid: str = Depends(verify_firebase_token),
 ):
-    """Start KYC verification process."""
+    """Start KYC verification process. User can only start their own KYC."""
+    if user_id != firebase_uid:
+        raise HTTPException(status_code=403, detail="Cannot start KYC for other users")
     try:
         result = await kyc_service.start_kyc(user_id, kyc_level)
         return result
@@ -4082,8 +4546,10 @@ async def start_kyc(
 
 
 @app.get("/api/kyc/status", tags=["KYC"])
-async def get_kyc_status(user_id: str = Query(...)):
-    """Get user KYC verification status."""
+async def get_kyc_status(user_id: str = Query(...), firebase_uid: str = Depends(verify_firebase_token)):
+    """Get user KYC verification status. User can only access their own status."""
+    if user_id != firebase_uid:
+        raise HTTPException(status_code=403, detail="Cannot access other users' KYC status")
     try:
         result = await kyc_service.get_kyc_status(user_id)
         return result
@@ -4096,9 +4562,12 @@ async def get_kyc_status(user_id: str = Query(...)):
 async def upload_kyc_document(
     user_id: str = Query(...),
     document_type: str = Query(...),
-    document_url: str = Query(...)
+    document_url: str = Query(...),
+    firebase_uid: str = Depends(verify_firebase_token),
 ):
-    """Upload KYC document."""
+    """Upload a KYC document. User can only upload to their own KYC record."""
+    if user_id != firebase_uid:
+        raise HTTPException(status_code=403, detail="Cannot upload documents for other users")
     try:
         result = await kyc_service.upload_document(
             user_id, document_type, document_url
@@ -4110,8 +4579,10 @@ async def upload_kyc_document(
 
 
 @app.post("/api/kyc/submit", tags=["KYC"])
-async def submit_kyc(user_id: str = Query(...)):
-    """Submit KYC for review."""
+async def submit_kyc(user_id: str = Query(...), firebase_uid: str = Depends(verify_firebase_token)):
+    """Submit KYC for review. User can only submit their own KYC."""
+    if user_id != firebase_uid:
+        raise HTTPException(status_code=403, detail="Cannot submit KYC for other users")
     try:
         result = await kyc_service.submit_kyc(user_id)
         return result
@@ -4121,8 +4592,10 @@ async def submit_kyc(user_id: str = Query(...)):
 
 
 @app.post("/api/kyc/resubmit", tags=["KYC"])
-async def resubmit_kyc(user_id: str = Query(...)):
-    """Resubmit rejected KYC."""
+async def resubmit_kyc(user_id: str = Query(...), firebase_uid: str = Depends(verify_firebase_token)):
+    """Resubmit rejected KYC. User can only resubmit their own KYC."""
+    if user_id != firebase_uid:
+        raise HTTPException(status_code=403, detail="Cannot resubmit KYC for other users")
     try:
         result = await kyc_service.resubmit_kyc(user_id)
         return result
@@ -4132,8 +4605,8 @@ async def resubmit_kyc(user_id: str = Query(...)):
 
 
 @app.get("/api/kyc/admin/pending", tags=["KYC", "Admin"])
-async def get_pending_kyc_reviews(limit: int = Query(50, le=100)):
-    """Admin: Get pending KYC reviews."""
+async def get_pending_kyc_reviews(limit: int = Query(50, le=100), admin_uid: str = Depends(verify_admin_token)):
+    """Admin: Get pending KYC reviews. Requires ADMIN_UIDS allowlist membership."""
     try:
         result = await kyc_service.get_pending_kyc_reviews(limit)
         return result
@@ -4145,12 +4618,13 @@ async def get_pending_kyc_reviews(limit: int = Query(50, le=100)):
 @app.post("/api/kyc/admin/approve", tags=["KYC", "Admin"])
 async def approve_kyc(
     user_id: str = Query(...),
-    admin_id: str = Query(...),
-    notes: str = Query("")
+    notes: str = Query(""),
+    admin_uid: str = Depends(verify_admin_token),
 ):
-    """Admin: Approve KYC."""
+    """Admin: Approve KYC. Requires ADMIN_UIDS allowlist membership — admin
+    identity is taken from the verified token, never a client-supplied param."""
     try:
-        result = await kyc_service.approve_kyc(user_id, admin_id, notes)
+        result = await kyc_service.approve_kyc(user_id, admin_uid, notes)
         return result
     except Exception as e:
         logger.error(f"❌ KYC approval failed: {e}")
@@ -4160,15 +4634,380 @@ async def approve_kyc(
 @app.post("/api/kyc/admin/reject", tags=["KYC", "Admin"])
 async def reject_kyc(
     user_id: str = Query(...),
-    admin_id: str = Query(...),
-    rejection_reason: str = Query(...)
+    rejection_reason: str = Query(...),
+    admin_uid: str = Depends(verify_admin_token),
 ):
-    """Admin: Reject KYC."""
+    """Admin: Reject KYC. Requires ADMIN_UIDS allowlist membership — admin
+    identity is taken from the verified token, never a client-supplied param."""
     try:
-        result = await kyc_service.reject_kyc(user_id, admin_id, rejection_reason)
+        result = await kyc_service.reject_kyc(user_id, admin_uid, rejection_reason)
         return result
     except Exception as e:
         logger.error(f"❌ KYC rejection failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# DISCLAIMER ACKNOWLEDGMENT ENDPOINTS (PRD Decision 7 — 7-point disclaimer system)
+# ============================================================================
+
+@app.get("/api/compliance/disclaimers", tags=["Compliance"])
+async def list_disclaimers():
+    """Get the current text/version of all disclaimer types. Public — shown pre-signup."""
+    try:
+        result = await compliance_service.get_disclaimer()
+        return result
+    except Exception as e:
+        logger.error(f"❌ Failed to fetch disclaimers: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/compliance/disclaimers/status", tags=["Compliance"])
+async def get_disclaimer_status(user_id: str = Query(...), firebase_uid: str = Depends(verify_firebase_token)):
+    """Get which disclaimers the caller has acknowledged. User can only check their own."""
+    if user_id != firebase_uid:
+        raise HTTPException(status_code=403, detail="Cannot access other users' disclaimer status")
+    try:
+        result = await compliance_service.get_user_disclaimer_status(user_id)
+        return result
+    except Exception as e:
+        logger.error(f"❌ Failed to fetch disclaimer status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/compliance/disclaimers/accept", tags=["Compliance"])
+async def accept_one_disclaimer(
+    user_id: str = Query(...),
+    disclaimer_key: str = Query(...),
+    version: Optional[str] = Query(None),
+    firebase_uid: str = Depends(verify_firebase_token),
+):
+    """Acknowledge a single disclaimer. User can only accept for themselves."""
+    if user_id != firebase_uid:
+        raise HTTPException(status_code=403, detail="Cannot accept disclaimers for other users")
+    try:
+        result = await compliance_service.accept_disclaimer(user_id, disclaimer_key, version)
+        if not result.get("success"):
+            raise HTTPException(status_code=400, detail=result.get("error", "Failed to accept disclaimer"))
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Disclaimer acceptance failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/compliance/disclaimers/accept-all", tags=["Compliance"])
+async def accept_all_disclaimers_route(
+    user_id: str = Query(...),
+    ts_version: Optional[str] = Query(None),
+    firebase_uid: str = Depends(verify_firebase_token),
+):
+    """Acknowledge all disclaimer types at once (used at signup). User can only accept for themselves."""
+    if user_id != firebase_uid:
+        raise HTTPException(status_code=403, detail="Cannot accept disclaimers for other users")
+    try:
+        result = await compliance_service.accept_all_disclaimers(user_id, ts_version)
+        return result
+    except Exception as e:
+        logger.error(f"❌ Disclaimer acceptance failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/compliance/audit-trail", tags=["Compliance"])
+async def get_compliance_audit_trail(user_id: str = Query(...), limit: int = Query(100, le=500), firebase_uid: str = Depends(verify_firebase_token)):
+    """Get a user's immutable compliance audit trail. User can only access their own."""
+    if user_id != firebase_uid:
+        raise HTTPException(status_code=403, detail="Cannot access other users' audit trail")
+    try:
+        result = await compliance_service.get_audit_trail(user_id, limit)
+        return result
+    except Exception as e:
+        logger.error(f"❌ Failed to fetch audit trail: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# SUBSCRIPTION BILLING ENDPOINTS (Stripe — PRD §16 Subscription-First)
+# ============================================================================
+
+@app.post("/api/billing/checkout-session", tags=["Billing"])
+async def create_checkout_session(
+    user_id: str = Query(...),
+    email: str = Query(...),
+    tier: str = Query("basic"),
+    success_url: str = Query(...),
+    cancel_url: str = Query(...),
+    firebase_uid: str = Depends(verify_firebase_token),
+):
+    """Create a Stripe Checkout session for a subscription. User can only checkout for themselves."""
+    if user_id != firebase_uid:
+        raise HTTPException(status_code=403, detail="Cannot create a checkout session for other users")
+    if tier not in ("basic", "pro", "vip"):
+        raise HTTPException(status_code=400, detail="Invalid tier")
+    try:
+        result = await billing_service.create_checkout_session(user_id, email, tier, success_url, cancel_url)
+        if not result.get("success"):
+            raise HTTPException(status_code=400, detail=result.get("error", "Checkout session creation failed"))
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Checkout session creation failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/billing/subscription", tags=["Billing"])
+async def get_subscription(user_id: str = Query(...), firebase_uid: str = Depends(verify_firebase_token)):
+    """Get the caller's current subscription tier/status. User can only access their own."""
+    if user_id != firebase_uid:
+        raise HTTPException(status_code=403, detail="Cannot access other users' subscription")
+    try:
+        result = await billing_service.get_subscription_status(user_id)
+        if not result.get("success"):
+            raise HTTPException(status_code=404, detail=result.get("error", "Subscription not found"))
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Failed to fetch subscription: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/billing/webhook", tags=["Billing"])
+async def stripe_webhook(request: Request, stripe_signature: str = Header(None, alias="Stripe-Signature")):
+    """Receive Stripe webhook events. Unauthenticated by design (Stripe can't
+    send a Firebase token) — trust is established purely via signature
+    verification against STRIPE_WEBHOOK_SECRET, never skip that check."""
+    raw_body = await request.body()
+
+    if not stripe_signature:
+        raise HTTPException(status_code=400, detail="Missing Stripe-Signature header")
+
+    event = billing_service.verify_webhook_signature(raw_body, stripe_signature)
+    if event is None:
+        raise HTTPException(status_code=400, detail="Invalid webhook signature")
+
+    result = await billing_service.handle_webhook_event(event)
+    return JSONResponse(status_code=200 if result.get("success") else 500, content=result)
+
+
+# ============================================================================
+# AUTOMATION ENDPOINTS (Grid Bot + DCA Bot)
+# ============================================================================
+
+from services.automation_engine import AutomationEngine
+
+automation_engine: Optional[AutomationEngine] = None
+
+
+@app.post("/api/automation/grid", tags=["Automation"])
+async def create_grid_bot(payload: GridBotCreate, firebase_uid: str = Depends(verify_firebase_token)):
+    """Create a Grid Bot that places buy/sell orders in a price range."""
+    if payload.user_id != firebase_uid:
+        raise HTTPException(status_code=403, detail="Cannot create a bot for other users")
+    try:
+        if not automation_engine:
+            raise HTTPException(status_code=503, detail="Automation engine not initialized")
+
+        result = await automation_engine.create_grid_bot(
+            user_id=payload.user_id,
+            exchange_id=payload.exchange_id,
+            symbol=payload.symbol,
+            lower_bound=payload.lower_bound,
+            upper_bound=payload.upper_bound,
+            grid_levels=payload.grid_levels,
+            order_size=payload.order_size,
+        )
+
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result["error"])
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Grid bot creation failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/automation/dca", tags=["Automation"])
+async def create_dca_bot(payload: DCABotCreate, firebase_uid: str = Depends(verify_firebase_token)):
+    """Create a DCA Bot that invests a fixed amount on a recurring schedule."""
+    if payload.user_id != firebase_uid:
+        raise HTTPException(status_code=403, detail="Cannot create a bot for other users")
+    try:
+        if not automation_engine:
+            raise HTTPException(status_code=503, detail="Automation engine not initialized")
+
+        result = await automation_engine.create_dca_bot(
+            user_id=payload.user_id,
+            exchange_id=payload.exchange_id,
+            symbol=payload.symbol,
+            investment_amount=payload.investment_amount,
+            frequency=payload.frequency,
+            start_time=payload.start_time,
+        )
+
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result["error"])
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ DCA bot creation failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/automation/jobs", tags=["Automation"])
+async def list_automation_jobs(user_id: str = Query(...), firebase_uid: str = Depends(verify_firebase_token)):
+    """List all automation jobs (active bots) for a user."""
+    if user_id != firebase_uid:
+        raise HTTPException(status_code=403, detail="Cannot list other users' automation jobs")
+    try:
+        if not automation_engine:
+            raise HTTPException(status_code=503, detail="Automation engine not initialized")
+
+        result = await automation_engine.list_user_jobs(user_id)
+        return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ List automation jobs failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/automation/jobs/{job_id}", tags=["Automation"])
+async def kill_automation_job(job_id: str, user_id: str = Query(...), firebase_uid: str = Depends(verify_firebase_token)):
+    """Kill switch: close all open orders and stop the bot."""
+    if user_id != firebase_uid:
+        raise HTTPException(status_code=403, detail="Cannot control other users' bots")
+    try:
+        if not automation_engine:
+            raise HTTPException(status_code=503, detail="Automation engine not initialized")
+
+        result = await automation_engine.stop_job(job_id, user_id)
+
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result["error"])
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Kill switch failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/automation/jobs/{job_id}", tags=["Automation"])
+async def get_automation_job(job_id: str, user_id: str = Query(...), firebase_uid: str = Depends(verify_firebase_token)):
+    """Get bot status, config, and P&L summary."""
+    if user_id != firebase_uid:
+        raise HTTPException(status_code=403, detail="Cannot access other users' bots")
+    try:
+        if not automation_engine:
+            raise HTTPException(status_code=503, detail="Automation engine not initialized")
+
+        result = await automation_engine.get_job_status(job_id, user_id)
+
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=404, detail=result["error"])
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Get automation job failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/automation/jobs/{job_id}/orders", tags=["Automation"])
+async def get_automation_orders(job_id: str, user_id: str = Query(...), firebase_uid: str = Depends(verify_firebase_token)):
+    """Get all orders placed by a specific bot."""
+    if user_id != firebase_uid:
+        raise HTTPException(status_code=403, detail="Cannot access other users' bot orders")
+    try:
+        if not automation_engine:
+            raise HTTPException(status_code=503, detail="Automation engine not initialized")
+
+        result = await automation_engine.get_job_orders(job_id, user_id)
+        return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Get automation orders failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/automation/jobs/{job_id}/pause", tags=["Automation"])
+async def pause_automation_job(job_id: str, user_id: str = Query(...), firebase_uid: str = Depends(verify_firebase_token)):
+    """Pause an automation job without cancelling open orders."""
+    if user_id != firebase_uid:
+        raise HTTPException(status_code=403, detail="Cannot control other users' bots")
+    try:
+        if not automation_engine:
+            raise HTTPException(status_code=503, detail="Automation engine not initialized")
+
+        result = await automation_engine.pause_job(job_id, user_id)
+
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result["error"])
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Pause automation job failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/automation/jobs/{job_id}/resume", tags=["Automation"])
+async def resume_automation_job(job_id: str, user_id: str = Query(...), firebase_uid: str = Depends(verify_firebase_token)):
+    """Resume a paused automation job."""
+    if user_id != firebase_uid:
+        raise HTTPException(status_code=403, detail="Cannot control other users' bots")
+    try:
+        if not automation_engine:
+            raise HTTPException(status_code=503, detail="Automation engine not initialized")
+
+        result = await automation_engine.resume_job(job_id, user_id)
+
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result["error"])
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Resume automation job failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/automation/jobs/{job_id}/events", tags=["Automation"])
+async def get_automation_events(job_id: str, user_id: str = Query(...), limit: int = Query(50, le=200), firebase_uid: str = Depends(verify_firebase_token)):
+    """Get event log for a specific automation job."""
+    if user_id != firebase_uid:
+        raise HTTPException(status_code=403, detail="Cannot access other users' bot events")
+    try:
+        if not automation_engine:
+            raise HTTPException(status_code=503, detail="Automation engine not initialized")
+
+        result = await automation_engine.get_job_events(job_id, user_id, limit)
+        return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Get automation events failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -4206,26 +5045,22 @@ async def websocket_market_updates(websocket: WebSocket):
 
 @app.websocket("/ws/signals")
 async def websocket_signals(websocket: WebSocket):
-    """Stream real-time signal updates."""
+    """WebSocket endpoint for live signal streaming."""
     await ws_manager.connect(websocket, "signals")
     
     try:
         while True:
-            # Fetch live signals from database
+            # Send latest signals every 2 seconds
             try:
-                response = db.supabase.table("signals").select("*").order("created_at", desc=True).limit(50).execute()
-                signals = [_map_signal_to_frontend(signal) for signal in (response.data or [])]
-            except Exception as e:
-                logger.warning(f"Failed to fetch signals: {e}")
-                signals = []
-            
-            # Only broadcast if there are signals
-            if signals:
-                await ws_manager.broadcast_to_group("signals", {
-                    "type": "signal_update",
-                    "data": signals,
-                    "timestamp": datetime.utcnow().isoformat(),
+                response = db.supabase.table("signals").select("*").limit(20).execute()
+                signals = response.data or []
+                await websocket.send_json({
+                    "type": "signals_update",
+                    "data": [_map_signal_to_frontend(s) for s in signals],
+                    "timestamp": datetime.utcnow().isoformat()
                 })
+            except Exception as e:
+                logger.error(f"WebSocket signals error: {e}")
             
             # Update every 2 seconds
             await asyncio.sleep(2)
@@ -4238,6 +5073,1212 @@ async def websocket_signals(websocket: WebSocket):
         ws_manager.disconnect(websocket, "signals")
 
 
+# ============================================================================
+# NO-CODE STRATEGY BUILDER ENDPOINTS
+# ============================================================================
+
+@app.post("/api/strategy-builder", tags=["Strategy Builder"])
+async def create_custom_strategy(
+    payload: StrategyBuilderCreate,
+    firebase_uid: str = Depends(verify_firebase_token),
+):
+    """Create a custom no-code strategy from visual builder selections."""
+    try:
+        # Resolve user_id from Firebase UID
+        user_response = db.supabase.table("users").select("id").eq("firebase_uid", firebase_uid).execute()
+        if not user_response.data:
+            raise HTTPException(status_code=404, detail="User not found")
+        user_id = user_response.data[0]["id"]
+
+        result = await strategy_configurator.create_strategy(
+            user_id=user_id,
+            strategy_name=payload.strategy_name,
+            rules=payload.rules,
+            description=payload.description or "",
+        )
+
+        if result.get("success"):
+            return result
+        raise HTTPException(status_code=400, detail=result.get("error", "Failed to create strategy"))
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Create strategy failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/strategy-builder", tags=["Strategy Builder"])
+async def list_custom_strategies(
+    firebase_uid: str = Depends(verify_firebase_token),
+):
+    """List all custom strategies for the authenticated user."""
+    try:
+        user_response = db.supabase.table("users").select("id").eq("firebase_uid", firebase_uid).execute()
+        if not user_response.data:
+            raise HTTPException(status_code=404, detail="User not found")
+        user_id = user_response.data[0]["id"]
+
+        result = await strategy_configurator.list_user_strategies(user_id)
+        return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ List strategies failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.put("/api/strategy-builder/{strategy_id}", tags=["Strategy Builder"])
+async def update_custom_strategy(
+    strategy_id: str,
+    payload: StrategyBuilderUpdate,
+    firebase_uid: str = Depends(verify_firebase_token),
+):
+    """Update a custom strategy's rules, name, or description."""
+    try:
+        user_response = db.supabase.table("users").select("id").eq("firebase_uid", firebase_uid).execute()
+        if not user_response.data:
+            raise HTTPException(status_code=404, detail="User not found")
+        user_id = user_response.data[0]["id"]
+
+        updates = payload.model_dump(exclude_unset=True)
+        result = await strategy_configurator.update_strategy(strategy_id, user_id, updates)
+
+        if result.get("success"):
+            return result
+        raise HTTPException(status_code=400, detail=result.get("error", "Failed to update strategy"))
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Update strategy failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/strategy-builder/{strategy_id}", tags=["Strategy Builder"])
+async def delete_custom_strategy(
+    strategy_id: str,
+    firebase_uid: str = Depends(verify_firebase_token),
+):
+    """Delete a custom strategy."""
+    try:
+        user_response = db.supabase.table("users").select("id").eq("firebase_uid", firebase_uid).execute()
+        if not user_response.data:
+            raise HTTPException(status_code=404, detail="User not found")
+        user_id = user_response.data[0]["id"]
+
+        result = await strategy_configurator.delete_strategy(strategy_id, user_id)
+
+        if result.get("success"):
+            return result
+        raise HTTPException(status_code=400, detail=result.get("error", "Failed to delete strategy"))
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Delete strategy failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/strategy-builder/{strategy_id}/activate", tags=["Strategy Builder"])
+async def activate_custom_strategy(
+    strategy_id: str,
+    firebase_uid: str = Depends(verify_firebase_token),
+):
+    """Set a strategy as the active trading strategy."""
+    try:
+        user_response = db.supabase.table("users").select("id").eq("firebase_uid", firebase_uid).execute()
+        if not user_response.data:
+            raise HTTPException(status_code=404, detail="User not found")
+        user_id = user_response.data[0]["id"]
+
+        result = await strategy_configurator.activate_strategy(strategy_id, user_id)
+
+        if result.get("success"):
+            return result
+        raise HTTPException(status_code=400, detail=result.get("error", "Failed to activate strategy"))
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Activate strategy failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/strategy-builder/{strategy_id}/simulate", tags=["Strategy Builder"])
+async def simulate_custom_strategy(
+    strategy_id: str,
+    days: int = Query(30, ge=1, le=365),
+    firebase_uid: str = Depends(verify_firebase_token),
+):
+    """Simulate a strategy against past signals to estimate performance."""
+    try:
+        user_response = db.supabase.table("users").select("id").eq("firebase_uid", firebase_uid).execute()
+        if not user_response.data:
+            raise HTTPException(status_code=404, detail="User not found")
+        user_id = user_response.data[0]["id"]
+
+        result = await strategy_configurator.simulate_strategy(strategy_id, user_id, days)
+
+        if result.get("success"):
+            return result
+        raise HTTPException(status_code=400, detail=result.get("error", "Simulation failed"))
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Simulate strategy failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/strategy-builder/templates", tags=["Strategy Builder"])
+async def get_strategy_templates(
+    category: Optional[str] = Query(None),
+    difficulty: Optional[str] = Query(None),
+):
+    """Get pre-built strategy templates for the no-code builder."""
+    try:
+        result = await strategy_configurator.get_templates(category=category, difficulty=difficulty)
+        return result
+    except Exception as e:
+        logger.error(f"❌ Get templates failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# ALPHAACADEMY (Education Layer)
+# ============================================================================
+
+@app.get("/api/academy/content")
+async def list_education_content(
+    category: Optional[str] = Query(None, description="Filter by category: patterns, strategies, risk_mgmt, quant_basics"),
+    difficulty: Optional[str] = Query(None, description="Filter by difficulty: beginner, intermediate, advanced"),
+):
+    """List all education content with optional category and difficulty filters."""
+    if not education_service:
+        raise HTTPException(status_code=503, detail="Education service not available")
+    result = await education_service.list_content(category=category, difficulty=difficulty)
+    if not result.get("success"):
+        raise HTTPException(status_code=500, detail=result.get("error", "Unknown error"))
+    return result
+
+
+@app.get("/api/academy/content/{content_id}")
+async def get_education_content(content_id: str = Path(..., description="Content ID")):
+    """Get a single education content piece by ID."""
+    if not education_service:
+        raise HTTPException(status_code=503, detail="Education service not available")
+    result = await education_service.get_content(content_id)
+    if not result.get("success"):
+        raise HTTPException(status_code=404, detail=result.get("error", "Content not found"))
+    return result
+
+
+@app.get("/api/academy/progress/{user_id}")
+async def get_user_progress(user_id: str = Path(..., description="User ID"), firebase_uid: str = Depends(verify_firebase_token)):
+    """Get a user's education progress including completion status and quiz scores. User can only access their own."""
+    if user_id != firebase_uid:
+        raise HTTPException(status_code=403, detail="Cannot access other users' progress")
+    if not education_service:
+        raise HTTPException(status_code=503, detail="Education service not available")
+    result = await education_service.get_user_progress(user_id)
+    if not result.get("success"):
+        raise HTTPException(status_code=500, detail=result.get("error", "Unknown error"))
+    return result
+
+
+@app.post("/api/academy/progress/{content_id}")
+async def mark_content_completed(
+    content_id: str = Path(..., description="Content ID"),
+    user_id: str = Body(..., embed=True, description="User ID"),
+    quiz_score: Optional[float] = Body(None, embed=True, description="Quiz score (0-100)"),
+    firebase_uid: str = Depends(verify_firebase_token),
+):
+    """Mark an education content piece as completed for a user. User can only mark their own progress."""
+    if user_id != firebase_uid:
+        raise HTTPException(status_code=403, detail="Cannot mark progress for other users")
+    if not education_service:
+        raise HTTPException(status_code=503, detail="Education service not available")
+    result = await education_service.mark_completed(
+        user_id=user_id, content_id=content_id, quiz_score=quiz_score
+    )
+    if not result.get("success"):
+        raise HTTPException(status_code=500, detail=result.get("error", "Unknown error"))
+    return result
+
+
+@app.get("/api/academy/signal-breakdown/{signal_id}")
+async def get_signal_breakdown(signal_id: str = Path(..., description="Signal ID")):
+    """Get an existing AI breakdown explanation for a signal."""
+    if not education_service:
+        raise HTTPException(status_code=503, detail="Education service not available")
+    result = await education_service.get_signal_breakdown(signal_id)
+    if not result.get("success"):
+        raise HTTPException(status_code=404, detail=result.get("error", "Breakdown not found"))
+    return result
+
+
+@app.post("/api/academy/generate-breakdown/{signal_id}")
+async def generate_signal_breakdown(signal_id: str = Path(..., description="Signal ID")):
+    """Generate an AI breakdown explanation for a signal."""
+    if not education_service:
+        raise HTTPException(status_code=503, detail="Education service not available")
+    result = await education_service.generate_breakdown(signal_id)
+    if not result.get("success"):
+        raise HTTPException(status_code=500, detail=result.get("error", "Failed to generate breakdown"))
+    return result
+
+
+# ============================================================================
+# PHASE 3: TRADING TOURNAMENTS
+# ============================================================================
+
+@app.get("/api/tournaments", tags=["Tournaments"])
+async def list_tournaments(
+    status: Optional[str] = Query(None),
+    limit: int = Query(50, le=100),
+):
+    """List active/upcoming tournaments."""
+    if not tournament_service:
+        raise HTTPException(status_code=503, detail="Tournament service not available")
+    result = await tournament_service.list_tournaments(status_filter=status, limit=limit)
+    if not result.get("success"):
+        raise HTTPException(status_code=500, detail=result.get("error"))
+    return result
+
+
+@app.post("/api/tournaments/{tournament_id}/join", tags=["Tournaments"])
+async def join_tournament(
+    tournament_id: str = Path(...),
+    user_id: str = Query(...),
+    firebase_uid: str = Depends(verify_firebase_token),
+):
+    """Join a tournament."""
+    if not tournament_service:
+        raise HTTPException(status_code=503, detail="Tournament service not available")
+    if user_id != firebase_uid:
+        raise HTTPException(status_code=403, detail="Cannot join tournament for another user")
+    result = await tournament_service.join_tournament(tournament_id, user_id)
+    if not result.get("success"):
+        raise HTTPException(status_code=400, detail=result.get("error"))
+    return result
+
+
+@app.get("/api/tournaments/{tournament_id}/leaderboard", tags=["Tournaments"])
+async def get_tournament_leaderboard(
+    tournament_id: str = Path(...),
+    sort_by: str = Query("final_pnl"),
+    limit: int = Query(100, le=500),
+):
+    """Get tournament leaderboard."""
+    if not tournament_service:
+        raise HTTPException(status_code=503, detail="Tournament service not available")
+    result = await tournament_service.get_leaderboard(tournament_id, sort_by=sort_by, limit=limit)
+    if not result.get("success"):
+        raise HTTPException(status_code=500, detail=result.get("error"))
+    return result
+
+
+@app.get("/api/tournaments/{tournament_id}/status", tags=["Tournaments"])
+async def get_my_tournament_status(
+    tournament_id: str = Path(...),
+    user_id: str = Query(...),
+    firebase_uid: str = Depends(verify_firebase_token),
+):
+    """Get my status in a tournament."""
+    if not tournament_service:
+        raise HTTPException(status_code=503, detail="Tournament service not available")
+    if user_id != firebase_uid:
+        raise HTTPException(status_code=403, detail="Cannot view status for another user")
+    result = await tournament_service.get_my_status(tournament_id, user_id)
+    return result
+
+
+# ============================================================================
+# PHASE 3: STRATEGY PERSONALITY
+# ============================================================================
+
+@app.get("/api/strategies/{strategy_id}/personality", tags=["Strategy Personality"])
+async def get_strategy_personality(
+    strategy_id: str = Path(...),
+):
+    """Get strategy personality badge and classification."""
+    if not strategy_personality_service:
+        raise HTTPException(status_code=503, detail="Strategy personality service not available")
+    result = await strategy_personality_service.get_personality(strategy_id)
+    if not result.get("success"):
+        raise HTTPException(status_code=500, detail=result.get("error"))
+    return result
+
+
+# ============================================================================
+# PHASE 3: COMMUNITY & SOCIAL
+# ============================================================================
+
+@app.get("/api/community/profile/{user_id}", tags=["Community"])
+async def get_community_profile(user_id: str = Path(...)):
+    """Get public community profile."""
+    if not community_service:
+        raise HTTPException(status_code=503, detail="Community service not available")
+    profile = await community_service.get_user_profile(user_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    return {"success": True, "profile": profile}
+
+
+@app.post("/api/community/profile", tags=["Community"])
+async def update_community_profile(
+    data: dict,
+    firebase_uid: str = Depends(verify_firebase_token),
+):
+    """Update own community profile."""
+    if not community_service:
+        raise HTTPException(status_code=503, detail="Community service not available")
+    user_id = data.get("user_id")
+    if user_id != firebase_uid:
+        raise HTTPException(status_code=403, detail="Cannot update profile for another user")
+    result = await community_service.update_user_profile(
+        user_id,
+        display_name=data.get("display_name"),
+        bio=data.get("bio"),
+        avatar_url=data.get("avatar_url"),
+    )
+    return result
+
+
+@app.post("/api/community/follow/{target_user_id}", tags=["Community"])
+async def follow_community_user(
+    target_user_id: str = Path(...),
+    firebase_uid: str = Depends(verify_firebase_token),
+):
+    """Follow another user."""
+    if not community_service:
+        raise HTTPException(status_code=503, detail="Community service not available")
+    result = await community_service.follow_user(firebase_uid, target_user_id)
+    return result
+
+
+@app.post("/api/community/unfollow/{target_user_id}", tags=["Community"])
+async def unfollow_community_user(
+    target_user_id: str = Path(...),
+    firebase_uid: str = Depends(verify_firebase_token),
+):
+    """Unfollow a user."""
+    if not community_service:
+        raise HTTPException(status_code=503, detail="Community service not available")
+    result = await community_service.unfollow_user(firebase_uid, target_user_id)
+    return result
+
+
+@app.get("/api/community/leaderboard", tags=["Community"])
+async def get_community_leaderboard(
+    metric: str = Query("pnl"),
+    timeframe: str = Query("all_time"),
+    limit: int = Query(100, le=500),
+):
+    """Get community leaderboard rankings."""
+    if not community_service:
+        raise HTTPException(status_code=503, detail="Community service not available")
+    leaderboard = await community_service.get_leaderboard(metric=metric, timeframe=timeframe, limit=limit)
+    return {"success": True, "leaderboard": leaderboard, "count": len(leaderboard)}
+
+
+@app.post("/api/community/strategy/{strategy_id}/comment", tags=["Community"])
+async def add_strategy_comment(
+    strategy_id: str = Path(...),
+    comment_text: str = Body(...),
+    firebase_uid: str = Depends(verify_firebase_token),
+):
+    """Add comment to strategy."""
+    if not community_service:
+        raise HTTPException(status_code=503, detail="Community service not available")
+    result = await community_service.add_strategy_comment(firebase_uid, strategy_id, comment_text)
+    return result
+
+
+@app.post("/api/community/strategy/{strategy_id}/rate", tags=["Community"])
+async def rate_strategy_community(
+    strategy_id: str = Path(...),
+    rating: int = Body(...),
+    firebase_uid: str = Depends(verify_firebase_token),
+):
+    """Rate a strategy (1-5 stars)."""
+    if not community_service:
+        raise HTTPException(status_code=503, detail="Community service not available")
+    result = await community_service.rate_strategy(firebase_uid, strategy_id, rating)
+    return result
+
+
+@app.get("/api/community/notifications", tags=["Community"])
+async def get_community_notifications(
+    firebase_uid: str = Depends(verify_firebase_token),
+):
+    """Get unread notifications."""
+    if not community_service:
+        raise HTTPException(status_code=503, detail="Community service not available")
+    notifications = await community_service.get_unread_notifications(firebase_uid)
+    return {"success": True, "notifications": notifications, "count": len(notifications)}
+
+
+# ============================================================================
+# PHASE 3: TRAILING ORDERS
+# ============================================================================
+
+@app.post("/api/orders/trailing-stop", tags=["Trailing Orders"])
+async def create_trailing_stop(
+    request: Dict[str, Any] = Body(...),
+):
+    """Create a trailing stop or trailing take-profit order."""
+    if not trailing_orders_service:
+        raise HTTPException(status_code=503, detail="Trailing orders service not available")
+    result = await trailing_orders_service.create_trailing_order(
+        user_id=request.get("user_id", ""),
+        asset=request.get("asset", "BTC"),
+        side=request.get("side", "SELL"),
+        order_type=request.get("order_type", "trailing_stop"),
+        trail_percent=float(request.get("trail_percent", 2.0)),
+        quantity=float(request.get("quantity", 0)),
+        direction=request.get("direction", "LONG"),
+        current_price=float(request.get("current_price", 0)) if request.get("current_price") else None,
+    )
+    if not result.get("success"):
+        raise HTTPException(status_code=400, detail=result.get("error"))
+    return result
+
+
+@app.put("/api/orders/trailing-stop/{order_id}", tags=["Trailing Orders"])
+async def update_trailing_stop(
+    order_id: str = Path(...),
+    request: Dict[str, Any] = Body(...),
+):
+    """Update a trailing stop order."""
+    if not trailing_orders_service:
+        raise HTTPException(status_code=503, detail="Trailing orders service not available")
+    user_id = request.pop("user_id", "")
+    result = await trailing_orders_service.update_trailing_order(order_id, user_id, request)
+    if not result.get("success"):
+        raise HTTPException(status_code=400, detail=result.get("error"))
+    return result
+
+
+@app.delete("/api/orders/trailing-stop/{order_id}", tags=["Trailing Orders"])
+async def cancel_trailing_stop(
+    order_id: str = Path(...),
+    user_id: str = Query(...),
+):
+    """Cancel a trailing stop order."""
+    if not trailing_orders_service:
+        raise HTTPException(status_code=503, detail="Trailing orders service not available")
+    result = await trailing_orders_service.cancel_trailing_order(order_id, user_id)
+    if not result.get("success"):
+        raise HTTPException(status_code=400, detail=result.get("error"))
+    return result
+
+
+@app.get("/api/orders/trailing-stop", tags=["Trailing Orders"])
+async def list_trailing_orders(
+    user_id: str = Query(...),
+    status: Optional[str] = Query(None),
+    limit: int = Query(50, le=200),
+):
+    """List active trailing orders."""
+    if not trailing_orders_service:
+        raise HTTPException(status_code=503, detail="Trailing orders service not available")
+    result = await trailing_orders_service.list_trailing_orders(user_id, status_filter=status, limit=limit)
+    return result
+
+
+# ============================================================================
+# PHASE 3: ONCHAIN SMART MONEY TRACKER
+# ============================================================================
+
+@app.get("/api/onchain/whales", tags=["Onchain Tracker"])
+async def get_whale_movements(
+    asset: Optional[str] = Query(None),
+    limit: int = Query(20, le=100),
+):
+    """Recent whale movements."""
+    if not onchain_tracker_service:
+        raise HTTPException(status_code=503, detail="Onchain tracker service not available")
+    result = await onchain_tracker_service.get_whale_movements(asset=asset, limit=limit)
+    return result
+
+
+@app.get("/api/onchain/metrics/{asset}", tags=["Onchain Tracker"])
+async def get_onchain_metrics(
+    asset: str = Path(...),
+):
+    """On-chain metrics for an asset (SOPR, MVRV, NVT, etc.)."""
+    if not onchain_tracker_service:
+        raise HTTPException(status_code=503, detail="Onchain tracker service not available")
+    result = await onchain_tracker_service.get_asset_metrics(asset)
+    if not result.get("success"):
+        raise HTTPException(status_code=404, detail=result.get("error"))
+    return result
+
+
+@app.get("/api/onchain/exchange-flows", tags=["Onchain Tracker"])
+async def get_exchange_flows(
+    asset: Optional[str] = Query(None),
+    hours: int = Query(24, ge=1, le=168),
+):
+    """Exchange inflows and outflows."""
+    if not onchain_tracker_service:
+        raise HTTPException(status_code=503, detail="Onchain tracker service not available")
+    result = await onchain_tracker_service.get_exchange_flows(asset=asset, hours=hours)
+    return result
+
+
+# ============================================================================
+# ENHANCED CHAT ENDPOINTS (AlphaAI Chat with LLM Integration)
+# ============================================================================
+
+from services.external_signal_ingestion import ExternalSignalIngestionService
+
+external_signal_ingestion: Optional[ExternalSignalIngestionService] = None
+
+@app.post("/api/chat/message", tags=["Chat"])
+async def send_chat_message_v2(
+    payload: Dict[str, Any] = Body(...),
+    firebase_uid: str = Depends(verify_firebase_token),
+):
+    """Send a message and get AI response with full context injection and token budget."""
+    try:
+        user_id = payload.get("user_id", firebase_uid)
+        if user_id != firebase_uid:
+            raise HTTPException(status_code=403, detail="Cannot send messages for other users")
+        message = payload.get("message", "")
+        signal_id = payload.get("signal_id")
+        strategy_id = payload.get("strategy_id")
+        page_context = payload.get("page_context")
+
+        if not message:
+            raise HTTPException(status_code=400, detail="Message is required")
+
+        context = await chat_service.get_context_for_response(
+            user_id, portfolio_service, signal_processor,
+            signal_id=signal_id, strategy_id=strategy_id, page_context=page_context,
+        )
+
+        full_response = ""
+        async for chunk in chat_service.generate_response(user_id, message, context, signal_id, strategy_id):
+            full_response += chunk
+
+        return {
+            "success": True,
+            "user_message": message,
+            "ai_response": full_response,
+            "context_used": bool(context.get("portfolio")),
+            "timestamp": datetime.utcnow().isoformat(),
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Chat processing failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/chat/history", tags=["Chat"])
+async def get_chat_history_v2(user_id: str = Query(...), limit: int = Query(50, le=100), firebase_uid: str = Depends(verify_firebase_token)):
+    """Get chat history for a user. User can only access their own history."""
+    try:
+        if user_id != firebase_uid:
+            raise HTTPException(status_code=403, detail="Cannot access other users' chat history")
+        history = await chat_service.get_chat_history(user_id, limit)
+        return {"success": True, "user_id": user_id, "messages": history, "count": len(history)}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to fetch chat history: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/chat/tokens", tags=["Chat"])
+async def get_chat_token_usage(user_id: str = Query(...), firebase_uid: str = Depends(verify_firebase_token)):
+    """Get token usage stats for a user. User can only access their own usage."""
+    try:
+        if user_id != firebase_uid:
+            raise HTTPException(status_code=403, detail="Cannot access other users' token usage")
+        usage = await chat_service.get_token_usage(user_id)
+        return {"success": True, "usage": usage}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Token usage fetch failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/chat/search", tags=["Chat"])
+async def search_chat(user_id: str = Query(...), query: str = Query(...), limit: int = Query(10), firebase_uid: str = Depends(verify_firebase_token)):
+    """Search chat history. User can only search their own history."""
+    try:
+        if user_id != firebase_uid:
+            raise HTTPException(status_code=403, detail="Cannot search other users' chat history")
+        results = await chat_service.search_chat_history(user_id, query, limit)
+        return {"success": True, "results": results, "count": len(results)}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Chat search failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.websocket("/ws/chat/{user_id}")
+async def websocket_chat(websocket: WebSocket, user_id: str):
+    """WebSocket endpoint for real-time AlphaAI Chat streaming."""
+    await ws_manager.connect(websocket, f"chat-{user_id}")
+    try:
+        while True:
+            data = await websocket.receive_json()
+            message = data.get("message", "")
+            signal_id = data.get("signal_id")
+            strategy_id = data.get("strategy_id")
+            page_context = data.get("page_context")
+
+            if not message:
+                continue
+
+            context = await chat_service.get_context_for_response(
+                user_id, portfolio_service, signal_processor,
+                signal_id=signal_id, strategy_id=strategy_id, page_context=page_context,
+            )
+
+            async for chunk in chat_service.generate_response(user_id, message, context, signal_id, strategy_id):
+                await websocket.send_json({
+                    "type": "chat_chunk",
+                    "content": chunk,
+                    "timestamp": datetime.utcnow().isoformat(),
+                })
+
+            await websocket.send_json({
+                "type": "chat_complete",
+                "timestamp": datetime.utcnow().isoformat(),
+            })
+
+    except WebSocketDisconnect:
+        ws_manager.disconnect(websocket, f"chat-{user_id}")
+    except Exception as e:
+        logger.error(f"Chat WebSocket error: {e}")
+        ws_manager.disconnect(websocket, f"chat-{user_id}")
+
+
+# ============================================================================
+# ENHANCED EXTERNAL SIGNAL INGESTION ENDPOINTS
+# ============================================================================
+
+@app.post("/api/external-signals/ingest", tags=["External Signals"])
+async def ingest_external_signal(
+    payload: Dict[str, Any] = Body(...),
+    source: str = Query("tradingview"),
+    x_webhook_signature: Optional[str] = Header(None),
+):
+    """Ingest an external signal with full validation pipeline."""
+    if not external_signal_ingestion:
+        raise HTTPException(status_code=503, detail="External signal ingestion service not available")
+
+    user_id = payload.get("user_id")
+    if not user_id:
+        raise HTTPException(status_code=400, detail="user_id required in payload")
+
+    signature_valid = True
+    if x_webhook_signature:
+        secret = os.getenv("TRADINGVIEW_WEBHOOK_HMAC_SECRET")
+        import json as _json
+        raw_body = _json.dumps(payload).encode()
+        signature_valid = external_signal_ingestion.verify_webhook_signature(raw_body, x_webhook_signature, secret)
+
+    result = await external_signal_ingestion.ingest_signal(user_id, payload, source, signature_valid)
+
+    status_code = 200 if result.get("success") else 400
+    return JSONResponse(status_code=status_code, content=result)
+
+
+@app.get("/api/external-signals/rules", tags=["External Signals"])
+async def get_ingestion_rules(user_id: str = Query(...)):
+    """Get user's external signal ingestion rules."""
+    if not external_signal_ingestion:
+        raise HTTPException(status_code=503, detail="Service not available")
+    rules = await external_signal_ingestion.get_user_rules(user_id)
+    return {"success": True, "rules": rules}
+
+
+@app.put("/api/external-signals/rules", tags=["External Signals"])
+async def update_ingestion_rules(
+    user_id: str = Query(...),
+    rules: Dict[str, Any] = Body(...),
+):
+    """Update user's external signal ingestion rules."""
+    if not external_signal_ingestion:
+        raise HTTPException(status_code=503, detail="Service not available")
+    result = await external_signal_ingestion.set_user_rules(user_id, rules)
+    return result
+
+
+@app.get("/api/external-signals/history", tags=["External Signals"])
+async def get_ingested_signal_history(
+    user_id: str = Query(...),
+    limit: int = Query(50, le=200),
+    status: Optional[str] = Query(None),
+):
+    """Get history of ingested external signals."""
+    if not external_signal_ingestion:
+        raise HTTPException(status_code=503, detail="Service not available")
+    signals = await external_signal_ingestion.get_signal_history(user_id, limit, status)
+    return {"success": True, "signals": signals, "count": len(signals)}
+
+
+@app.get("/api/external-signals/events", tags=["External Signals"])
+async def get_webhook_events(
+    user_id: Optional[str] = Query(None),
+    limit: int = Query(50, le=200),
+):
+    """Get webhook event log for debugging."""
+    if not external_signal_ingestion:
+        raise HTTPException(status_code=503, detail="Service not available")
+    events = await external_signal_ingestion.get_webhook_events(user_id, limit)
+    return {"success": True, "events": events, "count": len(events)}
+
+
+# ============================================================================
+# ARCHITECTURE DOC GAP SERVICES - API ROUTES
+# ============================================================================
+
+# --- Execution Service (§11.1) ---
+
+@app.post("/api/orders/place", tags=["Execution"])
+async def place_order(
+    request: Dict[str, Any] = Body(...),
+    firebase_uid: str = Depends(verify_firebase_token),
+):
+    """Place an order with idempotency protection."""
+    user_id = request.get("user_id", firebase_uid)
+    signal_id = request.get("signal_id", str(uuid.uuid4()))
+    asset = request.get("asset", "BTC")
+    direction = request.get("direction", "BUY")
+    quantity = request.get("quantity", 0)
+    exchange = request.get("exchange", "binance")
+
+    idem_key = idempotency_manager.generate_key(user_id, signal_id, asset, direction)
+    if not await idempotency_manager.acquire(idem_key):
+        raise HTTPException(status_code=409, detail="Duplicate order detected")
+
+    order_id = str(uuid.uuid4())
+    await order_monitor.record_submission(
+        order_id, user_id, signal_id, exchange, asset, direction, quantity, idem_key,
+    )
+    return {"success": True, "order_id": order_id, "idempotency_key": idem_key}
+
+
+@app.get("/api/orders/{order_id}/status", tags=["Execution"])
+async def get_order_status(order_id: str):
+    """Get order confirmation status."""
+    state = order_monitor.get_order_state(order_id)
+    if not state:
+        raise HTTPException(status_code=404, detail="Order not found")
+    return {"success": True, "order_id": order_id, "state": state.get("state", "UNKNOWN")}
+
+
+@app.get("/api/execution/circuit-breakers", tags=["Execution"])
+async def get_circuit_breakers():
+    """Get circuit breaker status for all exchanges."""
+    return {"success": True, "breakers": exchange_layer.get_circuit_breaker_status()}
+
+
+@app.get("/api/execution/data-validation/stats", tags=["Execution"])
+async def get_data_validation_stats():
+    """Get data validation pipeline statistics."""
+    return {"success": True, "stats": data_validation_pipeline.get_validation_stats()}
+
+
+@app.get("/api/execution/backup-providers", tags=["Execution"])
+async def get_backup_providers():
+    """Get backup market data provider status."""
+    return {"success": True, "providers": backup_data_provider.get_health_status()}
+
+
+# --- Notification Service (§15) ---
+
+@app.post("/api/notifications/send", tags=["Notifications"])
+async def send_notification(
+    request: Dict[str, Any] = Body(...),
+    firebase_uid: str = Depends(verify_firebase_token),
+):
+    """Send notification to user."""
+    result = await notification_svc.send_notification(
+        user_id=request.get("user_id", firebase_uid),
+        title=request.get("title", ""),
+        message=request.get("message", ""),
+        notification_type=request.get("type", "system"),
+        channels=request.get("channels"),
+    )
+    return result
+
+
+@app.get("/api/notifications/history", tags=["Notifications"])
+async def get_notification_history(
+    user_id: str = Query(...),
+    limit: int = Query(50, le=200),
+    firebase_uid: str = Depends(verify_firebase_token),
+):
+    if user_id != firebase_uid:
+        raise HTTPException(status_code=403, detail="Cannot access other users' notifications")
+    return await notification_svc.get_notification_history(user_id, limit)
+
+
+@app.put("/api/notifications/preferences", tags=["Notifications"])
+async def update_notification_preferences(
+    user_id: str = Query(...),
+    preferences: Dict[str, Any] = Body(...),
+    firebase_uid: str = Depends(verify_firebase_token),
+):
+    if user_id != firebase_uid:
+        raise HTTPException(status_code=403, detail="Cannot update other users' notification preferences")
+    return await notification_svc.update_user_preferences(user_id, preferences)
+
+
+# --- Sentiment Analysis Service (§26.1) ---
+
+@app.get("/api/sentiment/{ticker}", tags=["Sentiment"])
+async def get_sentiment(ticker: str):
+    """Get aggregated sentiment for a ticker."""
+    return await sentiment_svc.get_aggregated_sentiment(ticker)
+
+
+@app.get("/api/sentiment/{ticker}/signal", tags=["Sentiment"])
+async def get_sentiment_signal(ticker: str):
+    """Generate sentiment-based trading signal."""
+    return await sentiment_svc.generate_sentiment_signal(ticker)
+
+
+@app.post("/api/sentiment/ingest", tags=["Sentiment"])
+async def ingest_sentiment(
+    ticker: str = Query(...),
+    source: str = Query("unknown"),
+    items: List[Dict[str, Any]] = Body(...),
+):
+    """Ingest social data for sentiment analysis."""
+    return await sentiment_svc.ingest_social_data(ticker, source, items)
+
+
+@app.get("/api/sentiment/{ticker}/onchain", tags=["Sentiment"])
+async def get_onchain_metrics(ticker: str):
+    """Get on-chain metrics for a ticker."""
+    return await sentiment_svc.get_onchain_metrics(ticker)
+
+
+# --- Strategy Marketplace Service (§26.2) ---
+
+@app.post("/api/marketplace/strategies", tags=["Marketplace"])
+async def submit_strategy(
+    request: Dict[str, Any] = Body(...),
+    firebase_uid: str = Depends(verify_firebase_token),
+):
+    """Submit strategy for marketplace verification."""
+    return await strategy_marketplace_svc.submit_strategy(firebase_uid, request)
+
+
+@app.post("/api/marketplace/strategies/{strategy_id}/verify", tags=["Marketplace"])
+async def verify_strategy(strategy_id: str):
+    """Verify strategy backtest claims."""
+    return await strategy_marketplace_svc.verify_strategy(strategy_id)
+
+
+@app.get("/api/marketplace/leaderboard", tags=["Marketplace"])
+async def get_marketplace_leaderboard(
+    metric: str = Query("sharpe_ratio"),
+    limit: int = Query(50, le=100),
+):
+    """Get strategy marketplace leaderboard."""
+    return await strategy_marketplace_svc.get_leaderboard(metric, limit)
+
+
+@app.post("/api/marketplace/strategies/{strategy_id}/revenue", tags=["Marketplace"])
+async def calculate_revenue(strategy_id: str):
+    """Calculate creator revenue share."""
+    return await strategy_marketplace_svc.calculate_revenue_share(strategy_id)
+
+
+@app.get("/api/marketplace/creators/{creator_id}/reputation", tags=["Marketplace"])
+async def get_creator_reputation(creator_id: str):
+    """Get creator reputation score."""
+    return await strategy_marketplace_svc.get_reputation_score(creator_id)
+
+
+# --- Compliance Enhancement (§6) - 6 Disclaimer Types ---
+
+@app.get("/api/compliance/disclaimers", tags=["Compliance"])
+async def get_all_disclaimers():
+    """Get all 6 disclaimer types."""
+    return await compliance_svc.get_disclaimer()
+
+
+@app.post("/api/compliance/disclaimers/acknowledge", tags=["Compliance"])
+async def acknowledge_disclaimer(
+    request: Dict[str, Any] = Body(...),
+    firebase_uid: str = Depends(verify_firebase_token),
+):
+    """Acknowledge a specific disclaimer."""
+    return await compliance_svc.accept_disclaimer(
+        user_id=firebase_uid,
+        disclaimer_key=request.get("disclaimer_key", ""),
+        ts_version=request.get("ts_version"),
+    )
+
+
+@app.get("/api/compliance/disclaimers/status", tags=["Compliance"])
+async def get_disclaimer_status(user_id: str = Query(...)):
+    """Get which disclaimers user has acknowledged."""
+    return await compliance_svc.get_user_disclaimer_status(user_id)
+
+
+@app.post("/api/compliance/gdpr/export", tags=["Compliance"])
+async def gdpr_export(user_id: str = Query(...)):
+    """GDPR data export."""
+    return await compliance_svc.export_user_data(user_id)
+
+
+@app.post("/api/compliance/gdpr/delete", tags=["Compliance"])
+async def gdpr_delete(user_id: str = Query(...)):
+    """GDPR right-to-erasure."""
+    return await compliance_svc.delete_user_data(user_id)
+
+
+# --- Audit Log Service (§28) ---
+
+@app.get("/api/audit/events", tags=["Audit"])
+async def get_audit_events(
+    user_id: Optional[str] = Query(None),
+    event_type: Optional[str] = Query(None),
+    limit: int = Query(100, le=500),
+):
+    """Get audit events with filters."""
+    return await audit_log_svc.get_audit_trail(user_id=user_id, event_type=event_type, limit=limit)
+
+
+@app.get("/api/audit/verify-integrity", tags=["Audit"])
+async def verify_audit_integrity():
+    """Verify hash chain integrity of audit logs."""
+    return await audit_log_svc.verify_chain_integrity()
+
+
+@app.get("/api/audit/stats", tags=["Audit"])
+async def get_audit_stats(user_id: Optional[str] = Query(None)):
+    """Get audit log statistics."""
+    return await audit_log_svc.get_audit_stats(user_id)
+
+
+@app.get("/api/audit/category/{category}", tags=["Audit"])
+async def get_audit_by_category(category: str):
+    """Get audit events by category (auth, trading, account, admin)."""
+    events = await audit_log_svc.get_events_by_category(category)
+    return {"success": True, "events": events, "count": len(events)}
+
+
+# --- Paper Trading Enhancement (§10.1) ---
+
+@app.post("/api/paper-trading/validate-signal", tags=["Paper Trading"])
+async def start_signal_validation(
+    signal_id: str = Query(...),
+    backtest_sharpe: float = Query(...),
+):
+    """Start 4-week internal paper trading validation."""
+    return await paper_trading.start_internal_validation(signal_id, backtest_sharpe)
+
+
+@app.get("/api/paper-trading/validate-signal/{signal_id}", tags=["Paper Trading"])
+async def evaluate_signal_validation(signal_id: str):
+    """Evaluate internal signal validation result."""
+    return await paper_trading.evaluate_internal_validation(signal_id)
+
+
+@app.post("/api/paper-trading/paper-to-live", tags=["Paper Trading"])
+async def paper_to_live(
+    user_id: str = Query(...),
+    exchange: str = Query("binance"),
+):
+    """Execute paper-to-live conversion flow."""
+    return await paper_trading.paper_to_live_flow(user_id, exchange)
+
+
+@app.get("/api/paper-trading/proof/{signal_id}", tags=["Paper Trading"])
+async def get_signal_proof(signal_id: str):
+    """Get signal proof/verification data for Proof tab."""
+    return await paper_trading.get_signal_proof(signal_id)
+
+
+# --- Risk Engine Enhancement (§10) ---
+
+@app.get("/api/risk/funding-rate/{ticker}", tags=["Risk"])
+async def check_funding_rate(ticker: str, rate: float = Query(...)):
+    """Check funding rate alert for perpetuals."""
+    return await risk_manager.check_funding_rate(ticker, rate)
+
+
+@app.post("/api/risk/volatility-adjusted-size", tags=["Risk"])
+async def volatility_adjusted_size(request: Dict[str, Any] = Body(...)):
+    """Calculate volatility-adjusted position size."""
+    adjusted = risk_manager.calculate_volatility_adjusted_size(
+        base_size=request.get("base_size", 0),
+        current_vol_20d=request.get("current_vol_20d", 0),
+        historical_avg_vol_60d=request.get("historical_avg_vol_60d", 0),
+    )
+    return {"success": True, "adjusted_size": adjusted}
+
+
+@app.post("/api/risk/liquidation-check", tags=["Risk"])
+async def liquidation_buffer_check(request: Dict[str, Any] = Body(...)):
+    """Validate liquidation buffer is sufficient."""
+    liq = risk_manager.calculate_liquidation_price(
+        entry_price=request.get("entry_price", 0),
+        margin=request.get("margin", 0),
+        position_size=request.get("position_size", 1),
+        leverage=request.get("leverage", 1),
+        direction=request.get("direction", "LONG"),
+    )
+    validation = risk_manager.validate_liquidation_buffer(
+        liq["liquidation_price"], request.get("mark_price", 0)
+    )
+    return {"success": True, "liquidation": liq, "validation": validation}
+
+
+# ============================================================================
+# MOAT SERVICES: EXPLAINABILITY & BACKTESTING INTEGRITY
+# ============================================================================
+
+@app.post("/api/proofs/create", tags=["Proofs"])
+async def create_explainability_proof(request: Dict[str, Any] = Body(...)):
+    """Create an explainability proof for a signal."""
+    if not explainability_proofs_svc:
+        raise HTTPException(status_code=503, detail="Explainability service not initialized")
+
+    return await explainability_proofs_svc.create_proof(
+        signal_id=request.get("signal_id"),
+        symbol=request.get("symbol"),
+        signal_type=request.get("signal_type"),
+        confidence=request.get("confidence", 0.0),
+        reasoning_chain=request.get("reasoning_chain", []),
+        feature_importance=request.get("feature_importance", {}),
+        technical_drivers=request.get("technical_drivers", {}),
+        sentiment_components=request.get("sentiment_components", {}),
+        ml_model_version=request.get("ml_model_version", "1.0"),
+        backtest_performance=request.get("backtest_performance", {}),
+    )
+
+
+@app.get("/api/proofs/{signal_id}", tags=["Proofs"])
+async def get_explainability_proof(signal_id: str):
+    """Retrieve explainability proof for a signal."""
+    if not explainability_proofs_svc:
+        raise HTTPException(status_code=503, detail="Explainability service not initialized")
+
+    proof = await explainability_proofs_svc.get_proof(signal_id)
+    if not proof:
+        raise HTTPException(status_code=404, detail="Proof not found")
+
+    return proof
+
+
+@app.get("/api/proofs/{signal_id}/verify", tags=["Proofs"])
+async def verify_explainability_proof(signal_id: str, proof_hash: str = Query(...)):
+    """Verify integrity of an explainability proof."""
+    if not explainability_proofs_svc:
+        raise HTTPException(status_code=503, detail="Explainability service not initialized")
+
+    is_valid = await explainability_proofs_svc.verify_proof(signal_id, proof_hash)
+    return {"signal_id": signal_id, "is_valid": is_valid}
+
+
+@app.get("/api/proofs", tags=["Proofs"])
+async def list_explainability_proofs(
+    symbol: Optional[str] = Query(None),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    limit: int = Query(100)
+):
+    """List explainability proofs with optional filtering."""
+    if not explainability_proofs_svc:
+        raise HTTPException(status_code=503, detail="Explainability service not initialized")
+
+    proofs = await explainability_proofs_svc.list_proofs(
+        symbol=symbol,
+        start_date=start_date,
+        end_date=end_date,
+        limit=limit
+    )
+    return {"proofs": proofs, "count": len(proofs)}
+
+
+@app.get("/api/signals/{signal_id}/explainability", tags=["Proofs"])
+async def get_signal_explainability(signal_id: str):
+    """Get full explainability data for a signal."""
+    if not explainability_proofs_svc:
+        raise HTTPException(status_code=503, detail="Explainability service not initialized")
+
+    explainability = await explainability_proofs_svc.get_signal_explainability(signal_id)
+    if not explainability:
+        raise HTTPException(status_code=404, detail="Signal explainability data not found")
+
+    return explainability
+
+
+@app.get("/api/proofs/audit-trail/export", tags=["Proofs"])
+async def export_audit_trail(
+    user_id: Optional[str] = Query(None),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    format: str = Query("json")
+):
+    """Export audit trail of signal proofs for compliance."""
+    if not explainability_proofs_svc:
+        raise HTTPException(status_code=503, detail="Explainability service not initialized")
+
+    return await explainability_proofs_svc.export_audit_trail(
+        user_id=user_id,
+        start_date=start_date,
+        end_date=end_date,
+        format=format
+    )
+
+
+@app.post("/api/backtesting/integrity-check", tags=["Backtesting"])
+async def check_backtest_integrity(request: Dict[str, Any] = Body(...)):
+    """Check integrity of a backtest."""
+    if not backtesting_integrity_svc:
+        raise HTTPException(status_code=503, detail="Backtesting integrity service not initialized")
+
+    return await backtesting_integrity_svc.check_integrity(
+        backtest_id=request.get("backtest_id"),
+        backtest_data=request.get("backtest_data", {})
+    )
+
+
+@app.get("/api/ml/overfitting-check/{model_id}", tags=["ML"])
+async def check_overfitting(model_id: str):
+    """Check if model shows signs of overfitting."""
+    if not overfitting_prevention_svc:
+        raise HTTPException(status_code=503, detail="Overfitting prevention service not initialized")
+
+    result = await overfitting_prevention_svc.detect_overfitting(model_id)
+    return result
+
+
+@app.post("/api/signals/ensemble", tags=["Signals"])
+async def generate_ensemble_prediction(request: Dict[str, Any] = Body(...)):
+    """Generate ensemble prediction combining multiple signal sources."""
+    if not ensemble_predictor_svc:
+        raise HTTPException(status_code=503, detail="Ensemble predictor service not initialized")
+
+    return await ensemble_predictor_svc.predict_ensemble(
+        symbol=request.get("symbol"),
+        signals=request.get("signals", []),
+        weights=request.get("weights")
+    )
+
+
+# ============================================================================
+# ERROR HANDLING
 # ============================================================================
 # ERROR HANDLING
 # ============================================================================
@@ -4252,6 +6293,182 @@ async def http_exception_handler(request, exc):
             "timestamp": datetime.utcnow().isoformat()
         }
     )
+
+
+# ============================================================================
+# FEATURE STORE ROUTES (§13.3)
+# ============================================================================
+
+@app.get("/api/feature-store/definitions", tags=["Feature Store"])
+async def get_feature_definitions():
+    """Get all registered feature definitions."""
+    if not feature_store_svc:
+        raise HTTPException(status_code=503, detail="Feature store not initialized")
+    return {"success": True, "definitions": feature_store_svc.get_feature_definitions()}
+
+
+@app.get("/api/feature-store/{ticker}/features", tags=["Feature Store"])
+async def get_ticker_features(ticker: str, limit: int = Query(100, le=1000)):
+    """Get computed features for a ticker."""
+    if not feature_store_svc:
+        raise HTTPException(status_code=503, detail="Feature store not initialized")
+    features = await feature_store_svc.get_features(ticker, limit=limit)
+    return {"success": True, "ticker": ticker, "features": features}
+
+
+@app.get("/api/feature-store/{ticker}/vector", tags=["Feature Store"])
+async def get_feature_vector(ticker: str):
+    """Get latest feature vector for a ticker (flat dict for ML inference)."""
+    if not feature_store_svc:
+        raise HTTPException(status_code=503, detail="Feature store not initialized")
+    vector = await feature_store_svc.get_feature_vector(ticker)
+    return {"success": True, "ticker": ticker, "vector": vector}
+
+
+@app.post("/api/feature-store/{ticker}/compute", tags=["Feature Store"])
+async def compute_features(ticker: str, ohlcv_data: List[Dict[str, Any]] = Body(...)):
+    """Compute and store features from OHLCV data."""
+    if not feature_store_svc:
+        raise HTTPException(status_code=503, detail="Feature store not initialized")
+    result = await feature_store_svc.compute_and_store(ticker, ohlcv_data)
+    return {"success": True, "ticker": ticker, "result": result}
+
+
+# ============================================================================
+# IP WHITELIST ROUTES (§16.2)
+# ============================================================================
+
+@app.get("/api/ip-whitelist/{user_id}", tags=["IP Whitelist"])
+async def get_ip_whitelist(user_id: str):
+    """Get IP whitelist for a user."""
+    if not ip_whitelist_svc:
+        raise HTTPException(status_code=503, detail="IP whitelist service not initialized")
+    whitelist = await ip_whitelist_svc.get_whitelist(user_id)
+    return {"success": True, "user_id": user_id, "whitelist": whitelist}
+
+
+@app.post("/api/ip-whitelist/{user_id}/add", tags=["IP Whitelist"])
+async def add_ip_to_whitelist(
+    user_id: str,
+    ip_address: str = Body(..., embed=True),
+    description: str = Body("", embed=True),
+):
+    """Add an IP address to a user's whitelist."""
+    if not ip_whitelist_svc:
+        raise HTTPException(status_code=503, detail="IP whitelist service not initialized")
+    result = await ip_whitelist_svc.add_ip(user_id, ip_address, description=description)
+    return result
+
+
+@app.delete("/api/ip-whitelist/{user_id}/remove", tags=["IP Whitelist"])
+async def remove_ip_from_whitelist(user_id: str, ip_address: str = Body(..., embed=True)):
+    """Remove an IP address from a user's whitelist."""
+    if not ip_whitelist_svc:
+        raise HTTPException(status_code=503, detail="IP whitelist service not initialized")
+    result = await ip_whitelist_svc.remove_ip(user_id, ip_address)
+    return result
+
+
+@app.post("/api/ip-whitelist/{user_id}/toggle", tags=["IP Whitelist"])
+async def toggle_ip_whitelist(user_id: str, enabled: bool = Body(..., embed=True)):
+    """Enable or disable IP whitelisting for a user."""
+    if not ip_whitelist_svc:
+        raise HTTPException(status_code=503, detail="IP whitelist service not initialized")
+    result = await ip_whitelist_svc.enable_whitelist(user_id, enabled)
+    return result
+
+
+@app.get("/api/ip-whitelist/{user_id}/status", tags=["IP Whitelist"])
+async def get_ip_whitelist_status(user_id: str):
+    """Get whitelist status and stats for a user."""
+    if not ip_whitelist_svc:
+        raise HTTPException(status_code=503, detail="IP whitelist service not initialized")
+    result = await ip_whitelist_svc.get_whitelist_status(user_id)
+    return result
+
+
+# ============================================================================
+# REGIME DETECTOR ROUTES (§6.1)
+# ============================================================================
+
+@app.get("/api/regime/{ticker}", tags=["Regime Detection"])
+async def detect_market_regime(ticker: str):
+    """Detect current market regime for a ticker."""
+    if not regime_detector_svc:
+        raise HTTPException(status_code=503, detail="Regime detector not initialized")
+    if not market_data_service:
+        raise HTTPException(status_code=503, detail="Market data service not available")
+    try:
+        ohlcv = await market_data_service.fetch_forex_ohlcv(ticker, "1h", 100)
+        if not ohlcv:
+            ohlcv = []
+        closes = [c.get("close", 0) for c in ohlcv] if ohlcv else []
+        highs = [c.get("high", 0) for c in ohlcv] if ohlcv else []
+        lows = [c.get("low", 0) for c in ohlcv] if ohlcv else []
+        volumes = [c.get("volume", 0) for c in ohlcv] if ohlcv else []
+        regime = regime_detector_svc.detect_regime(ticker, closes, highs, lows, volumes)
+        return {"success": True, "ticker": ticker, "regime": regime}
+    except Exception as e:
+        logger.error(f"Regime detection failed for {ticker}: {e}")
+        return {"success": False, "error": str(e)}
+
+
+@app.get("/api/regime/{ticker}/cached", tags=["Regime Detection"])
+async def get_cached_regime(ticker: str):
+    """Get cached regime classification for a ticker (no recomputation)."""
+    if not regime_detector_svc:
+        raise HTTPException(status_code=503, detail="Regime detector not initialized")
+    regime = regime_detector_svc.get_cached_regime(ticker)
+    if regime:
+        return {"success": True, "ticker": ticker, "regime": regime}
+    return {"success": False, "error": "No cached regime available"}
+
+
+# ============================================================================
+# GPU INFERENCE ROUTES (§6.4)
+# ============================================================================
+
+@app.post("/api/inference/models", tags=["GPU Inference"])
+async def register_inference_model(config: Dict[str, Any] = Body(...)):
+    """Register a model for GPU/ONNX inference."""
+    if not gpu_inference_svc:
+        raise HTTPException(status_code=503, detail="GPU inference service not initialized")
+    model_config = ModelConfig(
+        model_id=config.get("model_id", ""),
+        model_path=config.get("model_path", ""),
+        input_shape=tuple(config.get("input_shape", [1, 10])),
+        precision=QuantizationPrecision(config.get("precision", "fp32")),
+        backend=InferenceBackend(config.get("backend", "cpu")),
+        batch_size=config.get("batch_size", 32),
+    )
+    result = gpu_inference_svc.register_model(model_config)
+    return result
+
+
+@app.post("/api/inference/{model_id}", tags=["GPU Inference"])
+async def run_inference(model_id: str, input_data: Dict[str, Any] = Body(...)):
+    """Run single inference on a registered model."""
+    if not gpu_inference_svc:
+        raise HTTPException(status_code=503, detail="GPU inference service not initialized")
+    result = await gpu_inference_svc.infer(model_id, input_data)
+    return result
+
+
+@app.post("/api/inference/{model_id}/batch", tags=["GPU Inference"])
+async def run_batch_inference(model_id: str, batch_data: List[Dict[str, Any]] = Body(...)):
+    """Run batch inference on a registered model."""
+    if not gpu_inference_svc:
+        raise HTTPException(status_code=503, detail="GPU inference service not initialized")
+    results = await gpu_inference_svc.infer_batch(model_id, batch_data)
+    return {"success": True, "model_id": model_id, "results": results}
+
+
+@app.get("/api/inference/stats", tags=["GPU Inference"])
+async def get_inference_stats():
+    """Get inference performance statistics."""
+    if not gpu_inference_svc:
+        raise HTTPException(status_code=503, detail="GPU inference service not initialized")
+    return {"success": True, "stats": gpu_inference_svc.get_stats()}
 
 
 # ============================================================================

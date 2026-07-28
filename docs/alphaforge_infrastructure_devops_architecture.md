@@ -2,6 +2,8 @@
 
 Version: 1.0
 
+> **Note:** This document describes the **target production architecture** for a fully scaled platform. The current implementation runs on Render/Railway with Supabase PostgreSQL. See [alphaforge_system_design.md](alphaforge_system_design.md) for the current system design.
+
 ---
 
 # 1. Document Overview

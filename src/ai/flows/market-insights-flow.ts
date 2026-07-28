@@ -44,7 +44,7 @@ export async function generateMarketInsights(input: MarketInsightsInput): Promis
       Context:
       Tickers:
       {{#each tickers}}
-      - {{asset}}: ${{price}} ({{change24h}}% 24h)
+      - {{asset}}: $${'{{price}}'} ({{change24h}}% 24h)
       {{/each}}
 
       Sentiment: {{sentiment.label}} (Score: {{sentiment.score}}/100)

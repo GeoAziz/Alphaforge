@@ -399,6 +399,6 @@ analytics.action('test_event');
 ---
 
 All files are already created and ready to use. Just follow the checklist above!
+See [BACKEND_FEATURE_INTEGRATION_GUIDE.md](./BACKEND_FEATURE_INTEGRATION_GUIDE.md) for detailed integration instructions.
 
-See [INTEGRATION_GUIDE.md](./INTEGRATION_GUIDE.md) for detailed integration instructions.
-See [OPTIONAL_SETUP.md](./OPTIONAL_SETUP.md) for full feature documentation.
+See [PRODUCTION_ENHANCEMENTS_SUMMARY.md](./PRODUCTION_ENHANCEMENTS_SUMMARY.md) for full feature documentation.

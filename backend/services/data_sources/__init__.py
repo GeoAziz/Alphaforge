@@ -5,6 +5,10 @@ from .binance_source import BinanceDataSource
 from .coingecko_source import CoinGeckoDataSource
 from .polygon_source import PolygonDataSource
 from .source_orchestrator import DataSourceOrchestrator
+from .exchange_adapters import BybitDataSource, OKXDataSource, BitgetDataSource
+from .bybit_source import BybitExchange
+from .okx_source import OKXExchange
+from .bitget_source import BitgetExchange
 
 __all__ = [
     "BaseDataSource",
@@ -12,4 +16,10 @@ __all__ = [
     "CoinGeckoDataSource",
     "PolygonDataSource",
     "DataSourceOrchestrator",
+    "BybitDataSource",
+    "OKXDataSource",
+    "BitgetDataSource",
+    "BybitExchange",
+    "OKXExchange",
+    "BitgetExchange",
 ]

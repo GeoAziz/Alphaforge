@@ -117,14 +117,14 @@
 
 **Terminal 1 - Backend:**
 ```bash
-cd /home/devmahnx/Dev/alphaforge/backend
+cd backend
 python main.py
 # Backend runs on http://localhost:8000
 ```
 
 **Terminal 2 - Frontend:**
 ```bash
-cd /home/devmahnx/Dev/alphaforge
+cd alphaforge
 npm run dev
 # Frontend runs on http://localhost:3000
 ```

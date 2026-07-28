@@ -85,21 +85,35 @@ class FirebaseTokenVerifier:
 
         try:
             decoded = auth.verify_id_token(cleaned)
+            logger.debug("Token verified successfully")
             return decoded
         except ValueError:
+            logger.debug("Invalid token format")
             raise HTTPException(status_code=401, detail="Invalid authentication token")
         except Exception as e:
             msg = str(e).lower()
             if "expired" in msg:
+                logger.debug("Token expired")
                 raise HTTPException(status_code=401, detail="Authentication token expired")
             if "revoked" in msg:
+                logger.debug("Token revoked")
                 raise HTTPException(status_code=401, detail="Authentication token revoked")
+            logger.warning("Token verification failed (not logging details to prevent PII leak)")
             raise HTTPException(status_code=401, detail="Authentication failed")
 
 
 def get_firebase_verifier() -> FirebaseTokenVerifier:
     """Get the singleton Firebase token verifier."""
     return FirebaseTokenVerifier()
+
+
+def _get_admin_uids() -> set:
+    """Allowlist of Firebase UIDs permitted to call admin-only endpoints
+    (e.g. KYC approve/reject). Bootstrap mechanism until a proper
+    role-based access system exists — set ADMIN_UIDS as a comma-separated
+    list of Firebase UIDs in the environment."""
+    raw = os.getenv("ADMIN_UIDS", "")
+    return {uid.strip() for uid in raw.split(",") if uid.strip()}
 
 
 async def verify_firebase_token(authorization: Optional[str] = Header(None)) -> str:
@@ -149,6 +163,49 @@ async def verify_firebase_token(authorization: Optional[str] = Header(None)) -> 
     verifier = get_firebase_verifier()
     decoded = verifier.verify_token(authorization)
     return decoded.get("uid", "unknown-user")
+
+
+async def verify_admin_token(authorization: Optional[str] = Header(None)) -> str:
+    """
+    FastAPI dependency: verify Firebase token AND require the caller's UID
+    to be in the ADMIN_UIDS allowlist. Use for admin-only endpoints (KYC
+    approve/reject, etc.) — never trust a client-supplied admin_id.
+
+    Usage:
+        @app.post("/api/kyc/admin/approve")
+        async def approve(admin_uid: str = Depends(verify_admin_token)):
+            ...
+    """
+    uid = await verify_firebase_token(authorization)
+    admin_uids = _get_admin_uids()
+    if not admin_uids:
+        logger.error("ADMIN_UIDS is not configured — refusing all admin actions")
+        raise HTTPException(status_code=503, detail="Admin access not configured")
+    if uid not in admin_uids:
+        raise HTTPException(status_code=403, detail="Admin privileges required")
+    return uid
+
+
+def require_self_or_admin(user_id: str, firebase_uid: str) -> None:
+    """
+    Raise 403 unless the authenticated caller (firebase_uid) is the same
+    person as the user_id whose data is being requested, or is an admin.
+
+    Many endpoints take a `user_id` path/query param independently of the
+    authenticated identity — without this check, any authenticated user can
+    read or modify any other user's data by simply changing the parameter.
+
+    Usage:
+        @app.get("/api/portfolio/{user_id}")
+        async def get_portfolio(user_id: str, firebase_uid: str = Depends(verify_firebase_token)):
+            require_self_or_admin(user_id, firebase_uid)
+            ...
+    """
+    if user_id == firebase_uid:
+        return
+    if firebase_uid in _get_admin_uids():
+        return
+    raise HTTPException(status_code=403, detail="Cannot access other users' data")
 
 
 async def verify_firebase_token_optional(

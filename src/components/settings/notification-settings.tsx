@@ -4,11 +4,12 @@ import { SpotlightCard } from '@/components/shared/spotlight-card';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
-import { Bell, Send, MessageSquare, Mail, Smartphone, Info, ShieldCheck, QrCode, Terminal } from 'lucide-react';
+import { Bell, Send, MessageSquare, Mail, Smartphone, Info, ShieldCheck, QrCode, Terminal, CheckCircle2, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
 
 const notificationTypes = [
   { id: 'signals', label: 'Signal Alpha Alerts', description: 'New high-confidence institutional trading signals.' },
@@ -31,6 +32,12 @@ export function NotificationSettings() {
     telegram: false,
     discord: false
   });
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  const handleSave = () => {
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 3000);
+  };
 
   const handleToggle = (id: string) => {
     setNotifications(prev => ({ ...prev, [id]: !prev[id] }));
@@ -148,6 +155,17 @@ export function NotificationSettings() {
             </p>
           </div>
         </div>
+      </div>
+
+      <div className="flex items-center justify-end gap-3">
+        {saveSuccess && (
+          <div className="flex items-center gap-2 text-green text-xs font-bold">
+            <CheckCircle2 size={14} /> Settings saved
+          </div>
+        )}
+        <Button onClick={handleSave} className="h-12 px-8 bg-primary text-primary-foreground font-black uppercase text-xs rounded-xl">
+          Save Notification Settings
+        </Button>
       </div>
     </div>
   );

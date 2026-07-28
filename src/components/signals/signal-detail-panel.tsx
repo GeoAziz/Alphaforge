@@ -126,7 +126,7 @@ export function SignalDetailPanel({
             {signal.drivers.map((driver, index) => (
               <div key={index} className="flex items-center gap-3 p-4 rounded-xl bg-elevated/20 border border-border-subtle hover:bg-elevated/40 transition-all cursor-default group">
                 <div className="w-1.5 h-1.5 rounded-full bg-primary group-hover:scale-150 transition-transform" />
-                <span className="text-[11px] font-bold text-text-secondary uppercase leading-relaxed">{driver}</span>
+                <span className="text-[11px] font-bold text-text-secondary uppercase leading-relaxed">{driver.label}</span>
               </div>
             ))}
           </div>

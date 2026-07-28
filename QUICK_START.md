@@ -8,7 +8,7 @@
 
 ### Terminal 1 - Start Backend
 ```bash
-cd /home/devmahnx/Dev/alphaforge/backend
+cd backend
 python main.py
 ```
 
@@ -21,7 +21,7 @@ INFO:main:🚀 Uvicorn running on 0.0.0.0:8000
 
 ### Terminal 2 - Start Frontend
 ```bash
-cd /home/devmahnx/Dev/alphaforge
+cd alphaforge
 npm run dev
 ```
 

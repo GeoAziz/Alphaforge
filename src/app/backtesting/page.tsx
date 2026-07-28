@@ -32,41 +32,57 @@ function BacktestingPageContent() {
     });
   }, [user]);
 
-  const performanceData = [
-    { date: '2024-01-01', equity: 10000 },
-    { date: '2024-01-05', equity: 10250 },
-    { date: '2024-01-10', equity: 10100 },
-    { date: '2024-01-15', equity: 10600 },
-    { date: '2024-01-20', equity: 11200 },
-    { date: '2024-01-25', equity: 10900 },
-    { date: '2024-02-01', equity: 11500 },
-    { date: '2024-02-05', equity: 12100 },
-    { date: '2024-02-10', equity: 11800 },
-    { date: '2024-02-15', equity: 12400 },
-    { date: '2024-02-20', equity: 13200 },
-    { date: '2024-02-28', equity: 14500 },
-  ];
+  const [equityCurve, setEquityCurve] = useState<{ day: number; equity: number; date: string }[]>([]);
+  const [isSyntheticData, setIsSyntheticData] = useState(false);
+  const [runError, setRunError] = useState<string | null>(null);
 
-  function handleRunBacktest() {
+  function parsePct(v: unknown): number {
+    if (typeof v === 'number') return v;
+    if (typeof v === 'string') return parseFloat(v.replace('%', '')) || 0;
+    return 0;
+  }
+
+  async function handleRunBacktest(config: { strategyId?: string; risk?: string }) {
+    if (!user?.uid) return;
     setIsRunning(true);
     setResults(null);
-    
-    setTimeout(() => {
-      setResults({
-        id: 'res-' + Math.random().toString(36).substr(2, 9),
-        userId: user?.uid || '',
-        backtestConfigId: 'config-1',
-        winRate: 68.4,
-        totalTrades: 142,
-        roi: 45.2,
-        maxDrawdown: -12.4,
-        sharpeRatio: 1.92,
-        sortinoRatio: 2.15,
-        profitFactor: 2.45,
-        equityCurvePointIds: []
+    setRunError(null);
+
+    const selectedStrategy = strategies.find(s => s.id === config.strategyId);
+
+    try {
+      const response = await api.backtest.run(user.uid, {
+        name: selectedStrategy?.name || 'Unnamed Strategy',
+        symbols: ['BTC'],
+        parameters: { risk: config.risk },
       });
+
+      if (response.results.data_source === 'unavailable') {
+        setRunError(response.results.error || 'Not enough historical data to run this backtest.');
+        return;
+      }
+
+      const m = response.results.metrics;
+      setResults({
+        id: response.backtest_id,
+        userId: user.uid,
+        backtestConfigId: config.strategyId || '',
+        winRate: parsePct(m.win_rate),
+        totalTrades: Number(m.total_trades) || 0,
+        roi: parsePct(m.total_return),
+        maxDrawdown: parsePct(m.max_drawdown),
+        sharpeRatio: Number(m.sharpe_ratio) || 0,
+        sortinoRatio: Number(m.sharpe_ratio) || 0, // engine doesn't compute Sortino separately yet
+        profitFactor: Number(m.profit_factor) || 0,
+        equityCurvePointIds: [],
+      });
+      setEquityCurve(response.results.equity_curve);
+      setIsSyntheticData(response.results.data_source === 'synthetic_demo');
+    } catch (err) {
+      setRunError(err instanceof Error ? err.message : 'Backtest failed to run');
+    } finally {
       setIsRunning(false);
-    }, 2500);
+    }
   }
 
   if (!user) {
@@ -100,6 +116,13 @@ function BacktestingPageContent() {
         </div>
       )}
 
+      {runError && (
+        <div className="mb-6 p-4 rounded-xl border border-red/30 bg-red/5 flex items-center gap-3">
+          <AlertCircle size={16} className="text-red shrink-0" />
+          <span className="text-xs font-bold text-red">{runError}</span>
+        </div>
+      )}
+
       <div className="grid grid-cols-12 gap-8">
         <div className="col-span-12 lg:col-span-4">
           <BacktestForm 
@@ -120,8 +143,16 @@ function BacktestingPageContent() {
             </div>
           ) : results ? (
             <div className="space-y-6">
+              {isSyntheticData && (
+                <div className="flex items-center gap-3 p-4 rounded-xl border border-yellow/30 bg-yellow/5">
+                  <AlertCircle size={16} className="text-yellow shrink-0" />
+                  <span className="text-[10px] font-bold text-yellow uppercase tracking-widest">
+                    Synthetic demo simulation — not a real historical-price replay of this strategy. Do not treat these numbers as verified performance.
+                  </span>
+                </div>
+              )}
               <BacktestResults results={results} />
-              <EquityCurve data={performanceData} />
+              <EquityCurve data={equityCurve} />
             </div>
           ) : (
             <div className="h-[600px] flex flex-col items-center justify-center text-center space-y-6 rounded-3xl border border-dashed border-border-subtle bg-surface/30">

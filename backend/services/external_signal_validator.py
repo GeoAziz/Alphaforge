@@ -64,13 +64,14 @@ class ExternalSignalPerformanceValidator:
                 .execute()
             
             if result.data and len(result.data) > 0:
-                # Update existing record
+                # Update existing record - use already fetched data
                 record_id = result.data[0]['id']
-                
+                existing = result.data[0]
+
                 update_data = {
-                    "total_signals_received": self.db.supabase.table("external_signal_performance").select("total_signals_received").eq("id", record_id).execute().data[0]["total_signals_received"] + 1 if result.data else 1,
-                    "total_signals_executed": self.db.supabase.table("external_signal_performance").select("total_signals_executed").eq("id", record_id).execute().data[0]["total_signals_executed"] + (1 if executed else 0) if result.data else 1 if executed else 0,
-                    "signals_ignored": self.db.supabase.table("external_signal_performance").select("signals_ignored").eq("id", record_id).execute().data[0]["signals_ignored"] + (1 if not executed else 0) if result.data else 1 if not executed else 0,
+                    "total_signals_received": existing["total_signals_received"] + 1,
+                    "total_signals_executed": existing["total_signals_executed"] + (1 if executed else 0),
+                    "signals_ignored": existing["signals_ignored"] + (1 if not executed else 0),
                     "last_signal_at": signal_received_at.isoformat(),
                     "last_updated_at": datetime.utcnow().isoformat()
                 }
@@ -122,7 +123,7 @@ class ExternalSignalPerformanceValidator:
             period_date = datetime.utcnow().date()
             is_win = pnl > 0
             
-            # Get current stats
+            # Get current stats - use Supabase ORM, not raw SQL
             result = self.db.supabase.table("external_signal_performance")\
                 .select("*")\
                 .eq("user_id", user_id)\
@@ -131,8 +132,6 @@ class ExternalSignalPerformanceValidator:
                 .order("period_end_date", desc=True)\
                 .limit(1)\
                 .execute()
-            
-            result = await self.db.execute(select_query, (user_id, source.value, period_date))
             
             if result:
                 perf = result[0]

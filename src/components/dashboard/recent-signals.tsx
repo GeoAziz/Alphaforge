@@ -7,7 +7,7 @@ import { SpotlightCard } from '@/components/shared/spotlight-card';
 // import { collection, query, orderBy, limit } from 'firebase/firestore';
 import { api } from '@/lib/api';
 import { Signal } from '@/lib/types';
-import { History } from 'lucide-react';
+import { History, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -17,10 +17,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 export function RecentSignals() {
   const [signals, setSignals] = useState<Signal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     api.signals.getLiveSignals('mock-user-001').then(data => {
       setSignals(data.slice(0, 5));
+      setIsLoading(false);
+    }).catch(err => {
+      setError(err.message || 'Failed to load signals');
       setIsLoading(false);
     });
   }, []);
@@ -36,7 +40,15 @@ export function RecentSignals() {
       </div>
 
       <div className="space-y-2 flex-1">
-        {isLoading ? (
+        {error ? (
+          <div className="p-4 rounded-xl bg-red/10 border border-red/20 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <AlertCircle size={14} className="text-red shrink-0" />
+              <span className="text-[10px] font-bold text-red">{error}</span>
+            </div>
+            <button onClick={() => { setError(null); setIsLoading(true); api.signals.getLiveSignals('mock-user-001').then(d => { setSignals(d.slice(0, 5)); setIsLoading(false); }).catch(e => { setError(e.message || 'Failed to load'); setIsLoading(false); }); }} className="text-[10px] font-black uppercase text-red hover:text-red/80">Retry</button>
+          </div>
+        ) : isLoading ? (
           Array(5).fill(0).map((_, i) => (
             <Skeleton key={i} className="h-12 w-full rounded-lg" />
           ))

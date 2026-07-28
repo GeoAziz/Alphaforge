@@ -19,11 +19,16 @@ import {
   FundingRate,
   OpenInterest,
   OnChainActivity,
+  OnChainMetricDetail,
   LiquidationCluster,
   CreatorVerificationStatus,
   ExternalSignal,
   WebhookEvent,
-  SignalIngestionRule
+  SignalIngestionRule,
+  PaperTradeResult,
+  MonitoringStats,
+  ChatMessage,
+  EducationContent
 } from './types';
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/$/, '');
@@ -110,6 +115,34 @@ export const api = {
     getRiskScore: async (userId: string): Promise<RiskScore> => {
       return request<RiskScore>(`/api/frontend/user/${userId}/risk-score`);
     },
+    register: async (data: { firebase_uid: string; email: string; display_name?: string }): Promise<UserProfile> => {
+      return request<UserProfile>('/api/users/register', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    },
+  },
+  settings: {
+    saveRisk: async (data: { risk_level: string; position_size: number; max_leverage: number }): Promise<{ success: boolean }> => {
+      return request<{ success: boolean }>('/api/settings/risk', {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+    },
+  },
+  exchange: {
+    connect: async (data: { exchange: string; api_key: string; api_secret: string }): Promise<{ success: boolean; id?: string }> => {
+      return request<{ success: boolean; id?: string }>('/api/exchange/connect', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    },
+    disconnect: async (exchangeId: string): Promise<{ success: boolean }> => {
+      return request<{ success: boolean }>('/api/exchange/disconnect', {
+        method: 'POST',
+        body: JSON.stringify({ exchange_id: exchangeId }),
+      });
+    },
   },
   market: {
     getTickers: async (): Promise<MarketTicker[]> => {
@@ -126,6 +159,9 @@ export const api = {
     },
     getOnChainActivity: async (): Promise<OnChainActivity[]> => {
       return request<OnChainActivity[]>('/api/frontend/market/on-chain-activity');
+    },
+    getOnChainMetrics: async (): Promise<OnChainMetricDetail[]> => {
+      return request<OnChainMetricDetail[]>('/api/frontend/market/on-chain-metrics');
     },
     getLiquidationClusters: async (): Promise<LiquidationCluster[]> => {
       return request<LiquidationCluster[]>('/api/frontend/market/liquidation-clusters');
@@ -165,15 +201,21 @@ export const api = {
         throw error;
       }
     },
-    getStrategyPaperTradeResult: async (id: string) => {
+    getStrategyPaperTradeResult: async (id: string): Promise<PaperTradeResult | null> => {
       try {
-        return await request(`/api/frontend/strategies/${id}/paper-trade-result`);
+        return await request<PaperTradeResult>(`/api/frontend/strategies/${id}/paper-trade-result`);
       } catch (error) {
         if (error instanceof ApiError && error.status === 404) {
           return null;
         }
         throw error;
       }
+    },
+    subscribe: async (strategyId: string, userId: string): Promise<{ success: boolean }> => {
+      return request<{ success: boolean }>(`/api/strategies/${strategyId}/subscribe`, {
+        method: 'POST',
+        body: JSON.stringify({ user_id: userId }),
+      });
     },
   },
   signals: {
@@ -200,6 +242,12 @@ export const api = {
         throw error;
       }
     },
+    execute: async (signalId: string, userId: string): Promise<{ success: boolean; trade_id?: string }> => {
+      return request<{ success: boolean; trade_id?: string }>(`/api/signals/${signalId}/execute`, {
+        method: 'POST',
+        body: JSON.stringify({ user_id: userId }),
+      });
+    },
   },
   external: {
     getSignals: async (userId: string): Promise<ExternalSignal[]> => {
@@ -217,6 +265,152 @@ export const api = {
       return request<CreatorVerificationStatus[]>(`/api/frontend/creator/${userId}/verification-pipeline`);
     }
   },
+  academy: {
+    listContent: async (category?: string, difficulty?: string): Promise<{ success: boolean; content: EducationContent[]; total: number }> => {
+      const params = new URLSearchParams();
+      if (category) params.set('category', category);
+      if (difficulty) params.set('difficulty', difficulty);
+      const qs = params.toString();
+      return request(`/api/academy/content${qs ? `?${qs}` : ''}`);
+    },
+    getProgress: async (userId: string): Promise<{
+      success: boolean;
+      progress: { content_id: string; completed: boolean; quiz_score: number | null }[];
+      completed_count: number;
+      total_content: number;
+      completion_pct: number;
+    }> => {
+      return request(`/api/academy/progress/${encodeURIComponent(userId)}`);
+    },
+    markCompleted: async (userId: string, contentId: string, quizScore?: number): Promise<{ success: boolean }> => {
+      return request(`/api/academy/progress/${encodeURIComponent(contentId)}`, {
+        method: 'POST',
+        body: JSON.stringify({ user_id: userId, quiz_score: quizScore ?? null }),
+      });
+    },
+  },
+  backtest: {
+    run: async (userId: string, config: { name?: string; symbols?: string[]; initial_capital?: number; parameters?: Record<string, unknown> }): Promise<{
+      success: boolean;
+      backtest_id: string;
+      results: {
+        data_source: string;
+        error?: string;
+        symbol?: string;
+        candles_used?: number;
+        equity_curve: { day: number; equity: number; date: string }[];
+        metrics: Record<string, number | string>;
+        trades: unknown[];
+      };
+    }> => {
+      return request(`/api/backtest/run?user_id=${encodeURIComponent(userId)}`, {
+        method: 'POST',
+        body: JSON.stringify(config),
+      });
+    },
+  },
+  tournaments: {
+    listTournaments: async (status?: string, limit?: number) => {
+      const params = new URLSearchParams();
+      if (status) params.set('status', status);
+      if (limit) params.set('limit', String(limit));
+      const qs = params.toString();
+      return request(`/api/tournaments${qs ? `?${qs}` : ''}`);
+    },
+    joinTournament: async (tournamentId: string, userId: string) => {
+      return request(`/api/tournaments/${encodeURIComponent(tournamentId)}/join?user_id=${encodeURIComponent(userId)}`, {
+        method: 'POST',
+      });
+    },
+    getLeaderboard: async (tournamentId: string, sortBy?: string, limit?: number) => {
+      const params = new URLSearchParams();
+      if (sortBy) params.set('sort_by', sortBy);
+      if (limit) params.set('limit', String(limit));
+      const qs = params.toString();
+      return request(`/api/tournaments/${encodeURIComponent(tournamentId)}/leaderboard${qs ? `?${qs}` : ''}`);
+    },
+    getMyStatus: async (tournamentId: string, userId: string) => {
+      return request(`/api/tournaments/${encodeURIComponent(tournamentId)}/status?user_id=${encodeURIComponent(userId)}`);
+    },
+  },
+  community: {
+    getProfile: async (userId: string) => {
+      return request(`/api/community/profile/${encodeURIComponent(userId)}`);
+    },
+    updateProfile: async (userId: string, data: { display_name?: string; bio?: string; avatar_url?: string }) => {
+      return request(`/api/community/profile`, {
+        method: 'POST',
+        body: JSON.stringify({ user_id: userId, ...data }),
+      });
+    },
+    follow: async (targetUserId: string) => {
+      return request(`/api/community/follow/${encodeURIComponent(targetUserId)}`, {
+        method: 'POST',
+      });
+    },
+    unfollow: async (targetUserId: string) => {
+      return request(`/api/community/unfollow/${encodeURIComponent(targetUserId)}`, {
+        method: 'POST',
+      });
+    },
+    getLeaderboard: async (metric?: string, limit?: number) => {
+      const params = new URLSearchParams();
+      if (metric) params.set('metric', metric);
+      if (limit) params.set('limit', String(limit));
+      const qs = params.toString();
+      return request(`/api/community/leaderboard${qs ? `?${qs}` : ''}`);
+    },
+    addComment: async (strategyId: string, comment: string) => {
+      return request(`/api/community/strategy/${encodeURIComponent(strategyId)}/comment`, {
+        method: 'POST',
+        body: JSON.stringify(comment),
+      });
+    },
+    rateStrategy: async (strategyId: string, rating: number) => {
+      return request(`/api/community/strategy/${encodeURIComponent(strategyId)}/rate`, {
+        method: 'POST',
+        body: JSON.stringify(rating),
+      });
+    },
+    getNotifications: async () => {
+      return request(`/api/community/notifications`);
+    },
+  },
+  compliance: {
+    acceptAllDisclaimers: async (userId: string): Promise<{ success: boolean }> => {
+      return request(`/api/compliance/disclaimers/accept-all?user_id=${encodeURIComponent(userId)}`, {
+        method: 'POST',
+      });
+    },
+    getDisclaimerStatus: async (userId: string): Promise<{ success: boolean; disclaimers: Record<string, { title: string; acknowledged: boolean; acknowledged_at: string | null }>; all_accepted: boolean }> => {
+      return request(`/api/compliance/disclaimers/status?user_id=${encodeURIComponent(userId)}`);
+    },
+  },
+  chat: {
+    sendMessage: async (data: {
+      user_id: string;
+      message: string;
+      signal_id?: string;
+      strategy_id?: string;
+      page_context?: string;
+    }): Promise<{ success: boolean; ai_response: string; context_used: boolean; timestamp: string }> => {
+      return request(`/api/chat/message`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    },
+    getHistory: async (userId: string, limit = 50): Promise<ChatMessage[]> => {
+      const res = await request<{ success: boolean; messages: Array<{ id: string; role: string; message: string; created_at: string }> }>(
+        `/api/chat/history?user_id=${encodeURIComponent(userId)}&limit=${limit}`
+      );
+      return (res.messages || []).map((m) => ({
+        id: String(m.id),
+        role: m.role === 'assistant' ? 'assistant' : 'user',
+        content: m.message,
+        timestamp: m.created_at,
+      }));
+    },
+  },
   system: {
     getAuditLogs: async (userId: string): Promise<AuditLogEntry[]> => {
       return request<AuditLogEntry[]>(`/api/frontend/system/${userId}/audit-logs`);
@@ -226,6 +420,9 @@ export const api = {
     },
     getNotifications: async (userId: string): Promise<Notification[]> => {
       return request<Notification[]>(`/api/frontend/system/${userId}/notifications`);
+    },
+    getMonitoringStats: async (): Promise<MonitoringStats> => {
+      return request<MonitoringStats>('/api/monitoring/stats');
     },
   },
 };

@@ -1,7 +1,7 @@
 # Supabase DB Init Checklist (Phase 1)
 
 ## 1) Run migration SQL
-1. Open Supabase project: https://xouqexmepzkxlymihjuw.supabase.co
+1. Open Supabase project: https://YOUR_PROJECT_ID.supabase.co
 2. Go to **SQL Editor** → **New Query**.
 3. Open and copy all contents of:
    - `backend/database/supabase_phase1_init.sql`

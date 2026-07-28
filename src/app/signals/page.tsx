@@ -14,7 +14,7 @@ import { SignalFilters } from "@/components/signals/signal-filters";
 import { SignalDetailPanel } from "@/components/signals/signal-detail-panel";
 import { Signal } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { ShieldAlert, Activity } from "lucide-react";
+import { ShieldAlert, Activity, AlertCircle } from "lucide-react";
 import { SpotlightCard } from "@/components/shared/spotlight-card";
 
 export default function SignalsPage() {
@@ -26,6 +26,8 @@ export default function SignalsPage() {
   const [selectedSignal, setSelectedSignal] = useState<Signal | null>(null);
   const [isExecuting, setIsExecuting] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [executeError, setExecuteError] = useState<string | null>(null);
 
   // Filter States
   const [search, setSearch] = useState("");
@@ -38,6 +40,9 @@ export default function SignalsPage() {
     analytics.pageView('/signals');
     api.signals.getLiveSignals(user?.uid || 'mock-user-001').then(data => {
       setRawSignals(data);
+      setIsLoading(false);
+    }).catch(err => {
+      setError(err.message || 'Failed to load signals');
       setIsLoading(false);
     });
   }, [user, analytics]);
@@ -62,15 +67,17 @@ export default function SignalsPage() {
 
   function handleExecuteSignal(signal: Signal) {
     setIsExecuting(true);
+    setExecuteError(null);
 
-    // Mock mode: Firebase writes disabled — log action only
-    // When upgrading to Blaze: restore addDocumentNonBlocking calls for positions and notifications
-    console.info('[Mock] Executing signal:', signal.id, signal.asset, signal.direction);
-
-    setTimeout(() => {
+    api.signals.execute(signal.id, user?.uid || 'mock-user-001').then(() => {
       setIsExecuting(false);
       setSelectedSignal(null);
-    }, 1500);
+      // Refresh signals list
+      api.signals.getLiveSignals(user?.uid || 'mock-user-001').then(setRawSignals).catch(() => {});
+    }).catch(err => {
+      setExecuteError(err.message || 'Failed to execute signal');
+      setIsExecuting(false);
+    });
   }
 
   if (!user) {
@@ -126,6 +133,16 @@ export default function SignalsPage() {
             }}
           />
 
+          {error && (
+            <div className="p-4 rounded-xl bg-red/10 border border-red/20 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <AlertCircle size={16} className="text-red shrink-0" />
+                <span className="text-xs font-bold text-red">{error}</span>
+              </div>
+              <button onClick={() => { setError(null); setIsLoading(true); api.signals.getLiveSignals(user?.uid || 'mock-user-001').then(d => { setRawSignals(d); setIsLoading(false); }).catch(e => { setError(e.message || 'Failed to load'); setIsLoading(false); }); }} className="text-[10px] font-black uppercase text-red hover:text-red/80 transition-colors">Retry</button>
+            </div>
+          )}
+
           <div className="space-y-4">
             {isLoading ? (
               Array(5).fill(0).map((_, i) => (
@@ -157,6 +174,14 @@ export default function SignalsPage() {
           </div>
         </div>
       </div>
+
+      {executeError && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 p-4 rounded-xl bg-red/10 border border-red/20 flex items-center gap-3 shadow-2xl backdrop-blur-xl max-w-md">
+          <AlertCircle size={16} className="text-red shrink-0" />
+          <span className="text-xs font-bold text-red">{executeError}</span>
+          <button onClick={() => setExecuteError(null)} className="text-[10px] font-black uppercase text-red hover:text-red/80 ml-2">Dismiss</button>
+        </div>
+      )}
 
       {selectedSignal && (
         <SignalDetailPanel 

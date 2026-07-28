@@ -13,7 +13,8 @@ import {
   ShoppingBag, 
   Search, 
   Award, 
-  ArrowRight
+  ArrowRight,
+  AlertCircle
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -46,6 +47,8 @@ export default function MarketplacePage() {
   const [selectedStrategy, setSelectedStrategy] = useState<MarketplaceStrategy | null>(null);
   const [subscribingId, setSubscribingId] = useState<string | null>(null);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [subscribeError, setSubscribeError] = useState<string | null>(null);
   
   // Filter States
   const [searchQuery, setSearchQuery] = useState("");
@@ -64,6 +67,9 @@ export default function MarketplacePage() {
   useEffect(() => {
     api.strategies.getMarketplaceStrategies().then(data => {
       setStrategies(data);
+      setIsLoading(false);
+    }).catch(err => {
+      setError(err.message || 'Failed to load marketplace strategies');
       setIsLoading(false);
     });
   }, []);
@@ -94,16 +100,16 @@ export default function MarketplacePage() {
   function handleFinalizeSubscription() {
     if (!selectedStrategy) return;
     setSubscribingId(selectedStrategy.id);
+    setSubscribeError(null);
     setShowDisclaimer(false);
 
-    // Mock mode: Firebase writes disabled — log subscription action
-    // When upgrading to Blaze: restore setDocumentNonBlocking for subscriptions + notifications
-    console.info('[Mock] Subscribing to strategy:', selectedStrategy.id, selectedStrategy.name);
-
-    setTimeout(() => {
+    api.strategies.subscribe(selectedStrategy.id, user?.uid || 'mock-user-001').then(() => {
       setSubscribingId(null);
       setSelectedStrategy(null);
-    }, 1500);
+    }).catch(err => {
+      setSubscribeError(err.message || 'Failed to subscribe to strategy');
+      setSubscribingId(null);
+    });
   }
 
   const allAgreed = Object.values(agreedTerms).every(v => v);
@@ -128,6 +134,16 @@ export default function MarketplacePage() {
         <h1 className="text-3xl font-black tracking-tight uppercase leading-none">Strategy Marketplace</h1>
         <p className="text-muted-foreground text-sm font-medium uppercase tracking-tight">Subscribe to verified institutional-grade algorithmic engines.</p>
       </header>
+
+      {error && (
+        <div className="p-4 rounded-xl bg-red/10 border border-red/20 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <AlertCircle size={16} className="text-red shrink-0" />
+            <span className="text-xs font-bold text-red">{error}</span>
+          </div>
+          <button onClick={() => { setError(null); setIsLoading(true); api.strategies.getMarketplaceStrategies().then(d => { setStrategies(d); setIsLoading(false); }).catch(e => { setError(e.message || 'Failed to load'); setIsLoading(false); }); }} className="text-[10px] font-black uppercase text-red hover:text-red/80 transition-colors">Retry</button>
+        </div>
+      )}
 
       {/* Top Providers */}
       <div className="space-y-4">
@@ -202,6 +218,14 @@ export default function MarketplacePage() {
         subscribingId={subscribingId}
         isLoading={isLoading}
       />
+
+      {subscribeError && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 p-4 rounded-xl bg-red/10 border border-red/20 flex items-center gap-3 shadow-2xl backdrop-blur-xl max-w-md">
+          <AlertCircle size={16} className="text-red shrink-0" />
+          <span className="text-xs font-bold text-red">{subscribeError}</span>
+          <button onClick={() => setSubscribeError(null)} className="text-[10px] font-black uppercase text-red hover:text-red/80 ml-2">Dismiss</button>
+        </div>
+      )}
 
       {/* Subscription Disclaimer */}
       {isMobile ? (

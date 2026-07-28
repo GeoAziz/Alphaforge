@@ -10,6 +10,7 @@ import { FirebaseClientProvider } from '@/firebase/client-provider';
 // import { OnboardingCheck } from '@/components/onboarding/onboarding-check';
 import { LayoutShell } from '@/components/layout/layout-shell';
 import { PostHogProvider } from '@/providers/posthog-provider';
+import { SentryProvider } from '@/providers/sentry-provider';
 
 export const metadata: Metadata = {
   title: 'AlphaForge | Institutional Grade Signal Intelligence',
@@ -30,14 +31,16 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased noise-surface overflow-hidden">
         {/* Production Firebase Authentication */}
-        <PostHogProvider>
-          <FirebaseClientProvider>
-            <LayoutShell>
-              {children}
-            </LayoutShell>
-            <Toaster />
-          </FirebaseClientProvider>
-        </PostHogProvider>
+        <SentryProvider>
+          <PostHogProvider>
+            <FirebaseClientProvider>
+              <LayoutShell>
+                {children}
+              </LayoutShell>
+              <Toaster />
+            </FirebaseClientProvider>
+          </PostHogProvider>
+        </SentryProvider>
       </body>
     </html>
   );

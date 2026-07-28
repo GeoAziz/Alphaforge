@@ -1,150 +1,369 @@
 """
-Signal Aggregator Service - Fetches signals from multiple external sources.
-Sources: Alpha Vantage, Polygon.io, TradingView webhooks, custom analysis.
+Signal Aggregator Service - Refactored
+Generates trading signals using multiple data sources and technical indicators.
 """
 
 import os
-import httpx
 import logging
 from datetime import datetime
-from typing import List, Optional
-from decimal import Decimal
+from typing import List, Dict, Any, Optional
+import asyncio
+
+from services.data_sources import DataSourceOrchestrator
+from services.cache import InMemoryCache, RedisCache
+from services.llm_signal_generator import LLMSignalGenerator
+from utils.indicators import TechnicalIndicators
+from config import Config, LLMConfig
 
 logger = logging.getLogger(__name__)
 
 
 class SignalAggregator:
-    """Aggregates signals from multiple external sources."""
+    """
+    Aggregates signals from multiple sources using:
+    1. Technical indicators (RSI, MACD, Bollinger Bands)
+    2. Market data from multiple providers
+    3. Sentiment analysis
+    """
     
-    def __init__(self):
-        self.alpha_vantage_key = os.getenv("ALPHA_VANTAGE_API_KEY")
-        self.polygon_key = os.getenv("POLYGON_IO_API_KEY")
-        self.client = httpx.AsyncClient()
+    def __init__(self, performance_tracker=None):
+        # Initialize data sources
+        self.data_sources = DataSourceOrchestrator(
+            enable_polygon=Config.ENABLE_POLYGON
+        )
+        
+        # Initialize cache
+        self._init_cache()
+        
+        # Optional: Signal performance tracker (injected from main.py)
+        self.performance_tracker = performance_tracker
+
+        # LLM explainability layer (PRD §5.1-5.2 "AI-generated signals with reasoning").
+        # Disabled by default (FeatureFlags.AI_SIGNALS); falls back to the rule-based
+        # technical-indicator signal below whenever disabled, unconfigured, or on error.
+        self.llm_generator = LLMSignalGenerator() if LLMConfig.ENABLED else None
+
+        self.default_symbols = [
+            "BTC", "ETH", "BNB", "SOL", "XRP", "ADA", "DOGE", "AVAX", "DOT",
+            "MATIC", "LINK", "UNI", "AAVE", "ARB", "OP", "NEAR", "ATOM", "SUI"
+        ]
     
-    async def fetch_alpha_vantage_signals(self, symbols: List[str]) -> List[dict]:
-        """
-        Fetch signals from Alpha Vantage API.
-        Uses RSI, MACD, and other technical indicators.
-        """
-        signals = []
+    def _init_cache(self):
+        """Initialize cache backend."""
+        cache_backend = Config.CACHE_BACKEND.lower()
         
-        for symbol in symbols:
-            try:
-                # RSI (Relative Strength Index)
-                rsi_url = "https://www.alphavantage.co/query"
-                params = {
-                    "function": "RSI",
-                    "symbol": symbol,
-                    "interval": "5min",
-                    "time_period": 14,
-                    "apikey": self.alpha_vantage_key
-                }
-                
-                response = await self.client.get(rsi_url, params=params, timeout=10)
-                data = response.json()
-                
-                if "Technical Analysis: RSI" in data:
-                    technical_data = data["Technical Analysis: RSI"]
-                    latest = list(technical_data.values())[0] if technical_data else {}
-                    rsi_value = float(latest.get("RSI", 50))
-                    
-                    # Generate signal based on RSI
-                    signal_type = self._rsi_to_signal(rsi_value)
-                    confidence = self._calculate_rsi_confidence(rsi_value)
-                    
-                    signals.append({
-                        "ticker": symbol,
-                        "signal_type": signal_type,
-                        "confidence": confidence,
-                        "rationale": f"RSI at {rsi_value:.1f} ({self._rsi_description(rsi_value)})",
-                        "drivers": ["RSI"],
-                        "source": "alpha_vantage"
-                    })
-                    logger.info(f"✅ Generated signal for {symbol}: {signal_type} (confidence: {confidence})")
-                
-            except Exception as e:
-                logger.error(f"❌ Alpha Vantage fetch failed for {symbol}: {e}")
-        
-        return signals
+        if cache_backend == "redis":
+            self.cache = RedisCache(
+                host=Config.REDIS_HOST,
+                port=Config.REDIS_PORT,
+                db=Config.REDIS_DB
+            )
+        else:
+            self.cache = InMemoryCache(max_entries=10000)
     
-    async def fetch_polygon_signals(self, symbols: List[str]) -> List[dict]:
-        """
-        Fetch signals from Polygon.io.
-        Uses market-wide technical analysis.
-        """
-        signals = []
-        
-        for symbol in symbols:
-            try:
-                # Polygon Technical Analysis endpoint
-                url = f"https://api.polygon.io/v3/snapshot/options/{symbol}"
-                params = {
-                    "apiKey": self.polygon_key
-                }
-                
-                response = await self.client.get(url, params=params, timeout=10)
-                
-                if response.status_code == 200:
-                    data = response.json()
-                    # Parse Polygon data for signals
-                    if "results" in data and data["results"]:
-                        signals.append({
-                            "ticker": symbol,
-                            "signal_type": "HOLD",
-                            "confidence": 0.5,
-                            "rationale": "Polygon snapshot data analyzed",
-                            "drivers": ["polygon_market_data"],
-                            "source": "polygon"
-                        })
-                        logger.info(f"✅ Polygon signal created for {symbol}")
-                
-            except Exception as e:
-                logger.error(f"❌ Polygon fetch failed for {symbol}: {e}")
-        
-        return signals
+    async def initialize(self):
+        """Initialize async components."""
+        if hasattr(self.cache, 'connect'):
+            await self.cache.connect()
     
-    async def fetch_all_signals(self, symbols: List[str]) -> List[dict]:
-        """Aggregate signals from all sources."""
+    # ========================================================================
+    # SIGNAL GENERATION
+    # ========================================================================
+    
+    async def fetch_all_signals(self, symbols: List[str] = None) -> List[Dict[str, Any]]:
+        """
+        Generate signals for multiple symbols using technical analysis.
+        
+        Process:
+        1. Fetch OHLCV data for each symbol
+        2. Compute technical indicators
+        3. Generate signals based on thresholds
+        4. Score confidence
+        5. Return ranked signals
+        """
+        if symbols is None:
+            symbols = self.default_symbols
+        
         all_signals = []
         
-        # Fetch from Alpha Vantage
-        alpha_signals = await self.fetch_alpha_vantage_signals(symbols)
-        all_signals.extend(alpha_signals)
+        for symbol in symbols:
+            try:
+                signal = await self._generate_signal_for_symbol(symbol)
+                if signal:
+                    all_signals.append(signal)
+            except Exception as e:
+                logger.error(f"❌ Signal generation error for {symbol}: {e}")
         
-        # Fetch from Polygon
-        polygon_signals = await self.fetch_polygon_signals(symbols)
-        all_signals.extend(polygon_signals)
-        
-        logger.info(f"📊 Total signals aggregated: {len(all_signals)}")
+        logger.info(f"📊 Generated {len(all_signals)} signals from {len(symbols)} symbols")
         return all_signals
     
-    def _rsi_to_signal(self, rsi: float) -> str:
-        """Convert RSI value to signal type."""
-        if rsi > 70:
-            return "SELL"  # Overbought
-        elif rsi < 30:
-            return "BUY"   # Oversold
-        else:
-            return "HOLD"
+    async def _generate_signal_for_symbol(self, symbol: str) -> Optional[Dict[str, Any]]:
+        """
+        Generate a trading signal for a single symbol.
+
+        Tries the LLM explainability layer first (when enabled); falls back to the
+        rule-based technical-indicator path if the LLM is disabled, unconfigured,
+        or returns nothing usable.
+        """
+        if self.llm_generator is not None:
+            llm_signal = await self._generate_llm_signal(symbol)
+            if llm_signal is not None:
+                return llm_signal
+
+        return await self._generate_rule_based_signal(symbol)
+
+    async def _generate_llm_signal(self, symbol: str) -> Optional[Dict[str, Any]]:
+        """Generate a signal via the LLM explainability layer, reusing the same
+        market data + technical indicators computed for the rule-based path."""
+        try:
+            ticker = await self.data_sources.fetch_ticker(symbol)
+            ohlcv = await self.data_sources.fetch_ohlcv(symbol, interval="1h", limit=100)
+            if not ticker or not ohlcv or len(ohlcv) < 26:
+                return None
+
+            analysis = TechnicalIndicators.analyze_candles(ohlcv)
+            if not analysis:
+                return None
+
+            market_data = {
+                "price": ticker.get("price"),
+                "change_24h": ticker.get("change_24h_pct"),
+                "volume": ticker.get("volume"),
+                "high_24h": ticker.get("high_24h"),
+                "low_24h": ticker.get("low_24h"),
+            }
+
+            signal = await self.llm_generator.generate_signal(
+                ticker=symbol,
+                market_data=market_data,
+                technical_indicators=analysis,
+            )
+            if not signal or signal.get("signal_type") == "HOLD":
+                return None
+            if signal.get("confidence", 0) < Config.MIN_SIGNAL_CONFIDENCE:
+                return None
+
+            signal["created_at"] = datetime.utcnow()
+            signal["price"] = market_data["price"]
+            signal["change_24h_pct"] = market_data["change_24h"]
+            return signal
+        except Exception as e:
+            logger.error(f"❌ LLM signal generation error for {symbol}: {e}")
+            return None
+
+    async def _generate_rule_based_signal(self, symbol: str) -> Optional[Dict[str, Any]]:
+        """
+        Generate a trading signal for a single symbol using pure technical-indicator rules.
+
+        Process:
+        1. Fetch ticker data
+        2. Fetch OHLCV data (for indicators)
+        3. Compute technical indicators
+        4. Evaluate signal drivers
+        5. Combine into composite signal
+        """
+        try:
+            # Step 1: Fetch ticker
+            ticker = await self.data_sources.fetch_ticker(symbol)
+            if not ticker:
+                logger.warning(f"⚠️ Could not fetch ticker for {symbol}")
+                return None
+            
+            # Step 2: Fetch OHLCV for indicator calculation
+            ohlcv = await self.data_sources.fetch_ohlcv(symbol, interval="1h", limit=100)
+            if not ohlcv or len(ohlcv) < 26:  # Need at least 26 for MACD
+                logger.warning(f"⚠️ Insufficient OHLCV data for {symbol}")
+                return None
+            
+            # Step 3: Compute technical indicators
+            analysis = TechnicalIndicators.analyze_candles(ohlcv)
+            if not analysis:
+                logger.warning(f"⚠️ Indicator analysis failed for {symbol}")
+                return None
+            
+            # Step 4: Evaluate signal drivers
+            drivers = []
+            signal_type = "HOLD"
+            confidence = 0.0
+            rationale_parts = []
+            
+            # RSI signals
+            if "rsi" in analysis:
+                rsi = analysis["rsi"]
+                if rsi > Config.RSI_OVERBOUGHT:
+                    signal_type = "SELL"
+                    confidence += 0.3
+                    drivers.append("RSI_OVERBOUGHT")
+                    rationale_parts.append(f"RSI {rsi:.1f} >overbought")
+                elif rsi < Config.RSI_OVERSOLD:
+                    signal_type = "BUY"
+                    confidence += 0.3
+                    drivers.append("RSI_OVERSOLD")
+                    rationale_parts.append(f"RSI {rsi:.1f} <oversold")
+            
+            # MACD signals
+            if "macd_line" in analysis and "signal_line" in analysis:
+                macd = analysis["macd_line"]
+                signal_line = analysis["signal_line"]
+                if macd > signal_line and signal_type != "SELL":
+                    signal_type = "BUY" if signal_type == "HOLD" else signal_type
+                    confidence += 0.2
+                    drivers.append("MACD_BULLISH")
+                    rationale_parts.append(f"MACD above signal")
+                elif macd < signal_line and signal_type != "BUY":
+                    signal_type = "SELL" if signal_type == "HOLD" else signal_type
+                    confidence += 0.2
+                    drivers.append("MACD_BEARISH")
+                    rationale_parts.append(f"MACD below signal")
+            
+            # Bollinger Bands signals
+            if "bollinger_bands" in analysis:
+                bb = analysis["bollinger_bands"]
+                percent_b = bb.get("percent_b", 0.5)
+                
+                if percent_b > 0.9:
+                    confidence += 0.15
+                    drivers.append("BB_UPPER")
+                    rationale_parts.append(f"Near upper band ({percent_b:.2f})")
+                elif percent_b < 0.1:
+                    confidence += 0.15
+                    drivers.append("BB_LOWER")
+                    rationale_parts.append(f"Near lower band ({percent_b:.2f})")
+            
+            # Price momentum
+            if len(ohlcv) >= 2:
+                current_close = ohlcv[-1]["close"]
+                prev_close = ohlcv[-2]["close"]
+                
+                if current_close > prev_close:
+                    confidence = min(1.0, confidence + 0.1)
+                    if "BUY" not in drivers:
+                        drivers.append("PRICE_UP")
+                else:
+                    confidence = min(1.0, confidence + 0.1)
+                    if "SELL" not in drivers:
+                        drivers.append("PRICE_DOWN")
+            
+            # Apply minimum confidence threshold
+            if confidence < Config.MIN_SIGNAL_CONFIDENCE:
+                logger.debug(f"⏭️  {symbol} confidence {confidence:.2f} below threshold")
+                return None
+            
+            # Step 5: Combine into composite signal
+            signal = {
+                "ticker": symbol,
+                "signal_type": signal_type,
+                "confidence": min(1.0, confidence),
+                "rationale": " | ".join(rationale_parts) if rationale_parts else f"{signal_type} signal",
+                "drivers": drivers,
+                "source": "multi_source_indicators",
+                "created_at": datetime.utcnow(),
+                "price": ticker.get("price"),
+                "change_24h_pct": ticker.get("change_24h_pct")
+            }
+            
+            logger.info(f"✅ Generated {signal_type} signal for {symbol} (confidence: {confidence:.2f})")
+            return signal
+        
+        except Exception as e:
+            logger.error(f"❌ Error generating signal for {symbol}: {e}")
+            return None
     
-    def _calculate_rsi_confidence(self, rsi: float) -> float:
-        """Calculate confidence based on RSI extremity."""
-        if rsi > 80 or rsi < 20:
-            return 0.8  # High confidence
-        elif rsi > 70 or rsi < 30:
-            return 0.6  # Medium confidence
-        else:
-            return 0.3  # Low confidence
+    # ========================================================================
+    # SIGNAL FILTERING & RANKING
+    # ========================================================================
     
-    def _rsi_description(self, rsi: float) -> str:
-        """Human-readable RSI description."""
-        if rsi > 70:
-            return "Overbought"
-        elif rsi < 30:
-            return "Oversold"
-        else:
-            return "Neutral"
+    async def get_top_signals(self, limit: int = 50) -> List[Dict[str, Any]]:
+        """
+        Generate and return top N ranked signals.
+        """
+        all_signals = await self.fetch_all_signals()
+        
+        # Filter by confidence threshold
+        filtered = [s for s in all_signals if s.get("confidence", 0) >= Config.MIN_SIGNAL_CONFIDENCE]
+        
+        # Sort by composite strength score
+        # Score = confidence * (1 + driver_count * 0.1) * recency_bonus
+        ranked = sorted(
+            filtered,
+            key=lambda s: s.get("confidence", 0) * (1 + len(s.get("drivers", [])) * 0.1),
+            reverse=True
+        )
+        
+        logger.info(f"📊 Top signals: {len(ranked[:limit])} from {len(filtered)} filtered")
+        return ranked[:limit]
+    
+    # ========================================================================
+    # SIGNAL TRACKING (Integration with Performance Tracker)
+    # ========================================================================
+    
+    async def record_signal_execution(self, signal: Dict[str, Any], entry_price: float):
+        """
+        Record when a signal is executed (e.g., traded).
+        Calls performance tracker if available.
+        """
+        if not self.performance_tracker:
+            return
+        
+        try:
+            # Ensure signal has an ID
+            signal_id = signal.get("id")
+            if not signal_id:
+                logger.warning("⚠️  Cannot track signal without ID")
+                return
+            
+            await self.performance_tracker.record_signal_execution(
+                signal_id=signal_id,
+                ticker=signal.get("ticker"),
+                signal_type=signal.get("signal_type"),
+                entry_price=entry_price,
+                entry_time=datetime.utcnow(),
+                confidence=signal.get("confidence", 0.5),
+                drivers=signal.get("drivers", [])
+            )
+            
+            logger.info(f"📊 Recorded signal execution for {signal_id}")
+        except Exception as e:
+            logger.error(f"❌ Failed to record signal execution: {e}")
+    
+    async def record_signal_closure(self, signal_id: str, exit_price: float, pnl: float, entry_price: float = None, quantity: float = None):
+        """
+        Record when a signal trade closes.
+        Calls performance tracker if available.
+        """
+        if not self.performance_tracker:
+            return
+
+        try:
+            # Calculate ROI: pnl / position_cost (entry_price * quantity)
+            if entry_price and quantity and entry_price > 0:
+                roi_pct = (pnl / (entry_price * quantity) * 100)
+            else:
+                roi_pct = 0
+            
+            await self.performance_tracker.record_signal_closure(
+                signal_id=signal_id,
+                exit_price=exit_price,
+                exit_time=datetime.utcnow(),
+                pnl=pnl,
+                roi_pct=roi_pct
+            )
+            
+            logger.info(f"📊 Recorded signal closure for {signal_id}: PnL={pnl}, ROI={roi_pct:.2f}%")
+        except Exception as e:
+            logger.error(f"❌ Failed to record signal closure: {e}")
+    
+    async def set_performance_tracker(self, tracker):
+        """Set the performance tracker (for late initialization)."""
+        self.performance_tracker = tracker
+        logger.info("✅ Performance tracker connected to signal aggregator")
+    
+    # ========================================================================
+    # CLEANUP
+    # ========================================================================
     
     async def close(self):
-        """Clean up HTTP client."""
-        await self.client.aclose()
+        """Close all connections."""
+        await self.cache.close()
+        await self.data_sources.close()
+        logger.info("🔌 Signal aggregator closed")

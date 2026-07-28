@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { LinkIcon, Plus, Trash2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { LinkIcon, Plus, Trash2, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { useState } from 'react';
+import { api } from '@/lib/api';
 
 interface ExchangeConnection {
   id: string;
@@ -25,6 +26,46 @@ export function ExchangeConnection() {
   const [newExchange, setNewExchange] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [apiSecret, setApiSecret] = useState('');
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [isDisconnecting, setIsDisconnecting] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  function handleConnect() {
+    if (!newExchange || !apiKey || !apiSecret) return;
+    setIsConnecting(true);
+    setError(null);
+
+    api.exchange.connect({ exchange: newExchange, api_key: apiKey, api_secret: apiSecret }).then(res => {
+      setExchanges(prev => [...prev, {
+        id: res.id || String(Date.now()),
+        name: newExchange.charAt(0).toUpperCase() + newExchange.slice(1),
+        connected: true,
+        connectedAt: new Date().toISOString().slice(0, 10),
+        apiKeyPreview: '••••••••' + apiKey.slice(-4),
+      }]);
+      setIsAdding(false);
+      setNewExchange('');
+      setApiKey('');
+      setApiSecret('');
+      setIsConnecting(false);
+    }).catch(err => {
+      setError(err.message || 'Failed to connect exchange');
+      setIsConnecting(false);
+    });
+  }
+
+  function handleDisconnect(id: string) {
+    setIsDisconnecting(id);
+    setError(null);
+
+    api.exchange.disconnect(id).then(() => {
+      setExchanges(prev => prev.map(e => e.id === id ? { ...e, connected: false } : e));
+      setIsDisconnecting(null);
+    }).catch(err => {
+      setError(err.message || 'Failed to disconnect exchange');
+      setIsDisconnecting(null);
+    });
+  }
 
   return (
     <div className="space-y-6">
@@ -61,10 +102,11 @@ export function ExchangeConnection() {
                 <Button 
                   variant="ghost" 
                   size="sm"
-                  onClick={() => setExchanges(exchanges.filter(e => e.id !== exchange.id))}
+                  onClick={() => handleDisconnect(exchange.id)}
+                  disabled={isDisconnecting === exchange.id}
                   className="text-red hover:text-red"
                 >
-                  <Trash2 size={16} />
+                  {isDisconnecting === exchange.id ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
                 </Button>
               )}
             </div>
@@ -73,6 +115,12 @@ export function ExchangeConnection() {
 
         {isAdding ? (
           <div className="space-y-4 p-6 rounded-xl bg-elevated/20 border border-border-subtle">
+            {error && (
+              <div className="p-3 rounded-lg bg-red/10 border border-red/20 flex items-center gap-2">
+                <AlertCircle size={14} className="text-red shrink-0" />
+                <span className="text-[10px] font-bold text-red">{error}</span>
+              </div>
+            )}
             <div>
               <Label className="text-xs font-black uppercase">Exchange</Label>
               <select 
@@ -108,7 +156,9 @@ export function ExchangeConnection() {
               />
             </div>
             <div className="flex gap-2">
-              <Button className="flex-1 bg-primary text-primary-foreground font-black">Connect</Button>
+              <Button onClick={handleConnect} disabled={isConnecting || !newExchange || !apiKey || !apiSecret} className="flex-1 bg-primary text-primary-foreground font-black">
+                {isConnecting ? <Loader2 className="animate-spin" size={16} /> : 'Connect'}
+              </Button>
               <Button 
                 variant="outline"
                 className="flex-1"

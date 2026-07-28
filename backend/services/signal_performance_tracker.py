@@ -26,10 +26,11 @@ class SignalOutcome(str, Enum):
 
 
 class SignalPerformanceTracker:
-    """Tracks and analyzes performance of generated signals."""
+    """Tracks and analyzes performance of generated signals with feedback loop."""
     
-    def __init__(self, db: Database):
+    def __init__(self, db: Database, signal_processor=None):
         self.db = db
+        self.signal_processor = signal_processor  # For feedback loop
         
     async def record_signal_execution(
         self,
@@ -128,6 +129,11 @@ class SignalPerformanceTracker:
                 .execute()
             
             logger.info(f"✅ Updated signal performance: {signal_id} | Win Rate: {new_win_rate:.1%} | PnL: {new_total_pnl}")
+            
+            # Feedback loop: Update signal processor's source accuracy
+            if self.signal_processor and signal_id:
+                source = perf.get("source", "unknown")
+                self.signal_processor.update_source_accuracy(source, is_win)
             
             return {
                 "success": True,

@@ -3,8 +3,8 @@ Tests for audit fixes: auth, paper trading, validation, error handling.
 """
 
 import pytest
-from backend.services.paper_trading import PaperTradingEngine
-from backend.firebase_config import FirebaseTokenVerifier, verify_firebase_token
+from services.paper_trading import PaperTradingEngine
+from firebase_config import FirebaseTokenVerifier, verify_firebase_token
 
 
 class TestPaperTradingSlippageFix:
@@ -55,7 +55,7 @@ class TestAuthValidation:
     def test_firebase_config_import(self):
         """Ensure firebase_config can be imported (not firebase_auth)."""
         try:
-            from backend import firebase_config
+            import firebase_config
             assert hasattr(firebase_config, 'verify_firebase_token')
             assert hasattr(firebase_config, 'verify_firebase_token_optional')
         except ImportError as e:
@@ -64,7 +64,7 @@ class TestAuthValidation:
     def test_firebase_auth_removed(self):
         """Ensure firebase_auth.py does not exist (should use firebase_config only)."""
         import os
-        firebase_auth_path = "backend/firebase_auth.py"
+        firebase_auth_path = "firebase_auth.py"
         assert not os.path.exists(firebase_auth_path), "firebase_auth.py should be deleted in favor of firebase_config.py"
 
 
@@ -73,7 +73,7 @@ class TestInputValidation:
 
     def test_paper_trade_quantity_validation(self):
         """Quantity must be positive and <= 1M."""
-        from backend.models.schemas import PaperTradeCreate
+        from models.schemas import PaperTradeCreate
         from pydantic import ValidationError
 
         with pytest.raises(ValidationError):
@@ -98,7 +98,7 @@ class TestInputValidation:
 
     def test_paper_trade_price_validation(self):
         """Prices must be positive."""
-        from backend.models.schemas import PaperTradeCreate
+        from models.schemas import PaperTradeCreate
         from pydantic import ValidationError
 
         with pytest.raises(ValidationError):
@@ -113,7 +113,7 @@ class TestInputValidation:
 
     def test_paper_trade_valid_creation(self):
         """Valid paper trade should pass validation."""
-        from backend.models.schemas import PaperTradeCreate
+        from models.schemas import PaperTradeCreate
 
         trade = PaperTradeCreate(
             user_id="user1",
@@ -136,25 +136,25 @@ class TestErrorBoundary:
     def test_error_boundary_file_exists(self):
         """ErrorBoundary component should exist."""
         import os
-        error_boundary_path = "src/components/ErrorBoundary.tsx"
+        error_boundary_path = "../src/components/ErrorBoundary.tsx"
         assert os.path.exists(error_boundary_path), "ErrorBoundary.tsx should exist"
 
     def test_error_boundary_in_portfolio_page(self):
         """Portfolio page should import and use ErrorBoundary."""
-        with open("src/app/portfolio/page.tsx", "r") as f:
+        with open("../src/app/portfolio/page.tsx", "r") as f:
             content = f.read()
             assert "ErrorBoundary" in content, "Portfolio page should import ErrorBoundary"
             assert "PortfolioPageContent" in content, "Portfolio page should use renamed content component"
 
     def test_error_boundary_in_analytics_page(self):
         """Analytics page should import and use ErrorBoundary."""
-        with open("src/app/analytics/page.tsx", "r") as f:
+        with open("../src/app/analytics/page.tsx", "r") as f:
             content = f.read()
             assert "ErrorBoundary" in content, "Analytics page should import ErrorBoundary"
 
     def test_error_boundary_in_backtesting_page(self):
         """Backtesting page should import and use ErrorBoundary."""
-        with open("src/app/backtesting/page.tsx", "r") as f:
+        with open("../src/app/backtesting/page.tsx", "r") as f:
             content = f.read()
             assert "ErrorBoundary" in content, "Backtesting page should import ErrorBoundary"
 
@@ -165,7 +165,7 @@ class TestApiResponse:
     def test_api_response_utility_exists(self):
         """ApiResponse utility should exist."""
         try:
-            from backend.utils.api_response import ApiResponse
+            from utils.api_response import ApiResponse
             assert hasattr(ApiResponse, 'success')
             assert hasattr(ApiResponse, 'error')
             assert hasattr(ApiResponse, 'validation_error')
@@ -174,7 +174,7 @@ class TestApiResponse:
 
     def test_api_response_success_format(self):
         """Success response should have correct format."""
-        from backend.utils.api_response import ApiResponse
+        from utils.api_response import ApiResponse
 
         response = ApiResponse.success(data={"test": "data"}, message="OK")
         assert response["success"] is True
@@ -184,7 +184,7 @@ class TestApiResponse:
 
     def test_api_response_error_format(self):
         """Error response should have correct format."""
-        from backend.utils.api_response import ApiResponse
+        from utils.api_response import ApiResponse
 
         response = ApiResponse.error(message="Bad request", status_code=400)
         assert response["success"] is False

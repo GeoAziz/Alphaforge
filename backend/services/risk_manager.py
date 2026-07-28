@@ -30,10 +30,13 @@ class RiskManager:
         signal: Dict[str, Any],
         portfolio_balance: float,
         leverage: float = 1.0,
-        trade_type: str = "spot"
+        trade_type: str = "spot",
+        user_sharpe_ratio: float = 1.0,
+        current_volatility: float = 0.0,
+        historical_volatility: float = 0.0,
     ) -> Dict[str, Any]:
         """
-        Comprehensive trade validation.
+        Comprehensive trade validation per §7 Architecture Doc.
         Returns: {
             'approved': bool,
             'risk_score': float,
@@ -100,20 +103,27 @@ class RiskManager:
         else:
             checks_passed += 1
         
-        # 5. Stop loss check (required on all trades)
+        # 5. Stop loss check (§7: REQUIRED on all trades — hard reject if missing)
         sl_valid = signal.get("stop_loss_price") is not None
         if not sl_valid:
-            warnings.append("Stop loss not defined - strongly recommended")
-            logger.warning("⚠️  No stop loss for signal")
-        else:
-            checks_passed += 1
+            logger.warning("❌ Stop loss not defined - REJECTING trade per §7")
+            return {
+                "approved": False,
+                "risk_score": 10.0,
+                "warnings": ["Stop loss required per risk policy — order rejected"],
+                "reason": "Stop loss required on all orders (§7 Risk Engine)"
+            }
+        checks_passed += 1
         
-        # 6. Risk score calculation
+        # 6. Risk score calculation (§7: with Sharpe ratio component)
         risk_score = self._calculate_risk_score(
             confidence,
             leverage,
             signal,
-            correlation_valid
+            correlation_valid,
+            user_sharpe_ratio=user_sharpe_ratio,
+            current_volatility=current_volatility,
+            historical_volatility=historical_volatility,
         )
         
         if risk_score > 8.0:
@@ -125,11 +135,17 @@ class RiskManager:
             }
         checks_passed += 1
         
-        # Calculate position size
-        position_size = self._calculate_position_size(confidence, portfolio_balance, leverage)
+        # Calculate position size (volatility-adjusted if vol data available)
+        base_size = self._calculate_position_size(confidence, portfolio_balance, leverage)
+        if current_volatility > 0 and historical_volatility > 0:
+            position_size = self.calculate_volatility_adjusted_size(
+                base_size, current_volatility, historical_volatility
+            )
+        else:
+            position_size = base_size
         
         # Final decision
-        approved = len(warnings) == 0 or risk_score < 6.0
+        approved = risk_score < 6.0
         
         logger.info(f"✅ Trade validation: {ticker} {signal_type} - Score: {risk_score:.1f}/10, Size: {position_size:.2f}, Approved: {approved}")
         
@@ -138,7 +154,7 @@ class RiskManager:
             "risk_score": risk_score,
             "warnings": warnings,
             "position_size": position_size,
-            "reason": "Trade approved" if approved else f"Warnings present (risk score: {risk_score:.1f})"
+            "reason": "Trade approved" if approved else f"Risk score {risk_score:.1f}/10 exceeds threshold"
         }
     
     async def _check_position_size(
@@ -246,26 +262,41 @@ class RiskManager:
         confidence: float,
         leverage: float,
         signal: Dict[str, Any],
-        has_correlation: bool
+        has_correlation: bool,
+        user_sharpe_ratio: float = 1.0,
+        current_volatility: float = 0.0,
+        historical_volatility: float = 0.0,
     ) -> float:
         """
         Calculate composite risk score (0-10, lower is better).
-        Formula: (1 - confidence) * 5 + (leverage - 1) * 0.5 + correlation_penalty
+        §7 Architecture Doc formula:
+        Risk Score = (Position Size % × Leverage × Volatility Index × (1 - Sharpe Ratio)) + Correlation Risk
         """
         
-        # Base risk from lack of confidence
-        confidence_risk = (1 - confidence) * 5  # 0-5
+        position_size_pct = 2.0  # Max 2% per position
         
-        # Leverage risk
-        leverage_risk = max(0, (leverage - 1) * 0.5)  # 0-2.5
+        # Volatility index: ratio of current to historical vol, clamped
+        if historical_volatility > 0 and current_volatility > 0:
+            vol_index = min(current_volatility / historical_volatility, 3.0)
+        else:
+            vol_index = 1.0  # Neutral when vol data unavailable
+        
+        # Sharpe ratio factor (1 - Sharpe), clamped to [0, 1]
+        sharpe_factor = max(0.0, min(1.0, 1.0 - user_sharpe_ratio))
+        
+        # §7 formula: Position Size % × Leverage × Volatility Index × (1 - Sharpe)
+        base_risk = position_size_pct * leverage * vol_index * sharpe_factor
+        
+        # Normalize to 0-10 scale
+        confidence_risk = (1 - confidence) * 3  # 0-3
+        
+        # Leverage excess risk
+        leverage_risk = max(0, (leverage - 1) * 0.3)  # 0-1.5
         
         # Correlation penalty
         correlation_risk = 2.0 if has_correlation else 0
         
-        # Stop loss penalty
-        sl_risk = 1.0 if signal.get("stop_loss_price") is None else 0
-        
-        total_risk = confidence_risk + leverage_risk + correlation_risk + sl_risk
+        total_risk = (base_risk * 0.5) + confidence_risk + leverage_risk + correlation_risk
         
         return min(10.0, total_risk)
     
@@ -317,4 +348,93 @@ class RiskManager:
             "at_liquidation_risk": at_risk,
             "buffer_remaining_pct": buffer_remaining,
             "liquidation_price": price_drop_to_liquidation if direction == "LONG" else price_rise_to_liquidation
+        }
+
+    # ========================================================================
+    # VOLATILITY-ADJUSTED POSITION SIZING (§10)
+    # ========================================================================
+
+    def calculate_volatility_adjusted_size(
+        self,
+        base_size: float,
+        current_vol_20d: float,
+        historical_avg_vol_60d: float,
+    ) -> float:
+        """
+        Architecture Doc §10: adjusted_size = base_size × (20-day_vol / 60-day_avg_vol)
+        If current IV is 3× historical, position reduced to 33%.
+        """
+        if historical_avg_vol_60d <= 0:
+            return base_size
+
+        vol_ratio = current_vol_20d / historical_avg_vol_60d
+        adjusted = base_size / vol_ratio if vol_ratio > 0 else base_size
+        return adjusted
+
+    # ========================================================================
+    # FUNDING RATE ALERTS (§10)
+    # ========================================================================
+
+    async def check_funding_rate(
+        self, ticker: str, current_funding_rate: float
+    ) -> Dict[str, Any]:
+        """
+        Architecture Doc §10: Funding rate alert: Warn if >1% daily.
+        """
+        daily_rate = abs(current_funding_rate)
+        alert = daily_rate > 0.01
+
+        return {
+            "ticker": ticker,
+            "funding_rate": current_funding_rate,
+            "daily_rate": daily_rate,
+            "alert": alert,
+            "message": f"⚠️ Funding rate {daily_rate*100:.2f}% exceeds 1% threshold" if alert else "Funding rate normal",
+        }
+
+    # ========================================================================
+    # LIQUIDATION PRICE CALCULATION (§10)
+    # ========================================================================
+
+    def calculate_liquidation_price(
+        self,
+        entry_price: float,
+        margin: float,
+        position_size: float,
+        leverage: float,
+        direction: str,
+    ) -> Dict[str, Any]:
+        """
+        Architecture Doc §10: Liquidation Price formula.
+        System checks: If (Liquidation Price - Mark Price) < (Mark Price * 0.20) → Reject
+        """
+        if direction == "LONG":
+            liq_price = entry_price - (margin * entry_price / position_size)
+        else:
+            liq_price = entry_price + (margin * entry_price / position_size)
+
+        return {
+            "liquidation_price": liq_price,
+            "direction": direction,
+            "entry_price": entry_price,
+            "buffer_pct": abs(liq_price - entry_price) / entry_price * 100 if entry_price else 0,
+        }
+
+    def validate_liquidation_buffer(
+        self, liquidation_price: float, mark_price: float
+    ) -> Dict[str, Any]:
+        """Check if liquidation buffer is sufficient (20% cushion)."""
+        if mark_price <= 0:
+            return {"valid": False, "reason": "Invalid mark price"}
+
+        buffer_pct = abs(liquidation_price - mark_price) / mark_price * 100
+        valid = buffer_pct >= self.LIQUIDATION_BUFFER_PCT * 100
+
+        return {
+            "valid": valid,
+            "buffer_pct": round(buffer_pct, 2),
+            "required_pct": self.LIQUIDATION_BUFFER_PCT * 100,
+            "liquidation_price": liquidation_price,
+            "mark_price": mark_price,
+            "reason": "Buffer OK" if valid else f"Buffer {buffer_pct:.1f}% < required {self.LIQUIDATION_BUFFER_PCT*100}%",
         }
