@@ -11,19 +11,21 @@ import { useWebSocket } from '@/hooks/use-websocket';
 import { SpotlightCard } from '@/components/shared/spotlight-card';
 import { AnimatedCounter } from '@/components/shared/animated-counter';
 import { Position, Trade, PortfolioSummary } from '@/lib/types';
-import { 
-  Wallet, 
-  TrendingUp, 
-  Activity, 
-  Zap, 
-  ShieldAlert
+import {
+  Wallet,
+  TrendingUp,
+  Activity,
+  Zap,
+  ShieldAlert,
+  AlertCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ActivePositions } from '@/components/portfolio/active-positions';
 import { TradeHistory } from '@/components/portfolio/trade-history';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
-export default function PortfolioPage() {
+function PortfolioPageContent() {
   const { user } = useUser();
   const analytics = useAnalytics();
   const { isConnected: marketConnected } = useWebSocket('/ws/market-updates');
@@ -33,13 +35,14 @@ export default function PortfolioPage() {
   const [isSummaryLoading, setIsSummaryLoading] = useState(true);
   const [isPositionsLoading, setIsPositionsLoading] = useState(true);
   const [isTradesLoading, setIsTradesLoading] = useState(true);
+  const [errors, setErrors] = useState<{ summary?: string; positions?: string; trades?: string }>({});
 
   useEffect(() => {
     analytics.pageView('/portfolio');
     const uid = user?.uid || 'mock-user-001';
-    api.portfolio.getSummary(uid).then(d => { setSummary(d); setIsSummaryLoading(false); });
-    api.portfolio.getPositions(uid).then(d => { setPositions(d); setIsPositionsLoading(false); });
-    api.portfolio.getTrades(uid).then(d => { setTrades(d); setIsTradesLoading(false); });
+    api.portfolio.getSummary(uid).then(d => { setSummary(d); setIsSummaryLoading(false); }).catch(e => { setErrors(prev => ({ ...prev, summary: e.message || 'Failed to load summary' })); setIsSummaryLoading(false); });
+    api.portfolio.getPositions(uid).then(d => { setPositions(d); setIsPositionsLoading(false); }).catch(e => { setErrors(prev => ({ ...prev, positions: e.message || 'Failed to load positions' })); setIsPositionsLoading(false); });
+    api.portfolio.getTrades(uid).then(d => { setTrades(d); setIsTradesLoading(false); }).catch(e => { setErrors(prev => ({ ...prev, trades: e.message || 'Failed to load trades' })); setIsTradesLoading(false); });
   }, [user, analytics]);
 
   if (!user) {
@@ -63,6 +66,16 @@ export default function PortfolioPage() {
         <h1 className="text-3xl font-black tracking-tight uppercase leading-none">Portfolio Intelligence</h1>
         <p className="text-muted-foreground text-sm font-medium">Real-time performance metrics and active risk exposure.</p>
       </header>
+
+      {(errors.summary || errors.positions || errors.trades) && (
+        <div className="p-4 rounded-xl bg-red/10 border border-red/20 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <AlertCircle size={16} className="text-red shrink-0" />
+            <span className="text-xs font-bold text-red">{errors.summary || errors.positions || errors.trades}</span>
+          </div>
+          <button onClick={() => { window.location.reload(); }} className="text-[10px] font-black uppercase text-red hover:text-red/80 transition-colors">Retry</button>
+        </div>
+      )}
 
       {/* Hero Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
@@ -133,5 +146,13 @@ export default function PortfolioPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PortfolioPage() {
+  return (
+    <ErrorBoundary>
+      <PortfolioPageContent />
+    </ErrorBoundary>
   );
 }

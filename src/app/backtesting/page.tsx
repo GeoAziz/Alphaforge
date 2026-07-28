@@ -7,20 +7,29 @@ import { useUser } from '@/firebase';
 // import { collection, query } from 'firebase/firestore';
 import { api } from '@/lib/api';
 import { BacktestResult, Strategy } from '@/lib/types';
-import { FlaskConical, Loader2 } from 'lucide-react';
+import { FlaskConical, Loader2, AlertCircle } from 'lucide-react';
 import { SpotlightCard } from '@/components/shared/spotlight-card';
 import { BacktestForm } from '@/components/backtesting/backtest-form';
 import { BacktestResults } from '@/components/backtesting/backtest-results';
 import { EquityCurve } from '@/components/backtesting/equity-curve';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
-export default function BacktestingPage() {
+function BacktestingPageContent() {
   const { user } = useUser();
   const [isRunning, setIsRunning] = useState(false);
   const [results, setResults] = useState<BacktestResult | null>(null);
   const [strategies, setStrategies] = useState<Strategy[]>([]);
+  const [isStrategiesLoading, setIsStrategiesLoading] = useState(true);
+  const [strategiesError, setStrategiesError] = useState<string | null>(null);
 
   useEffect(() => {
-    api.strategies.getUserStrategies(user?.uid || 'mock-user-001').then(setStrategies);
+    api.strategies.getUserStrategies(user?.uid || 'mock-user-001').then(data => {
+      setStrategies(data);
+      setIsStrategiesLoading(false);
+    }).catch(err => {
+      setStrategiesError(err.message || 'Failed to load strategies');
+      setIsStrategiesLoading(false);
+    });
   }, [user]);
 
   const performanceData = [
@@ -81,12 +90,22 @@ export default function BacktestingPage() {
         <p className="text-muted-foreground text-sm font-medium">Simulate institutional algorithmic performance against historical tick data.</p>
       </header>
 
+      {strategiesError && (
+        <div className="p-4 rounded-xl bg-red/10 border border-red/20 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <AlertCircle size={16} className="text-red shrink-0" />
+            <span className="text-xs font-bold text-red">{strategiesError}</span>
+          </div>
+          <button onClick={() => { setStrategiesError(null); setIsStrategiesLoading(true); api.strategies.getUserStrategies(user?.uid || 'mock-user-001').then(d => { setStrategies(d); setIsStrategiesLoading(false); }).catch(e => { setStrategiesError(e.message || 'Failed to load'); setIsStrategiesLoading(false); }); }} className="text-[10px] font-black uppercase text-red hover:text-red/80 transition-colors">Retry</button>
+        </div>
+      )}
+
       <div className="grid grid-cols-12 gap-8">
         <div className="col-span-12 lg:col-span-4">
           <BacktestForm 
             strategies={strategies} 
             onRun={handleRunBacktest} 
-            isLoading={isRunning} 
+            isLoading={isRunning || isStrategiesLoading} 
           />
         </div>
 
@@ -118,5 +137,13 @@ export default function BacktestingPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function BacktestingPage() {
+  return (
+    <ErrorBoundary>
+      <BacktestingPageContent />
+    </ErrorBoundary>
   );
 }

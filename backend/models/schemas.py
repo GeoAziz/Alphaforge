@@ -253,10 +253,17 @@ class PaperTradeBase(BaseModel):
     signal_id: str
     asset: str
     direction: TradeDirection
-    entry_price: float
-    quantity: float
-    stop_loss: Optional[float] = None
-    take_profit: Optional[float] = None
+    entry_price: float = Field(..., gt=0, description="Entry price must be positive")
+    quantity: float = Field(..., gt=0, le=1000000, description="Quantity must be positive and <= 1M")
+    stop_loss: Optional[float] = Field(None, gt=0, description="Stop loss must be positive if set")
+    take_profit: Optional[float] = Field(None, gt=0, description="Take profit must be positive if set")
+
+    @field_validator('entry_price', 'stop_loss', 'take_profit')
+    @classmethod
+    def validate_prices(cls, v):
+        if v is not None and v > 1e10:
+            raise ValueError('Price exceeds maximum allowed value')
+        return v
 
 
 class PaperTradeCreate(PaperTradeBase):
@@ -625,4 +632,122 @@ class ExchangeConnection(BaseModel):
     
     class Config:
         from_attributes = True
+
+
+# ============================================================================
+# AUTOMATION (Grid Bot + DCA Bot)
+# ============================================================================
+
+class GridBotCreate(BaseModel):
+    user_id: str
+    exchange_id: str
+    symbol: str
+    lower_bound: float
+    upper_bound: float
+    grid_levels: int = Field(..., ge=2, le=50)
+    order_size: float
+
+
+class DCABotCreate(BaseModel):
+    user_id: str
+    exchange_id: str
+    symbol: str
+    investment_amount: float
+    frequency: str = "weekly"
+    start_time: Optional[str] = None
+
+
+class AutomationJob(BaseModel):
+    id: str
+    job_type: str
+    exchange_id: str
+    symbol: str
+    status: str
+    config: Dict[str, Any] = {}
+    created_at: datetime
+    updated_at: datetime
+
+
+class AutomationOrder(BaseModel):
+    id: str
+    automation_job_id: str
+    order_id: str
+    status: str
+    filled_amount: float = 0
+    avg_price: float = 0
+    side: Optional[str] = None
+    price: Optional[float] = None
+    created_at: datetime
+
+
+class AutomationEvent(BaseModel):
+    id: str
+    automation_job_id: str
+    event_type: str
+    details: Dict[str, Any] = {}
+    created_at: datetime
+
+
+# ============================================================================
+# STRATEGY BUILDER (No-Code Strategy Configurator)
+# ============================================================================
+
+class StrategyBuilderSignalFilters(BaseModel):
+    min_confidence: Optional[float] = Field(None, ge=0.0, le=1.0)
+    max_volatility: Optional[str] = None
+    preferred_time_windows: Optional[List[str]] = None
+    included_tickers: Optional[List[str]] = None
+    excluded_tickers: Optional[List[str]] = None
+
+
+class StrategyBuilderPositionSizing(BaseModel):
+    method: Optional[str] = "fixed"
+    base_allocation: Optional[float] = Field(None, ge=0.001, le=0.10)
+    max_per_position: Optional[float] = None
+
+
+class StrategyBuilderRiskControls(BaseModel):
+    max_loss_per_trade: Optional[float] = None
+    max_daily_loss: Optional[float] = None
+    max_open_positions: Optional[int] = None
+
+
+class StrategyBuilderRules(BaseModel):
+    signal_filters: Optional[StrategyBuilderSignalFilters] = None
+    position_sizing: Optional[StrategyBuilderPositionSizing] = None
+    risk_controls: Optional[StrategyBuilderRiskControls] = None
+
+
+class StrategyBuilderCreate(BaseModel):
+    strategy_name: str = Field(..., min_length=1, max_length=100)
+    description: Optional[str] = ""
+    rules: Dict[str, Any]
+
+
+class StrategyBuilderUpdate(BaseModel):
+    strategy_name: Optional[str] = Field(None, min_length=1, max_length=100)
+    description: Optional[str] = None
+    rules: Optional[Dict[str, Any]] = None
+
+
+class StrategyBuilderResponse(BaseModel):
+    id: str
+    user_id: str
+    strategy_name: str
+    description: str
+    rules: Dict[str, Any]
+    is_active: bool
+    performance_stats: Dict[str, Any] = {}
+    created_at: str
+    updated_at: str
+
+
+class StrategyTemplateResponse(BaseModel):
+    id: str
+    name: str
+    description: str
+    category: str
+    difficulty: str
+    rules: Dict[str, Any]
+    created_at: str
 

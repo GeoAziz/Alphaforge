@@ -1,6 +1,10 @@
 """
 Firebase Admin SDK initialization for token verification in FastAPI.
-Place this in backend/firebase_config.py
+
+Security model:
+- Production: Requires valid Firebase ID token. No exceptions.
+- Development: Allows unauthenticated access ONLY when ALLOW_UNAUTHENTICATED_DEV=true.
+  This flag must be explicitly set — the default is to require auth even in dev.
 """
 
 import os
@@ -9,149 +13,170 @@ from typing import Optional
 import firebase_admin
 from firebase_admin import credentials, auth
 from fastapi import HTTPException, Header
-from functools import lru_cache
 import logging
 from config import Config
 
 logger = logging.getLogger(__name__)
 
+# Explicit dev bypass — must be opt-in, not default
+_ALLOW_UNAUTHENTICATED_DEV = (
+    os.getenv("ALLOW_UNAUTHENTICATED_DEV", "false").lower() == "true"
+    and os.getenv("API_ENV", "development").lower() == "development"
+)
+
 
 class FirebaseTokenVerifier:
-    """Helper class for Firebase token verification."""
-    
+    """Firebase token verification singleton."""
+
     _instance = None
-    
+
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(FirebaseTokenVerifier, cls).__new__(cls)
             cls._instance._initialized = False
         return cls._instance
-    
+
     def __init__(self):
         if self._initialized:
             return
-        
+
         self._initialized = True
-        
-        # Try to load Firebase credentials from file
+        self.firebase_enabled = False
+
         service_account_path = Config.FIREBASE_SERVICE_ACCOUNT_PATH
-        
+
         try:
-            # Check if service account key file exists
             if os.path.exists(service_account_path):
-                with open(service_account_path, 'r') as f:
+                with open(service_account_path, "r") as f:
                     creds_dict = json.load(f)
-                
+
                 creds = credentials.Certificate(creds_dict)
-                if not fb_admin._apps:
-                    fb_admin.initialize_app(creds)
-                logger.info(f"✅ Firebase Admin SDK initialized from {service_account_path}")
+                if not firebase_admin._apps:
+                    firebase_admin.initialize_app(creds)
                 self.firebase_enabled = True
+                logger.info("Firebase Admin SDK initialized")
             else:
-                logger.warning(f"⚠️ Service account key not found at {service_account_path}")
-                logger.info("   Firebase token verification disabled (mock mode)")
-                self.firebase_enabled = False
-        
+                logger.warning(
+                    "Service account key not found at %s — token verification disabled",
+                    service_account_path,
+                )
+
         except Exception as e:
-            logger.warning(f"⚠️ Firebase Admin SDK initialization failed: {e}")
-            logger.info("   Using mock Firebase verification for development")
-            self.firebase_enabled = False
-    
+            logger.error("Firebase Admin SDK initialization failed: %s", e)
+
     @staticmethod
-    def verify_token(token: str) -> Optional[dict]:
+    def verify_token(token: str) -> dict:
         """
-        Verify Firebase ID token and return decoded token.
-        
-        Args:
-            token: Firebase ID token from Authorization header
-            
-        Returns:
-            Decoded token dict with uid, email, etc.
-            
+        Verify a Firebase ID token.
+
         Raises:
-            HTTPException: If token is invalid
+            HTTPException: 401 if token is invalid, expired, revoked, or Firebase
+                           is not initialized.
         """
+        if not firebase_admin._apps:
+            raise HTTPException(
+                status_code=503,
+                detail="Authentication service not configured",
+            )
+
+        cleaned = token.replace("Bearer ", "").strip()
+        if not cleaned:
+            raise HTTPException(status_code=401, detail="Empty authentication token")
+
         try:
-            # Remove "Bearer " prefix if present
-            token = token.replace("Bearer ", "").strip()
-            
-            # Check if Firebase is initialized
-            if not fb_admin._apps:
-                logger.warning("Firebase not initialized, using mock verification")
-                # For development: accept any token format
-                return {"uid": "dev-user", "email": "dev@example.com"}
-            
-            decoded_token = auth.verify_id_token(token)
-            logger.info(f"Token verified for user: {decoded_token.get('uid')}")
-            return decoded_token
-            
-        except ValueError as e:
-            # Invalid token format
-            logger.error(f"Invalid ID token: {e}")
+            decoded = auth.verify_id_token(cleaned)
+            return decoded
+        except ValueError:
             raise HTTPException(status_code=401, detail="Invalid authentication token")
         except Exception as e:
-            # Catch all other exceptions (expired, revoked, etc.)
-            error_msg = str(e).lower()
-            if "expired" in error_msg:
-                logger.error(f"Expired ID token: {e}")
+            msg = str(e).lower()
+            if "expired" in msg:
                 raise HTTPException(status_code=401, detail="Authentication token expired")
-            elif "revoked" in error_msg:
-                logger.error(f"Revoked ID token: {e}")
+            if "revoked" in msg:
                 raise HTTPException(status_code=401, detail="Authentication token revoked")
-            else:
-                logger.error(f"Token verification failed: {e}")
-                raise HTTPException(status_code=401, detail="Authentication failed")
+            raise HTTPException(status_code=401, detail="Authentication failed")
 
 
 def get_firebase_verifier() -> FirebaseTokenVerifier:
-    """Get Firebase token verifier singleton instance."""
+    """Get the singleton Firebase token verifier."""
     return FirebaseTokenVerifier()
 
 
 async def verify_firebase_token(authorization: Optional[str] = Header(None)) -> str:
     """
-    FastAPI dependency for verifying Firebase tokens in Authorization header.
-    Returns user_id if token is valid.
-    
+    FastAPI dependency: verify Firebase token, return user UID.
+
+    Behavior:
+      - Production: always requires a valid token.
+      - Development with ALLOW_UNAUTHENTICATED_DEV=true: allows missing/invalid
+        tokens with a demo-user fallback (for local dev convenience).
+      - Development without that flag: requires a valid token just like production.
+
     Usage:
         @app.get("/api/protected")
-        async def protected_endpoint(user_id: str = Depends(verify_firebase_token)):
-            return {"message": f"Hello {user_id}"}
+        async def protected(user_id: str = Depends(verify_firebase_token)):
+            ...
     """
-    # Development mode: Allow any token or no token
-    if os.getenv("API_ENV") == "development":
+    # Production — no exceptions
+    if os.getenv("API_ENV", "development").lower() == "production":
         if not authorization:
-            logger.warning("No authorization header provided, using demo user (dev mode)")
+            raise HTTPException(status_code=401, detail="Missing authorization header")
+        verifier = get_firebase_verifier()
+        decoded = verifier.verify_token(authorization)
+        return decoded.get("uid", "unknown-user")
+
+    # Development — explicit opt-in bypass (allows missing token, but validates if provided)
+    if _ALLOW_UNAUTHENTICATED_DEV:
+        if not authorization:
+            logger.warning(
+                "DEV MODE: No auth header — using demo-user "
+                "(set ALLOW_UNAUTHENTICATED_DEV=false to enforce auth)"
+            )
             return "demo-user"
-        # In dev mode, accept any token format
-        logger.warning("Using development mode token verification (accepting any token)")
-        return "demo-user"
-    
-    # Production mode: Require valid Firebase token
+        verifier = get_firebase_verifier()
+        if not verifier.firebase_enabled:
+            logger.warning("DEV MODE: Firebase not available, using token as-is")
+            return authorization.replace("Bearer ", "").strip()[:20]
+        try:
+            decoded = verifier.verify_token(authorization)
+            return decoded.get("uid", "unknown-user")
+        except HTTPException as e:
+            raise HTTPException(status_code=e.status_code, detail=e.detail)
+
+    # Development — default: enforce auth (same as production)
     if not authorization:
         raise HTTPException(status_code=401, detail="Missing authorization header")
-    
     verifier = get_firebase_verifier()
-    decoded_token = verifier.verify_token(authorization)
-    
-    return decoded_token.get("uid", "unknown-user")
+    decoded = verifier.verify_token(authorization)
+    return decoded.get("uid", "unknown-user")
 
 
-# Optional: Mock verification for testing
 async def verify_firebase_token_optional(
-    authorization: Optional[str] = Header(None)
+    authorization: Optional[str] = Header(None),
 ) -> str:
     """
-    Soft verification: returns user_id if token provided, otherwise demo user.
-    Useful for endpoints that support both authenticated and anonymous access.
+    Soft verification for endpoints that support anonymous access.
+    Returns user_id if token is valid, otherwise a demo user.
+    Never silently swallows real auth errors in production.
     """
     if not authorization:
-        return "demo-user"
-    
+        if os.getenv("API_ENV", "development").lower() == "development":
+            return "demo-user"
+        raise HTTPException(status_code=401, detail="Missing authorization header")
+
+    verifier = get_firebase_verifier()
+    if not verifier.firebase_enabled:
+        if os.getenv("API_ENV", "development").lower() == "development":
+            return "demo-user"
+        raise HTTPException(
+            status_code=503,
+            detail="Authentication service not configured",
+        )
+
     try:
-        verifier = get_firebase_verifier()
-        decoded_token = verifier.verify_token(authorization)
-        return decoded_token.get("uid", "demo-user")
+        decoded = verifier.verify_token(authorization)
+        return decoded.get("uid", "demo-user")
     except HTTPException:
-        # If token verification fails, still allow with demo user
-        return "demo-user"
+        if os.getenv("API_ENV", "development").lower() == "development":
+            return "demo-user"
+        raise
