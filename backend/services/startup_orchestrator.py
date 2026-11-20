@@ -158,12 +158,12 @@ class StartupOrchestrator:
         logger.info("📦 Verifying Service Imports...")
         
         required_services = [
-            ("services.signal_aggregator_v2", "SignalAggregator"),
+            ("services.signal_aggregator", "SignalAggregator"),
             ("services.signal_processor", "SignalProcessor"),
             ("services.paper_trading", "PaperTradingEngine"),
             ("services.portfolio", "PortfolioService"),
             ("services.risk_manager", "RiskManager"),
-            ("services.market_data_v2", "MarketDataService"),
+            ("services.market_data", "MarketDataService"),
             ("services.chat_service", "ChatService"),
             ("services.creator_service", "CreatorVerificationService"),
             ("services.user_service", "UserManagementService"),
@@ -218,29 +218,39 @@ class StartupOrchestrator:
         # 1. Verify database connection
         logger.info("")
         db_ok = await self.verify_database_connection()
+        allow_mock = os.getenv("ALLOW_MOCK_DB_FALLBACK", "true").lower() == "true"
+        is_dev = os.getenv("API_ENV", "development").lower() != "production"
+
         if not db_ok:
-            logger.error("❌ Cannot proceed without database connection")
-            return False
-        
-        # 2. Check migration status
-        logger.info("")
-        migrations_ok = await self.check_migration_status()
-        
-        # 3. Run migrations if needed
-        if not migrations_ok:
-            if auto_migrate:
-                logger.info("")
-                logger.info("🔄 Auto-migration enabled, running migrations...")
-                migrations_ok = await self.run_migrations_if_needed()
-                
-                if not migrations_ok:
-                    logger.error("❌ Migrations failed")
-                    return False
+            if is_dev and allow_mock:
+                logger.warning("⚠️  Database connection unavailable; proceeding with mock database fallback in development mode")
+                self.status["database"]["status"] = "mock_fallback"
+                self.status["migrations"]["status"] = "skipped_mock"
+                # Clear errors so summary does not block startup
+                self.errors = [e for e in self.errors if "Failed to connect to database" not in e]
             else:
-                logger.error("")
-                logger.error("❌ Migrations are incomplete. Run:")
-                logger.error("   python scripts/run_all_migrations.py")
+                logger.error("❌ Cannot proceed without database connection")
                 return False
+        else:
+            # 2. Check migration status
+            logger.info("")
+            migrations_ok = await self.check_migration_status()
+            
+            # 3. Run migrations if needed
+            if not migrations_ok:
+                if auto_migrate:
+                    logger.info("")
+                    logger.info("🔄 Auto-migration enabled, running migrations...")
+                    migrations_ok = await self.run_migrations_if_needed()
+                    
+                    if not migrations_ok:
+                        logger.error("❌ Migrations failed")
+                        return False
+                else:
+                    logger.error("")
+                    logger.error("❌ Migrations are incomplete. Run:")
+                    logger.error("   python scripts/run_all_migrations.py")
+                    return False
         
         # 4. Verify service imports
         logger.info("")
@@ -286,12 +296,12 @@ class StartupOrchestrator:
         
         # Database status
         db_status = self.status["database"]["status"]
-        db_icon = "✅" if db_status == "connected" else "❌"
+        db_icon = "✅" if db_status == "connected" else "🟡" if db_status == "mock_fallback" else "❌"
         logger.info(f"{db_icon} Database: {db_status}")
         
         # Migration status
         mig_status = self.status["migrations"]["status"]
-        mig_icon = "✅" if mig_status == "complete" else "⏳" if mig_status == "pending" else "❌"
+        mig_icon = "✅" if mig_status == "complete" else "🟡" if "mock" in mig_status else "⏳" if mig_status == "pending" else "❌"
         logger.info(f"{mig_icon} Migrations: {mig_status}")
         
         # Services

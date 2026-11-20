@@ -382,7 +382,7 @@ async def lifespan(app: FastAPI):
     await order_monitor.start_watchdog()
     logger.info("✅ Order confirmation monitor initialized")
 
-    exchange_layer = get_exchange_layer(db)
+    exchange_layer = get_exchange_layer("binance", "", "")
     logger.info("✅ Exchange abstraction layer initialized")
 
     data_validation_pipeline = DataValidationPipeline()
@@ -624,14 +624,25 @@ CORS_ALLOW_HEADERS = [
     "X-User-Id",
 ]
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
-    allow_credentials=allow_credentials,
-    allow_methods=CORS_ALLOW_METHODS,
-    allow_headers=CORS_ALLOW_HEADERS,
-    expose_headers=["X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset"],
-)
+if not IS_PRODUCTION:
+    # Allow all local network origins in development (LAN IPs, localhost, etc.)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+)(:\d+)?$",
+        allow_credentials=True,
+        allow_methods=CORS_ALLOW_METHODS,
+        allow_headers=CORS_ALLOW_HEADERS,
+        expose_headers=["X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset"],
+    )
+else:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=ALLOWED_ORIGINS,
+        allow_credentials=allow_credentials,
+        allow_methods=CORS_ALLOW_METHODS,
+        allow_headers=CORS_ALLOW_HEADERS,
+        expose_headers=["X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset"],
+    )
 
 # ---------------------------------------------------------------------------
 # Trusted Hosts
@@ -641,8 +652,8 @@ TRUSTED_HOSTS_RAW = os.getenv("TRUSTED_HOSTS", "").strip()
 if TRUSTED_HOSTS_RAW:
     TRUSTED_HOSTS = [h.strip() for h in TRUSTED_HOSTS_RAW.split(",") if h.strip()]
 else:
-    # Safe defaults: localhost in dev, must be explicit in production
-    TRUSTED_HOSTS = ["localhost", "127.0.0.1"] if not IS_PRODUCTION else []
+    # Safe defaults: allow all hosts in development (LAN IPs, localhost), must be explicit in production
+    TRUSTED_HOSTS = ["*"] if not IS_PRODUCTION else []
 
 if IS_PRODUCTION and "*" in TRUSTED_HOSTS:
     raise RuntimeError("TRUSTED_HOSTS cannot include '*' in production")

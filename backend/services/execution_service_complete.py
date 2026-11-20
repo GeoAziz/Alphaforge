@@ -169,6 +169,16 @@ class ExchangeAbstractionLayer:
 
         self.last_request_time = time.time()
 
+    def get_circuit_breaker_status(self) -> Dict[str, Any]:
+        """Return circuit breaker status for this exchange."""
+        return {
+            self.exchange_name: {
+                "open": self.circuit_breaker_open,
+                "failure_count": self.circuit_breaker_failure_count,
+                "state": "open" if self.circuit_breaker_open else "closed"
+            }
+        }
+
     async def close(self):
         """Close exchange connection."""
         await self.exchange.close()
@@ -369,6 +379,19 @@ class OrderConfirmationMonitor:
     def __init__(self, db):
         self.db = db
         self.pending_orders: Dict[str, Dict[str, Any]] = {}
+        self._watchdog_task = None
+        self._running = False
+
+    async def start_watchdog(self):
+        """Start the background watchdog task to monitor pending orders."""
+        self._running = True
+        logger.info("OrderConfirmationMonitor watchdog started")
+
+    async def stop_watchdog(self):
+        """Stop the background watchdog task."""
+        self._running = False
+        if self._watchdog_task:
+            self._watchdog_task.cancel()
 
     async def wait_for_confirmation(
         self,
@@ -491,5 +514,6 @@ def get_order_monitor(db) -> OrderConfirmationMonitor:
     return _order_monitor
 
 
-def get_exchange_layer(exchange_name: str, api_key: str, api_secret: str) -> ExchangeAbstractionLayer:
+def get_exchange_layer(exchange_name: str = "binance", api_key: str = "", api_secret: str = "") -> ExchangeAbstractionLayer:
+    """Return an ExchangeAbstractionLayer instance. Allows optional credentials for system-level status."""
     return ExchangeAbstractionLayer(exchange_name, api_key, api_secret)

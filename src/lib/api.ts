@@ -31,7 +31,20 @@ import {
   EducationContent
 } from './types';
 
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/$/, '');
+const getApiBaseUrl = (): string => {
+  // If explicitly provided via env (e.g. external microservice or production domain)
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '');
+  }
+  // In the browser, use empty string so requests automatically route to current host origin (e.g. http://192.168.x.x:9002/api/...)
+  if (typeof window !== 'undefined') {
+    return '';
+  }
+  // Server-side rendering default to local backend
+  return 'http://127.0.0.1:8000';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 class ApiError extends Error {
   status: number;

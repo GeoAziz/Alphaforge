@@ -49,9 +49,18 @@ export function useWebSocket<T = any>(
 
   const connect = useCallback(() => {
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-      // Convert http/https to ws/wss
-      const wsUrl = `${API_URL.replace(/^http/, 'ws')}${path}`;
+      let wsBaseUrl = '';
+      if (process.env.NEXT_PUBLIC_API_URL) {
+        wsBaseUrl = process.env.NEXT_PUBLIC_API_URL.replace(/^http/, 'ws');
+      } else if (typeof window !== 'undefined') {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        // Connect to backend port 8000 on the same host (e.g. 192.168.x.x:8000)
+        wsBaseUrl = `${protocol}//${window.location.hostname}:8000`;
+      } else {
+        wsBaseUrl = 'ws://127.0.0.1:8000';
+      }
+
+      const wsUrl = `${wsBaseUrl}${path}`;
 
       console.log(`[WebSocket] Connecting to ${wsUrl}`);
       ws.current = new WebSocket(wsUrl);
